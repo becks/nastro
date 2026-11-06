@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""Generate mac-sim.pd: desktop stand-in for the Organelle hardware."""
+import os, sys
+
+OUT = sys.argv[1]
+L, C = ["#N canvas 60 60 760 560 12;"], []
+n = 0
+
+
+def add(kind, x, y, t):
+    global n
+    L.append(f"#X {kind} {x} {y} {t};")
+    n += 1
+    return n - 1
+
+
+def c(a, b, o=0, i=0):
+    C.append(f"#X connect {a} {o} {b} {i};")
+
+
+add("text", 20, 10, "NASTRO - simulatore Organelle per Mac. Clicca su questa finestra prima di suonare.")
+add("text", 20, 34, "Tasti: A W S E D F T G Y H U J K O L P = note (Do..Mi) / SPAZIO = Aux / Z = footswitch / [ ] = tasti 82-83 (Spazio+[ ] = ottava)")
+
+# knobs
+names = ["knob1", "knob2", "knob3", "knob4"]
+for k, nm in enumerate(names):
+    add("obj", 20, 80 + k * 30,
+        f"hsl 200 18 0 1 0 0 {nm} empty {nm} 205 9 0 12 #fcfcfc #000000 #000000 0 1")
+# aux toggle (mouse) -> s aux
+add("obj", 320, 80, "tgl 25 0 aux empty Aux(spazio) 30 12 0 12 #fcfcfc #000000 #000000 0 1")
+
+# display
+add("text", 20, 220, "--- OLED ---")
+for k in range(5):
+    r = add("obj", 480, 240 + k * 30, f"r screenLine{k+1}")
+    lp = add("obj", 590, 240 + k * 30, "list prepend set")
+    lt = add("obj", 590, 255 + k * 30, "list trim")
+    box = add("msg", 20, 240 + k * 30, "-")
+    c(r, lp); c(lp, lt); c(lt, box)
+rled = add("obj", 320, 130, "r led")
+add("text", 380, 160, "LED")
+led = add("floatatom", 320, 160, "5 0 0 0 - - - 0")
+c(rled, led)
+
+# keyboard
+keys = "awsedftgyhujkolp"
+codes = [ord(ch) for ch in keys]
+notes_for = [60 + i for i in range(len(keys))]
+# extra keys: [ and ] are the top two Organelle keys (A#5 / B5: with AUX = octave down / up)
+codes += [ord("["), ord("]")]
+notes_for += [82, 83]
+kd = add("obj", 20, 420, "key")
+ku = add("obj", 200, 420, "keyup")
+sel_d = add("obj", 20, 450, "sel " + " ".join(map(str, codes + [32, 122])))
+sel_u = add("obj", 200, 480, "sel " + " ".join(map(str, codes + [32, 122])))
+c(kd, sel_d); c(ku, sel_u)
+on = add("msg", 20, 500, "1")
+for idx in range(len(codes) + 2):
+    m1 = add("msg", 20 + idx * 40, 520, "1")
+    m0 = add("msg", 20 + idx * 40, 545, "0")
+    ch = add("obj", 20 + idx * 40, 575, "change")
+    c(sel_d, m1, idx); c(sel_u, m0, idx); c(m1, ch); c(m0, ch)
+    if idx < len(codes):
+        mul = add("obj", 20 + idx * 40, 600, "* 100")
+        lp = add("obj", 20 + idx * 40, 625, f"list prepend {notes_for[idx]}")
+        sn = add("obj", 20 + idx * 40, 650, "s notes")
+        c(ch, mul); c(mul, lp); c(lp, sn)
+    else:
+        sa = add("obj", 20 + idx * 40, 600, "s aux" if idx == len(codes) else "s fs")
+        c(ch, sa)
+
+# audio
+add("text", 480, 400, "--- audio ---")
+lb = add("obj", 480, 420, "loadbang")
+dsp = add("msg", 480, 450, "\\; pd dsp 1")
+c(lb, dsp)
+cl = add("obj", 600, 420, "catch~ outL")
+cr = add("obj", 600, 450, "catch~ outR")
+dac = add("obj", 600, 490, "dac~")
+c(cl, dac, 0, 0); c(cr, dac, 0, 1)
+
+# OLED -> oled-sim.py (browser view) over UDP
+add("text", 20, 700, "--- OLED grafico: avvia oled-sim.py e apri http://localhost:8123 ---")
+ns = add("obj", 20, 760, "netsend -u")
+lb2 = add("obj", 20, 720, "loadbang")
+tb2 = add("obj", 20, 740, "t b b")
+con = add("msg", 120, 730, "connect localhost 9123")
+redraw = add("msg", 300, 730, "\\; nst-redraw bang")
+c(lb2, tb2); c(tb2, con, 1); c(con, ns); c(tb2, redraw, 0)
+ro = add("obj", 300, 770, "r oscOut")
+lp = add("obj", 300, 800, "list prepend send")
+lt = add("obj", 300, 830, "list trim")
+c(ro, lp); c(lp, lt); c(lt, ns)
+for k in range(5):
+    r = add("obj", 480 + k * 150, 770, f"r screenLine{k+1}")
+    lp = add("obj", 480 + k * 150, 800, f"list prepend send /oled/line/{k+1}")
+    c(r, lp); c(lp, lt)
+rl = add("obj", 1230, 770, "r led")
+lpl = add("obj", 1230, 800, "list prepend send /led")
+c(rl, lpl); c(lpl, lt)
+
+# the patch itself, loaded last so the display receivers already exist
+add("obj", 480, 520, "main")
+
+with open(os.path.join(OUT, "mac-sim.pd"), "w") as f:
+    f.write("\n".join(L + C) + "\n")
+print("ok")

@@ -1,0 +1,317 @@
+#!/usr/bin/env python3
+"""Generate the Nastro Organelle patch (main.pd, synth-fm.pd, fm-voice.pd)."""
+import os, sys
+
+OUT = sys.argv[1]
+os.makedirs(OUT, exist_ok=True)
+
+
+class Patch:
+    def __init__(self, w=1000, h=760):
+        self.lines = [f"#N canvas 40 40 {w} {h} 12;"]
+        self.n = 0
+        self.conns = []
+
+    def _add(self, kind, x, y, text):
+        self.lines.append(f"#X {kind} {x} {y} {text};")
+        i = self.n
+        self.n += 1
+        return i
+
+    def obj(self, x, y, t): return self._add("obj", x, y, t)
+    def msg(self, x, y, t): return self._add("msg", x, y, t)
+    def text(self, x, y, t): return self._add("text", x, y, t)
+
+    def c(self, a, b, o=0, i=0):
+        self.conns.append(f"#X connect {a} {o} {b} {i};")
+
+    def save(self, name):
+        with open(os.path.join(OUT, name), "w") as f:
+            f.write("\n".join(self.lines + self.conns) + "\n")
+
+
+# ---------------------------------------------------------------- fm-voice.pd
+v = Patch(820, 620)
+v.text(20, 10, "fm-voice: one voice of the FM engine. input = note velocity")
+inl = v.obj(20, 50, "inlet")
+tll = v.obj(20, 80, "t l l")
+upn = v.obj(160, 110, "unpack f f")
+mtof = v.obj(160, 140, "mtof")
+freq = v.obj(160, 170, "sig~")
+upv = v.obj(20, 110, "unpack f f")
+mos = v.obj(60, 140, "moses 1")
+# attack branch
+div = v.obj(110, 170, "/ 127")
+patk = v.obj(110, 200, "pack f f")
+ratk = v.obj(400, 40, "r fm-attack")
+# release branch
+tb = v.obj(20, 170, "t b")
+frel = v.obj(20, 200, "f")
+rrel = v.obj(560, 40, "r fm-release")
+mrel = v.msg(20, 230, "0 \\$1")
+envl = v.obj(60, 270, "line~")
+env = v.obj(60, 300, "*~")  # squared envelope
+# ratio / index smoothing
+rrat = v.obj(400, 80, "r fm-ratio")
+mrat = v.msg(400, 110, "\\$1 20")
+lrat = v.obj(400, 140, "line~")
+ridx = v.obj(560, 80, "r fm-index")
+midx = v.msg(560, 110, "\\$1 20")
+lidx = v.obj(560, 140, "line~")
+# operators
+modf = v.obj(300, 200, "*~")
+mod = v.obj(300, 230, "osc~")
+dep1 = v.obj(300, 260, "*~")
+dep2 = v.obj(300, 290, "*~")
+dep3 = v.obj(300, 320, "*~")
+sumf = v.obj(160, 350, "+~")
+car = v.obj(160, 380, "osc~")
+vca = v.obj(160, 420, "*~")
+out = v.obj(160, 460, "outlet~")
+v.text(400, 200, "modulator = freq * ratio")
+v.text(400, 290, "depth = index * freq * env")
+
+v.c(inl, tll)
+v.c(tll, upn, 1)          # note first
+v.c(upn, mtof); v.c(mtof, freq)
+v.c(tll, upv, 0)          # then velocity -> envelope
+v.c(upv, mos, 1)
+v.c(mos, tb, 0); v.c(tb, frel); v.c(frel, mrel); v.c(mrel, envl)
+v.c(rrel, frel, 0, 1)
+v.c(mos, div, 1); v.c(div, patk); v.c(patk, envl)
+v.c(ratk, patk, 0, 1)
+v.c(envl, env, 0, 0); v.c(envl, env, 0, 1)
+v.c(rrat, mrat); v.c(mrat, lrat)
+v.c(ridx, midx); v.c(midx, lidx)
+v.c(freq, modf, 0, 0); v.c(lrat, modf, 0, 1)
+v.c(modf, mod)
+v.c(mod, dep1, 0, 0); v.c(lidx, dep1, 0, 1)
+v.c(dep1, dep2, 0, 0); v.c(freq, dep2, 0, 1)
+v.c(dep2, dep3, 0, 0); v.c(env, dep3, 0, 1)
+v.c(freq, sumf, 0, 0); v.c(dep3, sumf, 0, 1)
+v.c(sumf, car)
+v.c(car, vca, 0, 0); v.c(env, vca, 0, 1)
+v.c(vca, out)
+v.save("fm-voice.pd")
+
+# ---------------------------------------------------------------- synth-fm.pd
+s = Patch(1000, 640)
+s.text(20, 10, "synth-fm: 4-voice 2-operator FM engine (mode SYNTH)")
+rn = s.obj(20, 50, "r synth-notes")
+rp = s.obj(160, 50, "r synth-panic")
+poly = s.obj(20, 90, "poly 4 1")
+pk = s.obj(20, 120, "pack f f f")
+cl = s.obj(20, 150, "clone -s 1 fm-voice 4")
+gain = s.obj(20, 190, "*~ 0.3")
+clip = s.obj(20, 220, "clip~ -1 1")
+tl = s.obj(20, 260, "throw~ synth-bus")
+s.c(rn, poly); s.c(rp, poly)
+s.c(poly, pk, 0, 0); s.c(poly, pk, 1, 1); s.c(poly, pk, 2, 2)
+s.c(pk, cl); s.c(cl, gain); s.c(gain, clip); s.c(clip, tl)
+
+s.text(320, 10, "knobs: 1 ratio / 2 index / 3 attack / 4 release")
+rk = s.obj(320, 50, "r synth-knob")
+lb = s.obj(520, 20, "loadbang")
+defaults = s.msg(520, 50, "1 0.1 \\, 2 0.5 \\, 3 0 \\, 4 0.3")
+rt = s.obj(320, 90, "route 1 2 3 4")
+exprs = [
+    "expr int($f1*15+1)*0.5",
+    "expr int(pow($f1 \\, 2)*1000)/100",
+    "expr int(1+pow($f1 \\, 3)*1999)",
+    "expr int(10+pow($f1 \\, 2)*3990)",
+]
+sends = ["s fm-ratio", "s fm-index", "s fm-attack", "s fm-release"]
+labels = ["screenLine2 Ratio \\$1", "screenLine3 Index \\$1",
+          "screenLine4 Attack \\$1 ms", "screenLine5 Release \\$1 ms"]
+rm = s.obj(320, 420, "r mode")
+sel0 = s.obj(320, 450, "sel 0")
+tbbb = s.obj(320, 480, "t b b b b")
+s.c(lb, defaults); s.c(defaults, rt); s.c(rk, rt)
+s.c(rm, sel0); s.c(sel0, tbbb)
+for k in range(4):
+    x = 320 + k * 165
+    e = s.obj(x, 130, exprs[k])
+    t = s.obj(x, 170, "t f f")
+    snd = s.obj(x + 50, 200, sends[k])
+    f = s.obj(x, 240, "f")
+    m = s.msg(x, 280, "\\; " + labels[k])
+    s.c(rt, e, k); s.c(e, t); s.c(t, snd, 1); s.c(t, f, 0); s.c(f, m)
+    s.c(tbbb, f, 3 - k)
+s.save("synth-fm.pd")
+
+# ---------------------------------------------------------------- main.pd
+m = Patch(1100, 800)
+m.text(20, 5, "NASTRO - OP-1-style workstation for Organelle. AUX + key: C=SYNTH C#=DRUM D=TAPE D#=MIX E=SEQ / A#=oct- B=oct+ / F=play F#=rec G=rewind A=save")
+# --- aux handling
+raux = m.obj(20, 40, "r aux")
+tfff = m.obj(20, 70, "t f f f")
+eq0 = m.obj(20, 100, "== 0")
+sel1 = m.obj(120, 100, "sel 1")
+stop = m.msg(120, 130, "stop")
+spanic = m.obj(120, 160, "s synth-panic")
+# --- notes
+rnotes = m.obj(300, 40, "r notes")
+tll = m.obj(300, 70, "t l l")
+sp_play = m.obj(300, 130, "spigot 1")
+sp_sel = m.obj(460, 130, "spigot 0")
+m.c(raux, tfff)
+m.c(tfff, sp_sel, 2, 1)
+m.c(tfff, eq0, 1); m.c(eq0, sp_play, 0, 1)
+m.c(tfff, sel1, 0); m.c(sel1, stop); m.c(stop, spanic)
+m.c(rnotes, tll); m.c(tll, sp_sel, 1); m.c(tll, sp_play, 0)
+# play path: transpose by octave
+upk = m.obj(300, 170, "unpack f f")
+plus = m.obj(300, 200, "+ 0")
+pk = m.obj(300, 230, "pack f f")
+snotes = m.obj(300, 260, "s synth-notes")
+instr = m.obj(200, 150, "list prepend 0")
+irt = m.obj(200, 175, "route 0 1")
+m.c(sp_play, instr); m.c(instr, irt); m.c(irt, upk, 0)
+m.c(irt, m.obj(380, 200, "s drum-notes"), 1)
+m.c(m.obj(200, 120, "r seq-notes"), instr)
+m.c(upk, pk, 1, 1); m.c(upk, plus, 0); m.c(plus, pk); m.c(pk, snotes)
+# select path
+upk2 = m.obj(460, 170, "unpack f f")
+gt0 = m.obj(560, 200, "> 0")
+sp_on = m.obj(460, 230, "spigot")
+mos = m.obj(460, 260, "moses 65")
+sub = m.obj(460, 290, "- 60")
+smode = m.obj(460, 320, "s mode")
+sel_oct = m.obj(560, 290, "sel 82 83")
+mdn = m.msg(560, 320, "-1")
+mup = m.msg(610, 320, "1")
+acc = m.obj(560, 350, "+")
+clp = m.obj(560, 380, "clip -2 2")
+toct = m.obj(560, 410, "t f f")
+x12 = m.obj(660, 440, "* 12")
+m.c(sp_sel, upk2); m.c(upk2, gt0, 1); m.c(gt0, sp_on, 0, 1); m.c(upk2, sp_on, 0)
+m.c(sp_on, mos); m.c(mos, sub, 0); m.c(sub, smode); m.c(mos, sel_oct, 1)
+auxk = m.obj(660, 320, "s aux-key")
+m.c(sel_oct, auxk, 2)
+m.c(sel_oct, mdn, 0); m.c(sel_oct, mup, 1); m.c(mdn, acc); m.c(mup, acc)
+m.c(acc, clp); m.c(clp, acc, 0, 1); m.c(clp, toct)
+m.c(toct, x12, 1); m.c(x12, plus, 0, 1)
+m.c(toct, m.obj(620, 470, "s nst-oct"), 0)
+# --- display line 1 + led
+rmode = m.obj(720, 40, "r mode")
+tff = m.obj(720, 70, "t f f")
+selm = m.obj(720, 100, "sel 0 1 2 3 4")
+names = ["SYNTH", "DRUM", "TAPE", "MIX", "SEQ"]
+psf = m.obj(720, 200, "pack s f")
+line1 = m.msg(720, 230, "\\; screenLine1 \\$1 oct \\$2")
+tbf = m.obj(560, 440, "t b f")
+m.c(rmode, tff); m.c(tff, selm, 0)
+for k, nm in enumerate(names):
+    mm = m.msg(720 + k * 75, 130, f"symbol {nm.replace(' ', '_')}")
+    m.c(selm, mm, k); m.c(mm, psf)
+todo = m.msg(800, 170, "\\; screenLine2 (todo) \\; screenLine3 - \\; screenLine4 - \\; screenLine5 -")
+for k in ():
+    m.c(selm, todo, k)
+sp1 = m.obj(720, 215, "spigot 1")
+ne2 = m.obj(820, 215, "expr 0")
+# graphics modes (TAPE, MIX) hide the OS info bar
+gfx = m.obj(900, 160, "expr 1")
+gfxc = m.obj(900, 185, "change -1")
+gsel = m.obj(900, 210, "sel 1 0")
+ghide = m.msg(900, 240, "\\; oscOut sendtyped /oled/gShowInfoBar ii 3 0")
+gshow = m.msg(900, 270, "\\; oscOut sendtyped /oled/gShowInfoBar ii 3 1")
+m.c(tff, gfx, 1); m.c(gfx, gfxc); m.c(gfxc, gsel); m.c(gsel, ghide, 0); m.c(gsel, gshow, 1)
+m.c(psf, sp1); m.c(sp1, line1); m.c(tff, ne2, 1); m.c(ne2, sp1, 0, 1)
+m.c(toct, tbf, 0); m.c(tbf, psf, 1, 1); m.c(tbf, psf, 0, 0)
+ledp = m.obj(900, 70, "+ 1")
+ledm = m.msg(900, 100, "\\; led \\$1")
+m.c(tff, ledp, 1); m.c(ledp, ledm)
+# --- knob router
+m.text(20, 500, "knob router: knobs go to the active mode as [knob# value]")
+rks = []
+for k in range(4):
+    r = m.obj(20 + k * 120, 530, f"r knob{k+1}")
+    lp = m.obj(20 + k * 120, 560, f"list prepend {k+1}")
+    m.c(r, lp); rks.append(lp)
+router = m.obj(20, 610, "list prepend 0")
+# --- knob pickup: after a mode/page change a knob only takes over its
+# parameter once it reaches (or passes) the parameter's current value.
+# contexts: 0 synth 1 drum 2 tape 3 mix 4 seq 5 fx ; slot = ctx*4 + knob-1
+m.text(560, 500, "pickup: knob controls the parameter only after crossing its current value")
+m.obj(560, 530, "table pkval 44")
+m.obj(680, 530, "table pkpick 44")
+m.obj(800, 530, "table pkphys 4")
+pkin = m.obj(20, 590, "t l l l")
+for lp in rks:
+    m.c(lp, pkin)
+accE = m.obj(200, 590, "expr if(pkpick[$f3*4+$f1-1] || abs($f2-pkval[$f3*4+$f1-1])<0.02 || (pkphys[$f1-1]>=0 && (pkphys[$f1-1]-pkval[$f3*4+$f1-1])*($f2-pkval[$f3*4+$f1-1])<=0) \\, 1 \\, 0)")
+phE = m.obj(560, 590, "expr $f2 \\; $f1-1")
+phW = m.obj(560, 620, "tabwrite pkphys")
+gate = m.obj(20, 640, "spigot")
+fwd = m.obj(20, 670, "t l l")
+stE = m.obj(200, 700, "expr $f2 \\; $f3*4+$f1-1")
+stT = m.obj(200, 730, "t f b")
+one = m.msg(260, 760, "1")
+vW = m.obj(200, 790, "tabwrite pkval")
+pW = m.obj(320, 790, "tabwrite pkpick")
+m.c(pkin, accE, 2); m.c(accE, gate, 0, 1)
+m.c(pkin, phE, 1); m.c(phE, phW, 1, 1); m.c(phE, phW, 0, 0)
+m.c(pkin, gate, 0); m.c(gate, fwd)
+m.c(fwd, stE, 1); m.c(stE, vW, 1, 1); m.c(stE, pW, 1, 1); m.c(stE, stT, 0)
+m.c(stT, one, 1); m.c(one, pW); m.c(stT, vW, 0)
+m.c(fwd, router, 0)
+# context = mode, or 5 for the FX page of MIX; a change releases all knobs
+ctxE = m.obj(560, 660, "expr if($f1==3 && $f2==1 \\, 5 \\, if($f1==0 && $f3>0 \\, if($f3==4 \\, 10 \\, 5+$f3) \\, if($f1==4 && $f4==1 \\, 9 \\, $f1)))")
+rsp = m.obj(900, 630, "r seq-page")
+spTb = m.obj(900, 660, "t b f")
+m.c(rsp, spTb); m.c(spTb, ctxE, 1, 3); m.c(spTb, ctxE, 0, 0)
+reng = m.obj(800, 630, "r synth-engine")
+engTb = m.obj(800, 660, "t b f")
+m.c(reng, engTb); m.c(engTb, ctxE, 1, 2); m.c(engTb, ctxE, 0, 0)
+rpage = m.obj(700, 630, "r mix-page")
+pgTb = m.obj(700, 660, "t b f")
+ctxC = m.obj(560, 690, "change -1")
+ctxT = m.obj(560, 720, "t f f f")
+clr = m.msg(700, 750, "\\; pkpick const 0")
+m.c(tff, ctxE, 1, 0)
+imo = m.obj(560, 760, "moses 2")
+m.c(tff, imo, 1); m.c(imo, instr, 0, 1)
+m.c(rpage, pgTb); m.c(pgTb, ctxE, 1, 1); m.c(pgTb, ctxE, 0, 0)
+m.c(ctxE, ctxC); m.c(ctxC, ctxT)
+m.c(ctxT, accE, 2, 2); m.c(ctxT, stE, 1, 2); m.c(ctxT, clr, 0)
+pkInit = m.msg(560, 820, "\\; pkval 0 0.1 0.5 0 0.3 0.5 1 1 0.8 0.75 0 1 0 0.8 0.8 0.8 0.8 0.4286 0 1 0 0.6 0.42 0 0 0.45 0.3 0.5 0.3 0.7 0.6 0.6 0.4 0.5 0.6 0.5 0.5 0 1 0.47 0 0 1 0.3 0 \\; pkphys 0 -1 -1 -1 -1 \\; pkpick const 0")
+m.c(m.obj(560, 790, "loadbang"), pkInit)
+m.c(tff, router, 1, 1)
+rte = m.obj(20, 640, "route 0 1 2 3 4")
+m.c(router, rte)
+for k, nm in enumerate(["synth", "drum", "tape", "mix", "seq"]):
+    so = m.obj(20 + k * 120, 680, f"s {nm}-knob")
+    m.c(rte, so, k)
+# --- init + engines
+lb = m.obj(900, 500, "loadbang")
+tbb = m.obj(900, 530, "t b b")
+z1 = m.msg(900, 560, "0")
+z2 = m.msg(960, 560, "0")
+m.c(lb, tbb); m.c(tbb, z1, 1); m.c(z1, smode); m.c(tbb, z2, 0); m.c(z2, toct)
+m.obj(720, 620, "synth-fm")
+m.obj(720, 680, "synth-sub")
+m.obj(800, 680, "synth-pluk")
+m.obj(880, 680, "synth-pad")
+m.obj(960, 680, "synth")
+m.obj(1030, 680, "seq")
+m.obj(1080, 680, "synth-smpl")
+m.obj(1170, 680, "smpl")
+m.obj(820, 620, "tape")
+m.obj(820, 650, "tape-screen")
+m.obj(940, 650, "tape-map")
+m.obj(940, 620, "mix")
+m.obj(1000, 620, "tempo")
+m.obj(1070, 620, "drum")
+m.obj(890, 620, "master")
+m.text(720, 650, "engines: add drum / mix / seq abstractions here")
+m.save("main.pd")
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "gentape.py")).read())
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "genscreen.py")).read())
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "genmix.py")).read())
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "gentempo.py")).read())
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "gendrum.py")).read())
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "gentapemap.py")).read())
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "gensynth.py")).read())
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "genseq.py")).read())
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "gensmpl.py")).read())
+print("ok")

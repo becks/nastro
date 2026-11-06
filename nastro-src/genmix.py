@@ -1,0 +1,224 @@
+# exec'd from gen.py: builds master.pd (mix + delay + reverb) and mix.pd (MIX/FX pages)
+
+def osc2(path, types, args):
+    return f"\\; oscOut sendtyped /oled/{path} {types} 3 {args}"
+
+
+# ---------------------------------------------------------------- master.pd
+ms = Patch(1300, 900)
+ms.text(20, 10, "master: synth + tape -> delay + reverb -> out. The tape records the dry synth.")
+cs = ms.obj(20, 50, "catch~ synth-bus")
+ct = ms.obj(200, 50, "catch~ tape-bus")
+sti = ms.obj(20, 90, "s~ tape-in")
+dry = ms.obj(200, 90, "+~")
+ms.c(cs, sti); ms.c(cs, dry, 0, 0); ms.c(ct, dry, 0, 1)
+ol = ms.obj(20, 820, "throw~ outL")
+orr = ms.obj(200, 820, "throw~ outR")
+ms.c(dry, ol); ms.c(dry, orr)
+
+
+def smooth(x, y, name, init):
+    """[r name] -> line~ (20 ms), with a starting value."""
+    r = ms.obj(x, y, f"r {name}")
+    m = ms.msg(x, y + 30, "\\$1 20")
+    l = ms.obj(x, y + 60, "line~")
+    lb = ms.obj(x + 90, y, "loadbang")
+    i = ms.msg(x + 90, y + 30, f"{init}")
+    ms.c(r, m); ms.c(m, l); ms.c(lb, i); ms.c(i, m)
+    return l
+
+# --- delay (mono, feedback through a lowpass)
+dmix = smooth(400, 40, "fx-dmix", 0)
+dfb = smooth(560, 40, "fx-fb", 0.4)
+dtm = smooth(720, 40, "fx-time", 373)
+dsend = ms.obj(200, 160, "*~")
+ms.c(dry, dsend, 0, 0); ms.c(dmix, dsend, 0, 1)
+dsum = ms.obj(200, 200, "+~")
+dwr = ms.obj(200, 240, "delwrite~ nst-dly 2100")
+drd = ms.obj(400, 200, "vd~ nst-dly")
+dlp = ms.obj(400, 240, "lop~ 3500")
+dfbm = ms.obj(400, 280, "*~")
+dclip = ms.obj(400, 320, "clip~ -1.5 1.5")
+ms.c(dsend, dsum, 0, 0); ms.c(dsum, dwr)
+ms.c(dtm, drd); ms.c(drd, dlp); ms.c(dlp, dfbm, 0, 0); ms.c(dfb, dfbm, 0, 1)
+ms.c(dfbm, dclip); ms.c(dclip, dsum, 0, 1)
+ms.c(drd, ol); ms.c(drd, orr)
+
+# --- reverb: 4-line feedback delay network (Hadamard mix), stereo out
+rmix = smooth(880, 40, "fx-rmix", 0)
+rin = ms.obj(600, 400, "+~")
+ms.c(dry, rin, 0, 0); ms.c(drd, rin, 0, 1)
+rsend = ms.obj(600, 440, "*~")
+ms.c(rin, rsend, 0, 0); ms.c(rmix, rsend, 0, 1)
+times = [43.7, 53.9, 61.1, 71.3]
+reads, writes_in = [], []
+for k, tms in enumerate(times):
+    x = 600 + k * 150
+    s_ = ms.obj(x, 480, "+~")
+    w = ms.obj(x, 510, f"delwrite~ nst-rv{k} 100")
+    r = ms.obj(x, 560, f"delread~ nst-rv{k} {tms}")
+    ms.c(s_, w)
+    if k in (0, 2):
+        ms.c(rsend, s_, 0, 0)       # feed the input into two of the lines
+    reads.append(r); writes_in.append(s_)
+# Hadamard: s1=r0+r1 d1=r0-r1 s2=r2+r3 d2=r2-r3 ; m = (s1+s2, d1+d2, s1-s2, d1-d2)
+s1 = ms.obj(600, 600, "+~"); d1 = ms.obj(680, 600, "-~")
+s2 = ms.obj(760, 600, "+~"); d2 = ms.obj(840, 600, "-~")
+for a, b, o in ((0, 1, s1), (0, 1, d1), (2, 3, s2), (2, 3, d2)):
+    ms.c(reads[a], o, 0, 0); ms.c(reads[b], o, 0, 1)
+m1 = ms.obj(600, 640, "+~"); m2 = ms.obj(680, 640, "+~")
+m3 = ms.obj(760, 640, "-~"); m4 = ms.obj(840, 640, "-~")
+for a, b, o in ((s1, s2, m1), (d1, d2, m2), (s1, s2, m3), (d1, d2, m4)):
+    ms.c(a, o, 0, 0); ms.c(b, o, 0, 1)
+for k, mm in enumerate((m1, m2, m3, m4)):
+    x = 600 + k * 150
+    g_ = ms.obj(x, 680, "*~ 0.41")      # 0.5 (orthonormal) * 0.82 decay
+    lp = ms.obj(x, 710, "lop~ 5000")
+    ms.c(mm, g_); ms.c(g_, lp); ms.c(lp, writes_in[k], 0, 1)
+outLr = ms.obj(600, 760, "+~"); outRr = ms.obj(760, 760, "+~")
+ms.c(reads[0], outLr, 0, 0); ms.c(reads[2], outLr, 0, 1)
+ms.c(reads[1], outRr, 0, 0); ms.c(reads[3], outRr, 0, 1)
+gL = ms.obj(600, 790, "*~ 0.5"); gR = ms.obj(760, 790, "*~ 0.5")
+ms.c(outLr, gL); ms.c(outRr, gR); ms.c(gL, ol); ms.c(gR, orr)
+# mono copy of the whole output, for resampling (SMPL engine, AUX+F5)
+mA = ms.obj(400, 860, "*~ 1"); mB = ms.obj(500, 860, "*~ 0.5"); mS = ms.obj(400, 890, "+~")
+ms.c(dry, mA); ms.c(drd, mA); ms.c(gL, mB); ms.c(gR, mB); ms.c(mA, mS, 0, 0); ms.c(mB, mS, 0, 1)
+ms.c(mS, ms.obj(400, 920, "s~ nst-master"))
+ms.save("master.pd")
+
+# ---------------------------------------------------------------- mix.pd
+x_ = Patch(1300, 900)
+x_.text(20, 5, "mix: MIX page = tape track levels / FX page = delay time - feedback - delay amount - reverb amount")
+x_.text(20, 25, "press AUX+D# again while in MIX to switch page")
+# --- page toggle: mode 3 received while already in mode 3
+rmd = x_.obj(20, 60, "r mode")
+mt = x_.obj(20, 90, "t f f")
+again = x_.obj(20, 130, "expr $f1==3 && $f2==3")
+ag1 = x_.obj(20, 160, "sel 1")
+pgF = x_.obj(20, 190, "f")
+pgN = x_.obj(20, 220, "== 0")
+pgT = x_.obj(20, 250, "t f f")
+x_.c(rmd, mt); x_.c(mt, again, 1); x_.c(mt, again, 0, 1)
+x_.c(pgT, x_.obj(120, 280, "s mix-page"), 0)
+x_.c(again, ag1); x_.c(ag1, pgF); x_.c(pgF, pgN); x_.c(pgN, pgT); x_.c(pgT, pgF, 1, 1)
+# --- knobs, routed by page
+rk = x_.obj(200, 60, "r mix-knob")
+lp = x_.obj(200, 90, "list prepend 0")
+x_.c(rk, lp); x_.c(pgT, lp, 0, 1)
+rpg = x_.obj(200, 120, "route 0 1")
+x_.c(lp, rpg)
+rlv = x_.obj(200, 150, "route 1 2 3 4")
+rfx = x_.obj(500, 150, "route 1 2 3 4")
+x_.c(rpg, rlv, 0); x_.c(rpg, rfx, 1)
+lb = x_.obj(800, 60, "loadbang")
+defs = x_.msg(800, 90, "0 1 0.8 \\, 0 2 0.8 \\, 0 3 0.8 \\, 0 4 0.8 \\, 1 1 0.6 \\, 1 2 0.42 \\, 1 3 0 \\, 1 4 0")
+x_.c(lb, defs); x_.c(defs, rpg)
+lvF, fxF = [], []
+for k in range(4):
+    t_ = x_.obj(200 + k * 70, 190, "t f f")
+    s_ = x_.obj(200 + k * 70, 220, f"s tape-lvl{k+1}")
+    f_ = x_.obj(200 + k * 70, 250, "f")
+    x_.c(rlv, t_, k); x_.c(t_, s_, 1); x_.c(t_, f_, 0, 1)
+    lvF.append(f_)
+fxmap = ["expr int(20+980*pow($f1 \\, 2))", "* 0.95", "t f", "t f"]
+fxsend = ["t f", "s fx-fb", "s fx-dmix", "s fx-rmix"]
+for k in range(4):
+    t_ = x_.obj(500 + k * 120, 190, "t f f")
+    e_ = x_.obj(500 + k * 120, 220, fxmap[k])
+    s_ = x_.obj(500 + k * 120, 250, fxsend[k])
+    f_ = x_.obj(500 + k * 120, 280, "f")
+    x_.c(rfx, t_, k); x_.c(t_, e_, 1); x_.c(e_, s_); x_.c(t_, f_, 0, 1)
+    fxF.append(f_)
+    if k == 0:
+        kms = s_
+
+# delay time: free (knob 1) or synced to the tempo (TEMPO page, knob 4)
+timeE = x_.obj(500, 340, "expr min(2000 \\, if($f2==0 \\, $f1 \\, $f3*if($f2==1 \\, 0.25 \\, if($f2==2 \\, 0.5 \\, if($f2==3 \\, 0.75 \\, if($f2==4 \\, 1 \\, if($f2==5 \\, 1.5 \\, 2)))))))")
+x_.c(kms, timeE, 0, 0)
+rds = x_.obj(700, 310, "r dly-sync")
+rdsT = x_.obj(700, 340, "t b f")
+rbm = x_.obj(820, 310, "r tempo-beatms")
+rbmT = x_.obj(820, 340, "t b f")
+x_.c(rds, rdsT); x_.c(rdsT, timeE, 1, 1); x_.c(rdsT, timeE, 0, 0)
+x_.c(rbm, rbmT); x_.c(rbmT, timeE, 1, 2); x_.c(rbmT, timeE, 0, 0)
+timeT = x_.obj(500, 370, "t f f")
+x_.c(timeE, timeT); x_.c(timeT, x_.obj(500, 400, "s fx-time"), 0)
+ftimeF = x_.obj(600, 400, "f")
+fsyncF = x_.obj(700, 400, "f")
+x_.c(timeT, ftimeF, 1, 1); x_.c(rdsT, fsyncF, 1, 1)
+ftB = x_.obj(800, 400, "t b b")
+syS = x_.obj(800, 430, "sel 1 2 3 4 5 6")
+x_.c(ftB, fsyncF, 1); x_.c(fsyncF, syS)
+for i, nm in enumerate(["1/16", "1/8", "1/8.", "1/4", "1/4.", "1/2"]):
+    mm = x_.msg(800 + i * 70, 460, osc2("gPrintln", "iiiiis", f"22 1 8 1 {nm}"))
+    x_.c(syS, mm, i)
+x_.c(ftB, ftimeF, 0)
+
+# --- screen (10 fps while in MIX)
+eq3 = x_.obj(20, 300, "== 3")
+mtr = x_.obj(20, 330, "metro 100")
+x_.c(mt, eq3, 0); x_.c(eq3, mtr)
+pgS = x_.obj(20, 400, "f")
+x_.c(pgT, pgS, 0, 1)
+seq = x_.obj(20, 370, "t b b b")
+dOne = x_.msg(1420, 500, "1")
+dF = x_.obj(1300, 560, "f 1")
+x_.c(dOne, dF, 0, 1)
+dSel = x_.obj(1300, 590, "sel 1")
+dTT = x_.obj(1300, 620, "t b b")
+dZero = x_.msg(1420, 620, "0")
+x_.c(dF, dSel); x_.c(dSel, dTT); x_.c(dTT, dZero, 1); x_.c(dZero, dF, 0, 1); x_.c(dTT, seq, 0)
+x_.c(x_.obj(1500, 470, "r mix-knob"), dOne)
+x_.c(x_.obj(1590, 470, "r mix-page"), dOne)
+x_.c(x_.obj(1680, 470, "r mode"), dOne)
+x_.c(x_.obj(1770, 470, "r nst-redraw"), dOne)
+x_.c(x_.obj(1860, 470, "r dly-sync"), dOne)
+x_.c(x_.obj(1950, 470, "r tempo-beatms"), dOne)
+x_.c(mtr, dF)
+clr = x_.msg(20, 430, osc2("gClear", "ii", "1"))
+flip = x_.msg(20, 460, "\\; oscOut sendtyped /oled/gFlip i 3")
+x_.c(seq, clr, 2); x_.c(seq, pgS, 1); x_.c(seq, flip, 0)
+psel = x_.obj(200, 430, "sel 0 1")
+x_.c(pgS, psel)
+
+# MIX page: 4 vertical faders
+mixT = x_.obj(200, 470, "t b b b b b")
+x_.c(psel, mixT, 0)
+mixStatic = x_.msg(200, 500, " ".join(
+    [osc2("gPrintln", "iiiiis", "1 1 8 1 MIX"), osc2("gPrintln", "iiiiis", "70 1 8 1 aux+D#=FX")] +
+    [osc2("gBox", "iiiiii", f"{14 + k * 30} 14 12 40 1") for k in range(4)] +
+    [osc2("gPrintln", "iiiiii", f"{17 + k * 30} 56 8 1 {k + 1}") for k in range(4)]))
+x_.c(mixT, mixStatic, 4)
+for k in range(4):
+    X = 14 + k * 30
+    e_ = x_.obj(200 + k * 160, 560, "expr int($f1*38) \\; 53-int($f1*38)")
+    p_ = x_.obj(200 + k * 160, 590, "pack f f")
+    m_ = x_.msg(200 + k * 160, 620, osc2("gFillArea", "iiiiii", f"{X + 2} \\$2 8 \\$1 1"))
+    x_.c(mixT, lvF[k], 3 - k); x_.c(lvF[k], e_); x_.c(e_, p_, 0, 0); x_.c(e_, p_, 1, 1); x_.c(p_, m_)
+
+# FX page: 4 horizontal bars + delay time in ms
+fxT = x_.obj(800, 470, "t b b b b b b")
+x_.c(psel, fxT, 1)
+labels = ["TIME", "FDBK", "DLY", "REV"]
+fxStatic = x_.msg(800, 500, " ".join(
+    [osc2("gPrintln", "iiiiis", "1 1 8 1 FX")] +
+    [osc2("gPrintln", "iiiiis", f"1 {15 + k * 12} 8 1 {labels[k]}") for k in range(4)] +
+    [osc2("gBox", "iiiiii", f"34 {14 + k * 12} 93 9 1") for k in range(4)]))
+x_.c(fxT, fxStatic, 5)
+msE = x_.obj(800, 560, "int")
+msM = x_.msg(800, 590, osc2("gPrintln", "iiiiifs", "70 1 8 1 \\$1 ms"))
+fT0 = x_.obj(800, 530, "t b")
+x_.c(fxT, fT0, 4)
+# value for the title: re-use knob-1 value stored in fxF[0]
+x_.c(fT0, fxF[0])
+for k in range(4):
+    Y = 16 + k * 12
+    e_ = x_.obj(1000 + k * 70, 600, "expr max(0 \\, int($f1*89))")
+    m_ = x_.msg(1000 + k * 70, 640 + k * 30, osc2("gFillArea", "iiiiii", f"36 {Y} \\$1 5 1"))
+    x_.c(e_, m_)
+    if k == 0:
+        x_.c(fxF[0], e_); x_.c(fxF[0], ftB)
+    else:
+        x_.c(fxT, fxF[k], 4 - k); x_.c(fxF[k], e_)
+x_.c(msE, msM); x_.c(ftimeF, msE)
+x_.save("mix.pd")

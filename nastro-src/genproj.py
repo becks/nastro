@@ -126,7 +126,7 @@ p.c(ldMo, p.msg(1250, 730, "\\; nst-proj-status symbol NEW"), 0); p.c(ldSt, p.ob
 # apply the knob state to the modules, as if every knob had been turned
 CTX = [(0, "fm-knob"), (6, "sub-knob"), (7, "pluk-knob"), (8, "pad-knob"), (10, "smpl-knob"), (2, "tape-knob"),
        (3, "mix-lvl-set"), (11, "mix-pan-set"), (5, "mix-fx-set"), (4, "tempo-knob"), (9, "seq-step-set"),
-       (13, "synth-vol-set"), (14, "drum-vol-set"), (15, "tomb-set"), (16, "rvb-set"), (17, "endl-set"), (18, "air-knob"), (19, "bell-knob")]
+       (13, "synth-vol-set"), (14, "drum-vol-set"), (15, "tomb-set"), (16, "rvb-set"), (17, "endl-set"), (18, "air-knob"), (19, "bell-knob"), (20, "tfilt-set"), (21, "tres-set")]
 apT = p.obj(1000, 790, "t " + " ".join(["b"] * (len(CTX) + 1)))
 fixT = p.obj(900, 760, "t b b")
 p.c(apT0, fixT, 0); p.c(fixT, apT, 0)
@@ -140,6 +140,12 @@ fixE3 = p.obj(700, 790, "expr pkval[68]+pkval[69]+pkval[70]+pkval[71]==0")
 fixS3 = p.obj(700, 820, "sel 1")
 fixE4 = p.obj(600, 790, "expr pkval[72]+pkval[73]+pkval[74]+pkval[75]+pkval[76]+pkval[77]+pkval[78]+pkval[79]==0")
 fixS4 = p.obj(600, 820, "sel 1")
+fixE5 = p.obj(500, 790, "expr pkval[80]+pkval[81]+pkval[82]+pkval[83]+pkval[84]+pkval[85]+pkval[86]+pkval[87]==0")
+fixS5 = p.obj(500, 820, "sel 1")
+fixE6 = p.obj(400, 790, "expr pkval[53]+pkval[54]+pkval[55]==0")
+fixS6 = p.obj(400, 820, "sel 1")
+p.c(fixT, fixE6, 1); p.c(fixE6, fixS6); p.c(fixS6, p.msg(400, 850, "\\; pkval 53 0.04 0.28 1"))
+p.c(fixT, fixE5, 1); p.c(fixE5, fixS5); p.c(fixS5, p.msg(500, 850, "\\; pkval 80 0.5 0.5 0.5 0.5 0.3 0.3 0.3 0.3"))
 p.c(fixT, fixE4, 1); p.c(fixE4, fixS4); p.c(fixS4, p.msg(600, 850, "\\; pkval 72 0.5 0.5 0.5 0.4 0.4 0.5 0.7 0.3"))
 p.c(fixT, fixE3, 1); p.c(fixE3, fixS3); p.c(fixS3, p.msg(700, 850, "\\; pkval 68 0.6 0.45 0.1 1"))
 p.c(fixT, fixE2, 1); p.c(fixE2, fixS2); p.c(fixS2, p.msg(800, 850, "\\; pkval 64 0.5 0.6 0.15 0.3"))

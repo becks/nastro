@@ -61,6 +61,9 @@ counter + `tabwrite~` (block-aligned; `vline~` was ~80 samples off).
 ## Synth engines
 FM, SUB, PLUK, PAD, SMPL, AIR, GLASS. AUX+C again in SYNTH = next engine. Every voice switches its own DSP on at
 a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_voiceswitch.py`): about -42% DSP idle.
+- SUB ADSR (`apply_subadsr.py`, `test_subadsr.py`): AUX + knobs 2..4 on SUB = ATTACK (1–3000 ms), DECAY/RELEASE
+  (10–5000 ms), SUSTAIN; knob 1 stays the synth volume. Amp ADSR (`vline~`), filter envelope attack + decay to 0.
+  Defaults = the old sound (5 ms / ~400 ms / 100 %). Pickup ctx 13 slots 2..4.
 - AIR (`apply_ambient.py`): noise through 2 band-passes (note + octave, `vcf~`), Q from breath (2) to whistle (60)
   with sqrt(Q) make-up gain, slow random LFO per voice on pitch and level. Knobs ATK REL Q MOVE (pickup ctx 18).
 - GLASS: 4 partials (harmonic 1 2 3 4 <-> bell 1 2.76 5.4 8.93), shorter decay for higher partials, 2 detuned
@@ -78,6 +81,10 @@ a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_vo
   (31.7–73.7 ms, Hadamard butterflies), per-line `lop~` and decay gain (10^(-3L/T60)/sqrt 8), 2 modulated lines.
   AUX + knobs on the FX page: DEC (T60 0.4–12 s), TONE (1.5–12 kHz), PRE (0–120 ms), MOD (ctx 16). `switch~`: on
   when REV > 0, off T60 + 0.5 s after REV goes to 0. `test_reverb.py`.
+- Track DJ filters (`apply_trackfilter.py`, `test_trackfilter.py`): MIX page 3 FILTER, knob k = track k, centre
+  off (dead zone 0.47–0.53), left LP 18 kHz–80 Hz, right HP 20 Hz–8 kHz, AUX = resonance. One `biquad~` per track
+  after its level (RBJ coefficients computed in control only when a knob moves; off = `0 0 1 0 0`). Pickup ctx
+  20 / 21 (`pkval` 88).
 - Output meter (`genmeter.py` → `meter.pd`, `apply_meter.py`): title row of the MIX level page, L and R, 12
   segments -30..0 dBFS (`env~` after limiter and mute), falls one segment per frame, LIM light. 10 fps, only
   changed segments are drawn; `mt-reset` when the page clears the screen.

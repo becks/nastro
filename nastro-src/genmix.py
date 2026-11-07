@@ -115,7 +115,7 @@ mt = x_.obj(20, 90, "t f f")
 again = x_.obj(20, 130, "expr $f1==3 && $f2==3")
 ag1 = x_.obj(20, 160, "sel 1")
 pgF = x_.obj(20, 190, "f")
-pgN = x_.obj(20, 220, "== 0")
+pgN = x_.obj(20, 220, "expr ($f1+1)%3")             # MIX -> FX -> FILTER
 pgT = x_.obj(20, 250, "t f f")
 x_.c(rmd, mt); x_.c(mt, again, 1); x_.c(mt, again, 0, 1)
 x_.c(pgT, x_.obj(120, 280, "s mix-page"), 0)
@@ -124,7 +124,7 @@ x_.c(again, ag1); x_.c(ag1, pgF); x_.c(pgF, pgN); x_.c(pgN, pgT); x_.c(pgT, pgF,
 rk = x_.obj(200, 60, "r mix-knob")
 lp = x_.obj(200, 90, "list prepend 0")
 x_.c(rk, lp); x_.c(pgT, lp, 0, 1)
-rpg = x_.obj(200, 120, "route 0 1")
+rpg = x_.obj(200, 120, "route 0 1 2")
 x_.c(lp, rpg)
 rlv = x_.obj(200, 150, "route 1 2 3 4")
 rfx = x_.obj(500, 150, "route 1 2 3 4")
@@ -135,6 +135,12 @@ x_.c(x_.obj(560, 90, "r aux"), fxAux, 0, 1)
 fxAuxR = x_.obj(500, 135, "route 0 1")
 x_.c(rpg, fxAux, 1); x_.c(fxAux, fxAuxR); x_.c(fxAuxR, rfx, 0)
 x_.c(fxAuxR, x_.obj(600, 150, "s rvb-knob"), 1)
+# FILTER page: knob k -> track k filter, AUX held -> its resonance
+fiK = x_.obj(700, 120, "list prepend 0")
+x_.c(x_.obj(760, 90, "r aux"), fiK, 0, 1)
+fiKR = x_.obj(700, 135, "route 0 1")
+x_.c(rpg, fiK, 2); x_.c(fiK, fiKR)
+x_.c(fiKR, x_.obj(700, 150, "s tfilt-knob"), 0); x_.c(fiKR, x_.obj(800, 150, "s tres-knob"), 1)
 lb = x_.obj(800, 60, "loadbang")
 defs = x_.msg(800, 90, "0 1 0.8 \\, 0 2 0.8 \\, 0 3 0.8 \\, 0 4 0.8 \\, 1 1 0.6 \\, 1 2 0.42 \\, 1 3 0 \\, 1 4 0")
 x_.c(lb, defs); x_.c(defs, rpg)
@@ -204,7 +210,7 @@ clr = x_.msg(20, 430, osc2("gClear", "ii", "1"))
 flip = x_.msg(20, 460, "\\; oscOut sendtyped /oled/gFlip i 3")
 x_.c(seq, clr, 2); x_.c(seq, pgS, 1); x_.c(seq, flip, 0)
 x_.c(seq, x_.msg(100, 430, "\\; mt-reset bang"), 2)
-psel = x_.obj(200, 430, "sel 0 1")
+psel = x_.obj(200, 430, "sel 0 1 2")
 x_.c(pgS, psel)
 
 # MIX page: 4 dials with needles (OP-1 style). Holding AUX shows / edits PAN instead of level.
@@ -399,4 +405,58 @@ for k in range(4):
     else:
         x_.c(fxT, fxF[k], 4 - k); x_.c(fxF[k], e_)
 x_.c(msE, msM); x_.c(ftimeF, msE)
+
+# ------------------------------------------------ FILTER page (apply_trackfilter.py): 4 dials, LP <- off -> HP
+fltV, resV = [], []
+fvR = x_.obj(2600, 520, "route 1 2 3 4"); frR = x_.obj(2800, 520, "route 1 2 3 4")
+x_.c(x_.obj(2600, 490, "r tfilt-knob"), fvR); x_.c(x_.obj(2650, 470, "r tfilt-set"), fvR)
+x_.c(x_.obj(2800, 490, "r tres-knob"), frR); x_.c(x_.obj(2850, 470, "r tres-set"), frR)
+for k in range(4):
+    a = x_.obj(2600 + k * 50, 550, "f 0.5"); b = x_.obj(2800 + k * 50, 550, "f 0.3")
+    x_.c(fvR, a, k, 1); x_.c(frR, b, k, 1)
+    fltV.append(a); resV.append(b)
+x_.c(x_.obj(2900, 490, "r tres-knob"), dOne); x_.c(x_.obj(2950, 490, "r tfilt-set"), dOne)
+x_.c(x_.obj(3000, 490, "r tfilt-knob"), dOne)
+fiT = x_.obj(2600, 600, "t b b b b b")                 # 4 header (AUX state first), 3..0 tracks 1..4
+x_.c(psel, fiT, 2)
+fiAux = x_.obj(2500, 600, "f")
+x_.c(x_.obj(2500, 570, "r aux"), fiAux, 0, 1)
+fiHead = x_.obj(2500, 630, "sel 0 1")
+x_.c(fiT, fiAux, 4); x_.c(fiAux, fiHead)
+x_.c(fiHead, x_.msg(2500, 660, osc2("gPrintln", "iiiiis", "1 1 8 1 FILTER")), 0)
+x_.c(fiHead, x_.msg(2650, 660, osc2("gFillArea", "iiiiii", "0 0 21 10 1") + " " + osc2("gPrintln", "iiiiis", "2 1 8 0 RES")), 1)
+for k in range(4):
+    cx = 16 + 32 * k
+    X = 2600 + k * 260
+    tb = x_.obj(X, 700, "t b b")
+    x_.c(fiT, tb, 3 - k)
+    # text expr: $f1 mode (hot) $f2 AUX $f3 resonance knob $f4 frequency
+    txE = x_.obj(X, 880, "expr if($f2 \\, 5 \\, if($f1==0 \\, 0 \\, ($f1-1)*2+1)) \\; "
+                         "if($f2 \\, int((0.6+$f3*6)*10)/10.0 \\, int($f4))")
+    x_.c(fiAux, txE, 0, 1)
+    x_.c(tb, resV[k], 1); x_.c(resV[k], txE, 0, 2)
+    # dial: needle from -135 (full LP) through 0 (off, up) to +135 (full HP); outlets 0 x 1 y 2 mode 3 frequency
+    dE = x_.obj(X, 760, "expr "
+                f"int({cx}+9*sin((-135+270*$f1)*0.017453)) \\; int(28-9*cos((-135+270*$f1)*0.017453)) \\; "
+                "if($f1<0.47 \\, 1 \\, if($f1>0.53 \\, 2 \\, 0)) \\; "
+                "if($f1<0.47 \\, 80*pow(225 \\, $f1/0.47) \\, 20*pow(400 \\, ($f1-0.53)/0.47))")
+    x_.c(tb, fltV[k], 0); x_.c(fltV[k], dE)
+    x_.c(dE, txE, 3, 3)                                 # frequency (fires first, cold)
+    x_.c(dE, txE, 2, 0)                                 # mode (hot)
+    dP = x_.obj(X, 790, "pack f f")
+    x_.c(dE, dP, 1, 1); x_.c(dE, dP, 0, 0)
+    x_.c(dP, x_.msg(X, 820, osc2("gCircle", "iiiii", f"{cx} 28 11 1") + " " +
+                    osc2("gLine", "iiiiii", f"{cx} 28 \\$1 \\$2 1")))
+    tP = x_.obj(X, 910, "pack f f")
+    x_.c(txE, tP, 1, 1); x_.c(txE, tP, 0, 0)
+    tR = x_.obj(X, 940, "route 0 1 2 3 4 5")
+    x_.c(tP, tR)
+    L1 = lambda txt: osc2("gPrintln", "iiiiis", f"{cx - 12} 43 8 1 {k + 1} {txt}")
+    V = lambda suf: osc2("gPrintln", "iiiiif" + ("s" if suf else ""), f"{cx - 12} 54 8 1 \\$1" + (f" {suf}" if suf else ""))
+    x_.c(tR, x_.msg(X, 970, L1("--")), 0)
+    x_.c(tR, x_.msg(X, 1000, L1("LP") + " " + V("")), 1)
+    x_.c(tR, x_.msg(X, 1030, L1("LP") + " " + V("k")), 2)
+    x_.c(tR, x_.msg(X + 130, 970, L1("HP") + " " + V("")), 3)
+    x_.c(tR, x_.msg(X + 130, 1000, L1("HP") + " " + V("k")), 4)
+    x_.c(tR, x_.msg(X + 130, 1030, L1("Q") + " " + V("")), 5)
 x_.save("mix.pd")

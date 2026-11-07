@@ -89,14 +89,18 @@ Turn the encoder to open the **PROJECTS** menu. Turn it to select an item and pr
 Enter SYNTH with **AUX + C**. Press **AUX + C** again to cycle the engines:
 
 - **FM** — Ratio, Index, Attack, Release.
-- **SUB** — sub/saw voice with filter and envelope controls.
+- **SUB** — two detuned saws through a resonant low-pass filter (Cutoff, Resonance, filter Envelope amount, Detune). Hold AUX for its **ADSR**: knob 2 Attack, knob 3 Decay (also used as Release), knob 4 Sustain; knob 1 stays the synth volume.
 - **PLUK** — Karplus-Strong string voice.
 - **PAD** — detuned saw pad with a slow envelope.
 - **SMPL** — playable recorded sample.
 - **AIR** — resonant, breath-like noise voice: Attack, Release, Q and Movement.
 - **GLASS** — four-partial bell voice: Decay, Brightness, Inharmonicity and Beating.
 
-The four knobs control the parameters named on screen for the current engine. Hold AUX and use knob 1 for **SYNTH VOLUME**. The normal synth view shows the selected engine, octave and four parameter bars.
+The four knobs control the parameters named on screen for the current engine. Hold AUX and use knob 1 for **SYNTH VOLUME**.
+
+![SUB ADSR screen](oled/18-sub-adsr.png)
+
+With SUB selected, the AUX page shows VOL, ATK, D/R and SUS (the filter envelope follows Attack and Decay, then closes, which keeps SUB's plucky character). The normal synth view shows the selected engine, octave and four parameter bars.
 
 ### Sample instrument
 
@@ -199,6 +203,12 @@ Hold AUX on the FX page for the reverb page:
 2. **TONE** — damping / brightness.
 3. **PRE** — pre-delay, 0–120 ms.
 4. **MOD** — modulation depth.
+
+Press **AUX + D#** once more for the FILTER page.
+
+![Track filter screen](oled/17-track-filter.png)
+
+The FILTER page has a DJ-style filter for each tape track: knob 1–4 = track 1–4. The centre is off (a small dead zone makes it easy to find); turning left gives a low-pass filter (from 18 kHz down to 80 Hz), turning right a high-pass filter (from 20 Hz up to 8 kHz). Each dial shows `LP`, `HP` or `--` and the cutoff frequency in Hz. Hold AUX to set each track’s **resonance** (`Q`). Filters affect playback only, not what is recorded on the tape, and are saved with the project.
 
 The master has a fast limiter with no added latency. The metronome and tape input are outside the limiter.
 

@@ -95,6 +95,10 @@ Enter SYNTH with **AUX + C**. Press **AUX + C** again to cycle the engines:
 - **SMPL** — playable recorded sample.
 - **AIR** — resonant, breath-like noise voice: Attack, Release, Q and Movement.
 - **GLASS** — four-partial bell voice: Decay, Brightness, Inharmonicity and Beating.
+- **WAVE** — wavefolder: Fold, Symmetry (adds even harmonics), Envelope (extra fold at the attack) and Release.
+- **STRING** — plucked string with a body: Damping (bright ringing → muted), Body resonance, Pick position and Release.
+- **ORGAN** — four drawbars (16', 8', 4', 2⅔', shown 0–8 like a real organ) with key click and a gentle leslie.
+- **DRONE** — two slowly drifting, detuned saws through a breathing filter: Detune, Drift, Filter and Release (the attack is half the release).
 
 The four knobs control the parameters named on screen for the current engine. Hold AUX and use knob 1 for **SYNTH VOLUME**.
 
@@ -248,7 +252,7 @@ On the STEP page, a played key writes a note at the cursor, advances the cursor 
 
 - **AUX + A#** writes a rest.
 - **AUX + B** clears the pattern.
-- **AUX + C5** toggles playback.
+- **AUX + C5** plays the sequence: with the tape stopped it starts the tape (the sequencer's clock); while the tape plays it switches the sequence on or off.
 - Knob 1: cursor; knob 2: sequence length (1–16); knob 3: gate; knob 4: swing.
 
 The sequence is clocked from the tape clock and is saved with the project.

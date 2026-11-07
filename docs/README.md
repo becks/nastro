@@ -13,7 +13,9 @@ See Nastro running on the Organelle:
 
 ## Installation
 
-**Requirements:** an Organelle 1 with Organelle OS 4.x (Pd 0.49). Nastro uses only Pd vanilla objects, no externals. Other Organelle models have not been tested.
+**Requirements:** an Organelle 1 with Organelle OS 4.x (Pd 0.49). Nastro uses only Pd vanilla objects, no externals.
+
+**Organelle M and S:** they run the same Organelle OS patch system (keys, knobs, AUX, encoder and OLED work the same way), so Nastro should work on them too, and their faster processors leave more headroom. It has only been tested on the Organelle 1, though: if you try it on an M or S, feedback is welcome.
 
 **Download:** get the latest **Nastro-rel*.zip** from the [Releases page](https://github.com/becks/nastro/releases/latest) and unzip it: it contains the ready-to-copy `Nastro` folder (the `.pd` patches and `drums.wav`, the base drum kit). The same folder is also in this repository at `Nastro-Organelle/Patches/Nastro/`.
 

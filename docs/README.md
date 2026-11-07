@@ -4,6 +4,13 @@ Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines seven s
 
 This manual describes the current generated source in `nastro-src`. Screen images are rendered with the project’s bundled OLED simulator at the real 128 × 64 pixel resolution; values in the images are examples.
 
+## Videos
+
+See Nastro running on the Organelle:
+
+- ▶ [Nastro demo 1 (Instagram)](https://www.instagram.com/p/Dfb0vVJAxTm/)
+- ▶ [Nastro demo 2 (Instagram)](https://www.instagram.com/p/DfaXVU5gGDr/)
+
 ## Installation
 
 **Requirements:** an Organelle 1 with Organelle OS 4.x (Pd 0.49). Nastro uses only Pd vanilla objects, no externals. Other Organelle models have not been tested.

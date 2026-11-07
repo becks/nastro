@@ -164,3 +164,7 @@ All on-screen text is English (`apply_english.py`).
   the tape tracks that changed.
 
 Warning: do not run a second Pd `-batch` on the Organelle while the patch is running (it froze / rebooted it).
+
+## License
+GPL-3.0-or-later, see `../LICENSE`. Copyright © 2026 becks. The generated patches, `drums.wav` (from `makekit.py`)
+and the docs are covered too.

@@ -156,6 +156,10 @@ thL = t.obj(20, 960, "throw~ tape-busL")
 thR = t.obj(200, 960, "throw~ tape-busR")
 stop_all = t.msg(900, 680, "stop")
 tws, dubs = [], []
+sdR = t.obj(2600, 900, "route 1 2 3 4"); srR = t.obj(2800, 900, "route 1 2 3 4")      # FX sends (apply_sends.py)
+t.c(t.obj(2600, 870, "r dsend-knob"), sdR); t.c(t.obj(2650, 850, "r dsend-set"), sdR)
+t.c(t.obj(2800, 870, "r rsend-knob"), srR); t.c(t.obj(2850, 850, "r rsend-set"), srR)
+lbS = t.obj(3000, 870, "loadbang")
 xAs, xBs, rds = [], [], []
 # punch fade gain (apply_punchfade.py): written = old + g*(dub*old + in - old)
 pG = t.obj(900, 640, "line~")
@@ -234,6 +238,15 @@ for k in range(4):
     t.c(rRt, rIn, k); t.c(rIn, cE, 1, 1); t.c(rIn, vF, 0); t.c(vF, cE)
     t.c(bq, gLp, 0, 0); t.c(plL, gLp, 0, 1); t.c(bq, gRp, 0, 0); t.c(plR, gRp, 0, 1)
     t.c(gLp, thL); t.c(gRp, thR)
+    # FX sends (apply_sends.py): (L + R) / 2 as the old mono FX feed, x delay / reverb send
+    fxM = t.obj(x + 1300, 950, "+~"); fxH = t.obj(x + 1300, 980, "*~ 0.5")
+    t.c(gLp, fxM, 0, 0); t.c(gRp, fxM, 0, 1); t.c(fxM, fxH)
+    for j, (rt_, bus) in enumerate(((sdR, "fxd-tape"), (srR, "fxr-tape"))):
+        sm = t.msg(x + 1300 + j * 100, 1010, "\\$1 20"); sl = t.obj(x + 1300 + j * 100, 1040, "line~")
+        si = t.msg(x + 1360 + j * 100, 1010, "1")
+        t.c(rt_, sm, k); t.c(sm, sl); t.c(lbS, si); t.c(si, sl)
+        sx_ = t.obj(x + 1300 + j * 100, 1070, "*~"); st_ = t.obj(x + 1300 + j * 100, 1100, f"throw~ {bus}")
+        t.c(fxH, sx_, 0, 0); t.c(sl, sx_, 0, 1); t.c(sx_, st_)
     vuEnv = t.obj(x, 990, "env~ 2048 1024")
     t.c(bq, vuEnv); t.c(vuEnv, t.obj(x, 1020, f"s tape-vu{k+1}"))
     t.c(rd, db); t.c(db, ad, 0, 0); t.c(rin, ad, 0, 1)

@@ -185,8 +185,13 @@ class Oled:
             return
         path = words[0]
         args = words[1:]
+        types = ""
         if path.startswith("/oled/g") and args and all(ch in "ifsb" for ch in args[0]) and not _num(args[0]):
-            args = args[1:]           # drop the sendtyped type string
+            types, args = args[0], args[1:]           # drop the sendtyped type string
+            # like the device: a number sent with type 's' arrives as a string formatted "%f" (1 -> "1.000000")
+            args = [f"{float(a):f}" if i < len(types) and types[i] == "s" and _num(a) else a for i, a in enumerate(args)]
+            # and a word sent in a number field ('f' / 'i') arrives as 0
+            args = ["0" if i < len(types) and types[i] in "fi" and not _num(a) else a for i, a in enumerate(args)]
 
         def ints(n):
             return [int(float(a)) for a in args[:n]]
@@ -225,6 +230,8 @@ class Oled:
             elif path == "/oled/gInvert":
                 if ints(2)[1] == 1:
                     self.buf[:] = bytes(b ^ 0xFF for b in self.buf)
+            elif path == "/oled/gPrintln" and types and len(types) != len(args):
+                pass                          # like the device (packOSC): more words than types -> nothing drawn
             elif path == "/oled/gPrintln":
                 _, x, y, size, c = ints(5)
                 self.println(" ".join(_fmt(a) for a in args[5:]) + " ", x, y, size, c)
@@ -246,8 +253,9 @@ def _num(s):
 
 
 def _fmt(a):
-    # Pd sends floats; the OS prints them with %g
-    if _num(a):
+    # Pd sends floats; the OS prints them with %g. A number that went through a string field ('s') is already
+    # "%f" text (see handle) and is printed as it is, like on the device.
+    if _num(a) and not (len(a) > 7 and a[-7] == "." and a[-6:].isdigit()):
         return "%g" % float(a)
     return a
 

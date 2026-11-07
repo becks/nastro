@@ -64,7 +64,7 @@
 #X msg 700 550 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 1 TEMPO \; oscOut sendtyped /oled/gBox iiiiii 3 93 1 7 7 1 \; oscOut sendtyped /oled/gBox iiiiii 3 102 1 7 7 1 \; oscOut sendtyped /oled/gBox iiiiii 3 111 1 7 7 1 \; oscOut sendtyped /oled/gBox iiiiii 3 120 1 7 7 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 6 42 8 1 bpm \; oscOut sendtyped /oled/gLine iiiiii 3 0 52 127 52 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 55 8 1 BPM \; oscOut sendtyped /oled/gPrintln iiiiis 3 33 55 8 1 MET \; oscOut sendtyped /oled/gPrintln iiiiis 3 65 55 8 1 LOOP \; oscOut sendtyped /oled/gPrintln iiiiis 3 98 55 8 1 DLY;
 #X msg 700 580 \; oscOut sendtyped /oled/gPrintln iiiiif 3 4 16 24 1 \$1;
 #X obj 900 610 moses 0.005;
-#X msg 900 640 \; oscOut sendtyped /oled/gPrintln iiiiis 3 66 14 8 1 MET off;
+#X msg 900 640 \; oscOut sendtyped /oled/gPrintln iiiiiss 3 66 14 8 1 MET off;
 #X obj 1000 640 expr int($f1*100);
 #X msg 1000 670 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 66 14 8 1 MET \$1;
 #X obj 900 710 sel 0 1 2;

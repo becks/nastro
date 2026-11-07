@@ -75,7 +75,7 @@ Hold **AUX** and press a mode key:
 | C | SYNTH | Play and shape the selected synth engine. |
 | C# | DRUM | Play, edit and sample drum slots. |
 | D | TAPE | Four-track tape transport and looping. |
-| D# | MIX | Tape levels/pan, delay and reverb. |
+| D# | MIX | Tape levels/pan, delay and reverb, track filters, master compressor, FX sends. |
 | E | SEQ | Tempo, step sequencer, Tombola and Endless sequencer. |
 | A | SAVE | Save the open project from any page. |
 | high A# / high B | OCTAVE | Transpose the keyboard down/up by octaves. |
@@ -115,7 +115,7 @@ With the SMPL engine selected:
 - **AUX + E5** arms recording from the stereo audio input. Recording starts when the input crosses the threshold; there is a 15 ms pre-roll.
 - **AUX + F5** records Nastro’s master output immediately.
 - Press the same record key again to stop; maximum time is 10 seconds.
-- **AUX + F#5** toggles input monitoring. The monitored input goes through Nastro’s effects and can be recorded onto tape.
+- **AUX + F#5** toggles input monitoring. The monitored input is heard dry and can be recorded onto tape (once on a track it can go through the effects with the track’s sends).
 - **AUX + A** saves the sample as part of the project.
 
 The four SMPL knobs set Start, End, Release and Loop. Start/end are aligned to an upward zero crossing to reduce clicks.
@@ -196,8 +196,8 @@ Without AUX, FX knobs control:
 
 1. **TIME** — delay time; it can follow the delay-sync value in TEMPO.
 2. **FDBK** — delay feedback.
-3. **DLY** — delay amount.
-4. **REV** — reverb amount.
+3. **DLY** — delay amount (of the tape tracks, see SEND).
+4. **REV** — reverb amount (of the tape tracks, see SEND).
 
 ![Reverb screen](oled/10-reverb.png)
 
@@ -226,6 +226,12 @@ The MASTER page has a compressor on the whole output, before the limiter:
 **GR** shows the current gain reduction in dB. The compressor settings are saved with the project.
 
 The master has a fast limiter with no added latency. The metronome and tape input are outside the limiter.
+
+Press **AUX + D#** once more for the SEND page (after MASTER it goes back to the MIX page).
+
+![FX send screen](oled/20-fx-send.png)
+
+The SEND page sets how much of each tape track goes into the effects: knob 1–4 = delay send of track 1–4; hold AUX for the reverb send (the title turns to `SEND REV`). The sends are 0–100 and start at 100, so by default every track goes to the delay and reverb; turn a track down to keep it dry. **DLY** and **REV** on the FX page remain the overall amounts. Only tape tracks 1–4 reach the effects: the live synth, the drums and the input monitor are always dry (record them on a track to add effects). Sends are saved with the project.
 
 ## Sequencers and tempo
 

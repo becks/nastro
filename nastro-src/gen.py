@@ -6,6 +6,43 @@ OUT = sys.argv[1]
 os.makedirs(OUT, exist_ok=True)
 
 
+def fix_println_types(text):
+    """gPrintln args: 3 (screen) x y size colour, then the text. Rebuild the type string from the arguments:
+    the 5 numbers 'i', then per text token 's' for a word, 'f' for a number, and for anything with a $n the type
+    given by hand (a $n can be a word or a number) (apply_oledtypes.py)."""
+    def isnum(tok):
+        try:
+            float(tok)
+            return True
+        except ValueError:
+            return tok.lstrip("\\").startswith("$")
+
+    toks = text.split(" ")
+    out, i = [], 0
+    while i < len(toks):
+        out.append(toks[i])
+        if toks[i] == "/oled/gPrintln" and i > 0 and toks[i - 1] == "sendtyped" and i + 1 < len(toks):
+            j = i + 2
+            while j < len(toks) and ";" not in toks[j] and "," not in toks[j]:
+                j += 1
+            orig, args = toks[i + 1], toks[i + 2:j]   # given types; args up to the next ; or , separator
+            # $n placeholders keep the type given by hand (they can be words or numbers); literal text is typed here
+            ty = []
+            for k, t in enumerate(args):
+                if k < 5:
+                    ty.append("i")
+                elif "$" in t:
+                    ty.append(orig[k] if k < len(orig) and orig[k] in "ifs" else "s")
+                else:
+                    ty.append("f" if isnum(t) else "s")
+            out.append("".join(ty))
+            out += args
+            i = j
+            continue
+        i += 1
+    return " ".join(out)
+
+
 class Patch:
     def __init__(self, w=1000, h=760):
         self.lines = [f"#N canvas 40 40 {w} {h} 12;"]
@@ -19,7 +56,7 @@ class Patch:
         return i
 
     def obj(self, x, y, t): return self._add("obj", x, y, t)
-    def msg(self, x, y, t): return self._add("msg", x, y, t)
+    def msg(self, x, y, t): return self._add("msg", x, y, fix_println_types(t))
     def text(self, x, y, t): return self._add("text", x, y, t)
 
     def c(self, a, b, o=0, i=0):
@@ -281,8 +318,8 @@ router = m.obj(20, 610, "list prepend 0")
 # parameter once it reaches (or passes) the parameter's current value.
 # contexts: 0 synth 1 drum 2 tape 3 mix 4 seq 5 fx ; slot = ctx*4 + knob-1
 m.text(560, 500, "pickup: knob controls the parameter only after crossing its current value")
-m.obj(560, 530, "table pkval 108")
-m.obj(680, 530, "table pkpick 108")
+m.obj(560, 530, "table pkval 116")
+m.obj(680, 530, "table pkpick 116")
 m.obj(800, 530, "table pkphys 4")
 pkin = m.obj(20, 590, "t l l l")
 for lp in rks:
@@ -304,7 +341,7 @@ m.c(fwd, stE, 1); m.c(stE, vW, 1, 1); m.c(stE, pW, 1, 1); m.c(stE, stT, 0)
 m.c(stT, one, 1); m.c(one, pW); m.c(stT, vW, 0)
 m.c(fwd, router, 0)
 # context = mode, or 5 for the FX page of MIX; a change releases all knobs
-ctxE = m.obj(560, 660, "expr if($f1==5 \\, 12 \\, 0) + if($f1==5 \\, 0 \\, if($f1==3 && $f2==0 && $f5==1 \\, 11 \\, if($f1==0 && $f5==1 \\, 13 \\, if($f1==1 && $f5==1 \\, 14 \\, if($f1==3 && $f2==3 \\, 22 \\, if($f1==3 && $f2==2 \\, if($f5==1 \\, 21 \\, 20) \\, if($f1==3 && $f2==1 \\, if($f5==1 \\, 16 \\, 5) \\, if($f1==0 && $f3>0 \\, if($f3==4 \\, 10 \\, if($f3>=7 \\, 16+$f3 \\, if($f3>=5 \\, 13+$f3 \\, 5+$f3))) \\, if($f1==4 && $f4==1 \\, 9 \\, if($f1==4 && $f4==2 \\, 15 \\, if($f1==4 && $f4==3 \\, 17 \\, $f1)))))))))))")
+ctxE = m.obj(560, 660, "expr if($f1==5 \\, 12 \\, 0) + if($f1==5 \\, 0 \\, if($f1==3 && $f2==0 && $f5==1 \\, 11 \\, if($f1==0 && $f5==1 \\, 13 \\, if($f1==1 && $f5==1 \\, 14 \\, if($f1==3 && $f2==4 \\, if($f5==1 \\, 28 \\, 27) \\, if($f1==3 && $f2==3 \\, 22 \\, if($f1==3 && $f2==2 \\, if($f5==1 \\, 21 \\, 20) \\, if($f1==3 && $f2==1 \\, if($f5==1 \\, 16 \\, 5) \\, if($f1==0 && $f3>0 \\, if($f3==4 \\, 10 \\, if($f3>=7 \\, 16+$f3 \\, if($f3>=5 \\, 13+$f3 \\, 5+$f3))) \\, if($f1==4 && $f4==1 \\, 9 \\, if($f1==4 && $f4==2 \\, 15 \\, if($f1==4 && $f4==3 \\, 17 \\, $f1))))))))))))")
 rauxC = m.obj(1000, 630, "r aux")
 auxTb = m.obj(1000, 660, "t b f")
 m.c(rauxC, auxTb); m.c(auxTb, ctxE, 1, 4); m.c(auxTb, ctxE, 0, 0)
@@ -325,7 +362,7 @@ m.c(tff, imo, 1); m.c(imo, instr, 0, 1)
 m.c(rpage, pgTb); m.c(pgTb, ctxE, 1, 1); m.c(pgTb, ctxE, 0, 0)
 m.c(ctxE, ctxC); m.c(ctxC, ctxT)
 m.c(ctxT, accE, 2, 2); m.c(ctxT, stE, 1, 2); m.c(ctxT, clr, 0)
-pkInit = m.msg(560, 820, "\\; pkval 0 0.1 0.5 0 0.3 0.5 1 1 0.8 0.75 0 1 0 0.8 0.8 0.8 0.8 0.4286 0 1 0 0.6 0.42 0 0 0.45 0.3 0.5 0.3 0.7 0.6 0.6 0.4 0.5 0.6 0.5 0.5 0 1 0.47 0 0 1 0.3 0 0.5 0.5 0.5 0.5 0 0 0 0 0.8 0.04 0.28 1 0.8 0 0 0 0.583 0.5 0.6 0.6 0.5 0.6 0.15 0.3 0.6 0.45 0.1 1 0.5 0.5 0.5 0.4 0.4 0.5 0.7 0.3 0.5 0.5 0.5 0.5 0 0 0 0 0 0.5 0 0 0.3 0.0 0.5 0.3 0.3 0.5 0.25 0.4 0.75 1.0 0.5 0.25 0.4 0.4 0.4 0.5 \\; pkphys 0 -1 -1 -1 -1 \\; pkpick const 0")
+pkInit = m.msg(560, 820, "\\; pkval 0 0.1 0.5 0 0.3 0.5 1 1 0.8 0.75 0 1 0 0.8 0.8 0.8 0.8 0.4286 0 1 0 0.6 0.42 0 0 0.45 0.3 0.5 0.3 0.7 0.6 0.6 0.4 0.5 0.6 0.5 0.5 0 1 0.47 0 0 1 0.3 0 0.5 0.5 0.5 0.5 0 0 0 0 0.8 0.04 0.28 1 0.8 0 0 0 0.583 0.5 0.6 0.6 0.5 0.6 0.15 0.3 0.6 0.45 0.1 1 0.5 0.5 0.5 0.4 0.4 0.5 0.7 0.3 0.5 0.5 0.5 0.5 0 0 0 0 0 0.5 0 0 0.3 0.0 0.5 0.3 0.3 0.5 0.25 0.4 0.75 1.0 0.5 0.25 0.4 0.4 0.4 0.5 1 1 1 1 1 1 1 1 \\; pkphys 0 -1 -1 -1 -1 \\; pkpick const 0")
 m.c(m.obj(560, 790, "loadbang"), pkInit)
 m.c(m.obj(700, 790, "r nst-pk-defaults"), pkInit)
 m.c(tff, router, 1, 1)

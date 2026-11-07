@@ -126,7 +126,7 @@ p.c(ldMo, p.msg(1250, 730, "\\; nst-proj-status symbol NEW"), 0); p.c(ldSt, p.ob
 # apply the knob state to the modules, as if every knob had been turned
 CTX = [(0, "fm-knob"), (6, "sub-knob"), (7, "pluk-knob"), (8, "pad-knob"), (10, "smpl-knob"), (2, "tape-knob"),
        (3, "mix-lvl-set"), (11, "mix-pan-set"), (5, "mix-fx-set"), (4, "tempo-knob"), (9, "seq-step-set"),
-       (13, "synth-vol-set"), (14, "drum-vol-set"), (15, "tomb-set"), (16, "rvb-set"), (17, "endl-set"), (18, "air-knob"), (19, "bell-knob"), (20, "tfilt-set"), (21, "tres-set"), (22, "comp-set"), (23, "wave-knob"), (24, "strg-knob"), (25, "organ-knob"), (26, "drone-knob")]
+       (13, "synth-vol-set"), (14, "drum-vol-set"), (15, "tomb-set"), (16, "rvb-set"), (17, "endl-set"), (18, "air-knob"), (19, "bell-knob"), (20, "tfilt-set"), (21, "tres-set"), (22, "comp-set"), (23, "wave-knob"), (24, "strg-knob"), (25, "organ-knob"), (26, "drone-knob"), (27, "dsend-set"), (28, "rsend-set")]
 apT = p.obj(1000, 790, "t " + " ".join(["b"] * (len(CTX) + 1)))
 fixT = p.obj(900, 760, "t b b")
 p.c(apT0, fixT, 0); p.c(fixT, apT, 0)
@@ -148,6 +148,9 @@ fixE7 = p.obj(300, 790, "expr pkval[88]+pkval[89]==0")
 fixS7 = p.obj(300, 820, "sel 1")
 fixE8 = p.obj(200, 790, "expr pkval[92]+pkval[93]+pkval[94]+pkval[95]+pkval[96]+pkval[97]+pkval[98]+pkval[99]+pkval[100]+pkval[101]+pkval[102]+pkval[103]+pkval[104]+pkval[105]+pkval[106]+pkval[107]==0")
 fixS8 = p.obj(200, 820, "sel 1")
+fixE9 = p.obj(100, 790, "expr pkval[108]+pkval[109]+pkval[110]+pkval[111]+pkval[112]+pkval[113]+pkval[114]+pkval[115]==0")
+fixS9 = p.obj(100, 820, "sel 1")
+p.c(fixT, fixE9, 1); p.c(fixE9, fixS9); p.c(fixS9, p.msg(100, 850, "\\; pkval 108 1 1 1 1 1 1 1 1"))
 p.c(fixT, fixE8, 1); p.c(fixE8, fixS8); p.c(fixS8, p.msg(200, 850, "\\; pkval 92 0.3 0.0 0.5 0.3 0.3 0.5 0.25 0.4 0.75 1.0 0.5 0.25 0.4 0.4 0.4 0.5"))
 p.c(fixT, fixE7, 1); p.c(fixE7, fixS7); p.c(fixS7, p.msg(300, 850, "\\; pkval 88 0 0.5 0 0"))
 p.c(fixT, fixE6, 1); p.c(fixE6, fixS6); p.c(fixS6, p.msg(400, 850, "\\; pkval 53 0.04 0.28 1"))

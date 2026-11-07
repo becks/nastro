@@ -42,7 +42,7 @@ def add(t):
 
 nz = add("#X obj 600 20 noise~;"); env = add("#X obj 700 20 vline~;"); mul = add("#X obj 600 50 *~;")
 rb = add("#X obj 700 -10 r burst;"); bm = add("#X msg 700 5 0.3 \\, 0 0 10;")
-th = add("#X obj 600 80 throw~ synth-bus;")
+th = add("#X obj 600 80 throw~ fxr-tape;")             # the reverb is fed by the track sends only
 C += [f"#X connect {nz} 0 {mul} 0;", f"#X connect {env} 0 {mul} 1;", f"#X connect {mul} 0 {th} 0;",
       f"#X connect {rb} 0 {bm} 0;", f"#X connect {bm} 0 {env} 0;"]
 cL = add("#X obj 900 20 catch~ outL;"); cR = add("#X obj 1000 20 catch~ outR;")

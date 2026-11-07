@@ -49,6 +49,13 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
   but before that tick's `[bang~]` updates the tape position, so rec started the writer one block behind the
   head (a 64-sample silent gap at every restart). Tape keys, footswitch, navigation and track changes now go
   through `[pipe 0]`, which runs them after the position update. Mac batch tests can't reproduce the device order.
+- Per-track FX sends (`apply_sends.py`, `test_sends.py`): each track's (L+R)/2 after filter and pan (the old mono FX
+  feed) x a delay send and a reverb send (`line~`, default 1) -> `throw~ fxd-tape` / `fxr-tape`. Master: delay <-
+  `fxd-tape`, reverb <- `fxr-tape` + delay out; DLY / REV stay the overall amounts. Live synth, drums and the input
+  monitor stay dry (`apply_fxtapeonly.py`). MIX page 5 SEND; knob contexts 27 / 28 (`pkval` 116).
+- OLED text types (`apply_oledtypes.py`): `Patch.msg` rebuilds every gPrintln type string (packOSC drops a text
+  with more words than types and prints a number in an `s` field as "1.000000"); `$n` keep the hand-given type.
+  `oled-sim.py` mimics all three device behaviours.
 - Track DJ filter, no zipper (`apply_filterxfade.py`, `test_filtersweep.py`): `biquad~` (direct form II) clicks
   for a sample whenever its coefficients change while audio runs. Each track has two `biquad~`s: new coefficients
   go to the silent one and a 5 ms crossfade moves to it; while a knob turns, updates follow at most every 6 ms and

@@ -6,16 +6,16 @@ def osc2(path, types, args):
 
 # ---------------------------------------------------------------- master.pd
 ms = Patch(1300, 900)
-ms.text(20, 10, "master: synth + tape -> delay + reverb -> out. The tape records the dry synth.")
+ms.text(20, 10, "master: tape tracks (sends) -> delay + reverb. Live synth and drums stay dry. The tape records the dry synth.")
 cs = ms.obj(20, 50, "catch~ synth-bus")
 ctL = ms.obj(200, 50, "catch~ tape-busL")
 ctR = ms.obj(330, 50, "catch~ tape-busR")
-tMono = ms.obj(200, 70, "+~")
-tHalf = ms.obj(200, 75, "*~ 0.5")
-ms.c(ctL, tMono, 0, 0); ms.c(ctR, tMono, 0, 1); ms.c(tMono, tHalf)
+cfd = ms.obj(200, 70, "catch~ fxd-tape"); cfr = ms.obj(330, 70, "catch~ fxr-tape")      # per-track FX sends
 sti = ms.obj(20, 90, "s~ tape-in")
 dry = ms.obj(200, 90, "+~")
-ms.c(cs, sti); ms.c(cs, dry, 0, 0); ms.c(tHalf, dry, 0, 1)      # mono send for the FX
+ms.c(cs, sti); ms.c(cfd, dry, 0, 1)                             # delay feed: track delay sends only
+dryR = ms.obj(330, 90, "+~")
+ms.c(cfr, dryR, 0, 1)                                              # reverb feed: track reverb sends only
 # --- output limiter
 ol = ms.obj(20, 820, "*~ 1")                 # sums everything going to the left output
 orr = ms.obj(200, 820, "*~ 1")
@@ -92,7 +92,7 @@ ms.c(drd, ol); ms.c(drd, orr)
 # --- reverb (reverb.pd: diffusers + 8-line FDN, switches itself off when unused)
 rmix = smooth(880, 40, "fx-rmix", 0)
 rin = ms.obj(600, 400, "+~")
-ms.c(dry, rin, 0, 0); ms.c(drd, rin, 0, 1)
+ms.c(dryR, rin, 0, 0); ms.c(drd, rin, 0, 1)
 rsend = ms.obj(600, 440, "*~")
 ms.c(rin, rsend, 0, 0); ms.c(rmix, rsend, 0, 1)
 rvb = ms.obj(600, 480, "reverb")
@@ -163,7 +163,7 @@ mt = x_.obj(20, 90, "t f f")
 again = x_.obj(20, 130, "expr $f1==3 && $f2==3")
 ag1 = x_.obj(20, 160, "sel 1")
 pgF = x_.obj(20, 190, "f")
-pgN = x_.obj(20, 220, "expr ($f1+1)%4")             # MIX -> FX -> FILTER -> MASTER
+pgN = x_.obj(20, 220, "expr ($f1+1)%5")             # MIX -> FX -> FILTER -> MASTER -> SEND
 pgT = x_.obj(20, 250, "t f f")
 x_.c(rmd, mt); x_.c(mt, again, 1); x_.c(mt, again, 0, 1)
 x_.c(pgT, x_.obj(120, 280, "s mix-page"), 0)
@@ -172,7 +172,7 @@ x_.c(again, ag1); x_.c(ag1, pgF); x_.c(pgF, pgN); x_.c(pgN, pgT); x_.c(pgT, pgF,
 rk = x_.obj(200, 60, "r mix-knob")
 lp = x_.obj(200, 90, "list prepend 0")
 x_.c(rk, lp); x_.c(pgT, lp, 0, 1)
-rpg = x_.obj(200, 120, "route 0 1 2 3")
+rpg = x_.obj(200, 120, "route 0 1 2 3 4")
 x_.c(lp, rpg)
 rlv = x_.obj(200, 150, "route 1 2 3 4")
 rfx = x_.obj(500, 150, "route 1 2 3 4")
@@ -190,6 +190,11 @@ fiKR = x_.obj(700, 135, "route 0 1")
 x_.c(rpg, fiK, 2); x_.c(fiK, fiKR)
 x_.c(fiKR, x_.obj(700, 150, "s tfilt-knob"), 0); x_.c(fiKR, x_.obj(800, 150, "s tres-knob"), 1)
 x_.c(rpg, x_.obj(900, 150, "s comp-knob"), 3)                # MASTER page: knob 1 COMP, knob 2 SPEED
+seK = x_.obj(1000, 120, "list prepend 0")                       # SEND page: knob k -> delay send, AUX -> reverb send
+x_.c(x_.obj(1060, 90, "r aux"), seK, 0, 1)
+seKR = x_.obj(1000, 135, "route 0 1")
+x_.c(rpg, seK, 4); x_.c(seK, seKR)
+x_.c(seKR, x_.obj(1000, 150, "s dsend-knob"), 0); x_.c(seKR, x_.obj(1100, 150, "s rsend-knob"), 1)
 lb = x_.obj(800, 60, "loadbang")
 defs = x_.msg(800, 90, "0 1 0.8 \\, 0 2 0.8 \\, 0 3 0.8 \\, 0 4 0.8 \\, 1 1 0.6 \\, 1 2 0.42 \\, 1 3 0 \\, 1 4 0")
 x_.c(lb, defs); x_.c(defs, rpg)
@@ -259,7 +264,7 @@ clr = x_.msg(20, 430, osc2("gClear", "ii", "1"))
 flip = x_.msg(20, 460, "\\; oscOut sendtyped /oled/gFlip i 3")
 x_.c(seq, clr, 2); x_.c(seq, pgS, 1); x_.c(seq, flip, 0)
 x_.c(seq, x_.msg(100, 430, "\\; mt-reset bang"), 2)
-psel = x_.obj(200, 430, "sel 0 1 2 3")
+psel = x_.obj(200, 430, "sel 0 1 2 3 4")
 x_.c(pgS, psel)
 
 # MIX page: 4 dials with needles (OP-1 style). Holding AUX shows / edits PAN instead of level.
@@ -500,7 +505,8 @@ for k in range(4):
     x_.c(txE, tP, 1, 1); x_.c(txE, tP, 0, 0)
     tR = x_.obj(X, 940, "route 0 1 2 3 4 5")
     x_.c(tP, tR)
-    L1 = lambda txt: osc2("gPrintln", "iiiiis", f"{cx - 12} 43 8 1 {k + 1} {txt}")
+    L1 = lambda txt: (osc2("gPrintln", "iiiiif", f"{cx - 12} 43 8 1 {k + 1}") + " " +
+                      osc2("gPrintln", "iiiiis", f"{cx - 4} 43 8 1 {txt}"))
     V = lambda suf: osc2("gPrintln", "iiiiif" + ("s" if suf else ""), f"{cx - 12} 54 8 1 \\$1" + (f" {suf}" if suf else ""))
     x_.c(tR, x_.msg(X, 970, L1("--")), 0)
     x_.c(tR, x_.msg(X, 1000, L1("LP") + " " + V("")), 1)
@@ -546,4 +552,42 @@ x_.c(msT, cvG, 0); x_.c(cvG, cgE)
 cgP = x_.obj(4000, 750, "pack f f")
 x_.c(cgE, cgP, 1, 1); x_.c(cgE, cgP, 0, 0)
 x_.c(cgP, x_.msg(4000, 780, osc2("gPrintln", "iiiiif", "26 39 8 1 -\\$1") + " " + osc2("gFillArea", "iiiiii", "66 40 \\$2 5 1")))
+# ------------------------------------------------ SEND page (apply_sends.py): 4 bars, delay send (AUX: reverb)
+sdV, srV = [], []
+svR = x_.obj(4200, 520, "route 1 2 3 4"); swR = x_.obj(4400, 520, "route 1 2 3 4")
+x_.c(x_.obj(4200, 490, "r dsend-knob"), svR); x_.c(x_.obj(4250, 470, "r dsend-set"), svR)
+x_.c(x_.obj(4400, 490, "r rsend-knob"), swR); x_.c(x_.obj(4450, 470, "r rsend-set"), swR)
+for k in range(4):
+    a = x_.obj(4200 + k * 50, 550, "f 1"); b = x_.obj(4400 + k * 50, 550, "f 1")
+    x_.c(svR, a, k, 1); x_.c(swR, b, k, 1)
+    sdV.append(a); srV.append(b)
+for nm in ("dsend-knob", "dsend-set", "rsend-knob", "rsend-set"):
+    x_.c(x_.obj(4600, 490, f"r {nm}"), dOne)
+seT = x_.obj(4200, 600, "t b b b b b")                 # 4 header (AUX state first), 3..0 tracks 1..4
+x_.c(psel, seT, 4)
+seAux = x_.obj(4100, 600, "f")
+x_.c(x_.obj(4100, 570, "r aux"), seAux, 0, 1)
+seHead = x_.obj(4100, 630, "sel 0 1")
+x_.c(seT, seAux, 4); x_.c(seAux, seHead)
+x_.c(seHead, x_.msg(4100, 660, osc2("gPrintln", "iiiiis", "1 1 8 1 SEND DLY")), 0)
+x_.c(seHead, x_.msg(4250, 660, osc2("gFillArea", "iiiiii", "0 0 51 10 1") + " " + osc2("gPrintln", "iiiiis", "2 1 8 0 SEND REV")), 1)
+for k in range(4):
+    cx = 16 + 32 * k
+    X = 4200 + k * 200
+    tb = x_.obj(X, 700, "t b b")
+    x_.c(seT, tb, 3 - k)
+    # value shown: AUX ? reverb send : delay send. $f1 delay (hot), $f2 AUX, $f3 reverb
+    vE = x_.obj(X, 760, "expr if($f2 \\, $f3 \\, $f1)")
+    x_.c(seAux, vE, 0, 1)
+    x_.c(tb, srV[k], 1); x_.c(srV[k], vE, 0, 2)
+    x_.c(tb, sdV[k], 0); x_.c(sdV[k], vE)
+    # bar y 12..38, track number at y 42 and value at y 53 (same spacing as the FILTER page, readable on the OLED)
+    hE = x_.obj(X, 790, "expr int($f1*23+0.5) \\; 37-int($f1*23+0.5) \\; int($f1*100+0.5)")
+    x_.c(vE, hE)
+    hP = x_.obj(X, 820, "pack f f f")
+    x_.c(hE, hP, 2, 2); x_.c(hE, hP, 1, 1); x_.c(hE, hP, 0, 0)
+    x_.c(hP, x_.msg(X, 850, osc2("gBox", "iiiiii", f"{cx - 5} 12 11 27 1") + " " +
+                    osc2("gFillArea", "iiiiii", f"{cx - 3} \\$2 7 \\$1 1") + " " +
+                    osc2("gPrintln", "iiiiif", f"{cx - 3} 42 8 1 {k + 1}") + " " +
+                    osc2("gPrintln", "iiiiif", f"{cx - 9} 53 8 1 \\$3")))
 x_.save("mix.pd")

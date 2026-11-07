@@ -86,7 +86,7 @@ counter + `tabwrite~` (block-aligned; `vline~` was ~80 samples off).
   (`apply_editall.py`, `apply_editall_menu.py`, `test_editall.py`).
 
 ## Synth engines
-FM, SUB, PLUK, PAD, SMPL, AIR, GLASS. AUX+C again in SYNTH = next engine. Every voice switches its own DSP on at
+FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE. AUX+C again in SYNTH = next engine. Every voice switches its own DSP on at
 a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_voiceswitch.py`): about -42% DSP idle.
 - SUB ADSR (`apply_subadsr.py`, `test_subadsr.py`): AUX + knobs 2..4 on SUB = ATTACK (1–3000 ms), DECAY/RELEASE
   (10–5000 ms), SUSTAIN; knob 1 stays the synth volume. Amp ADSR (`vline~`), filter envelope attack + decay to 0.
@@ -95,6 +95,15 @@ a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_vo
   with sqrt(Q) make-up gain, slow random LFO per voice on pitch and level. Knobs ATK REL Q MOVE (pickup ctx 18).
 - GLASS: 4 partials (harmonic 1 2 3 4 <-> bell 1 2.76 5.4 8.93), shorter decay for higher partials, 2 detuned
   twins for beating, 6 voices, rings through note-off. Knobs DECAY BRITE INHAR BEAT (ctx 19). `test_ambient.py`.
+- WAVE / STRING / ORGAN / DRONE (`apply_moresynth.py`, `test_moresynth.py`), knob contexts 23..26:
+  - WAVE: sine -> `cos~` wavefolder (fold = FOLD x (1 + ENV x attack envelope), SYM offset adds even harmonics),
+    `hip~` DC block, make-up gain for small folds.
+  - STRING: Karplus-Strong (`switch~ 16`, `delwrite~`/`vd~` per voice), pick-position comb on the excitation, DAMP
+    = loop low-pass (6x..60x the note), 6 s T60 while held, REL shortens it after note-off, 3 fixed body `bp~`.
+  - ORGAN: drawbars 16' 8' 4' 2 2/3' (0..8 steps, squared), 4 ms key click (high-passed noise), leslie = slow
+    vibrato + tremolo with its own rate per voice, 4 ms / 60 ms gate.
+  - DRONE: two `phasor~` saws detuned +-DET/2 cents, each drifting (own slow LFO, up to +-15 cents), `vcf~`
+    low-pass that breathes, squared envelope, attack = REL / 2 (0.5..15 s release).
 - SMPL live view while recording: only the bar just measured is drawn (3 messages every 100 ms) instead of the
   whole SYNTH page (~60): from 610 to 30 OLED messages/s (`apply_smplive.py`).
 - Auto-start sampling (`apply_autorec.py`): AUX+E5 (input) arms recording (badge ARM); it starts when the signal
@@ -106,7 +115,7 @@ a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_vo
   attack, ~150 ms release, final `clip~`. No added latency. Metronome and tape input are outside it.
 - Master compressor (`apply_comp.py`, `test_comp.py`): MIX page 4 MASTER, COMP amount (threshold -2..-30 dBFS RMS,
   ratio 4:1, auto make-up up to +8 dB) and SPEED (attack 5–50 ms, release 50–800 ms). Feed-forward: `env~ 1024 128`
-  on (L+R)/2 -> gain -> `line~`, before the limiter; off = no control work. GR shown live. Pickup ctx 22 (`pkval` 92).
+  on (L+R)/2 -> gain -> `line~`, before the limiter; off = no control work. GR shown live. Pickup ctx 22.
 - Reverb (`genrev.py` → `reverb.pd`, `apply_reverb.py`): pre-delay (`vd~`) → 4 series allpasses → 8-line FDN
   (31.7–73.7 ms, Hadamard butterflies), per-line `lop~` and decay gain (10^(-3L/T60)/sqrt 8), 2 modulated lines.
   AUX + knobs on the FX page: DEC (T60 0.4–12 s), TONE (1.5–12 kHz), PRE (0–120 ms), MOD (ctx 16). `switch~`: on

@@ -1,6 +1,6 @@
 # Nastro for Organelle
 
-Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines seven synth engines, a 24-part drum sampler, a four-track tape recorder, effects, four sequencer pages, project saving and a tape editor.
+Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.5× / 2× recording), a mixer with per-track DJ filters and effect sends, delay, reverb, a master compressor and limiter, four sequencer pages, project saving and a tape editor.
 
 This manual describes the current generated source in `nastro-src`. Screen images are rendered with the project’s bundled OLED simulator at the real 128 × 64 pixel resolution; values in the images are examples.
 
@@ -182,7 +182,7 @@ Recording or loading a project clears the tape editor undo memory. Copy/paste an
 
 ![Mix level screen](oled/07-mix-level.png)
 
-Enter MIX with **AUX + D#**. The default page has four OP-1-style dials, one per tape track. Knobs set each track’s **level**. The title row includes left/right output meters and a `LIM` indicator when the master limiter is working.
+Enter MIX with **AUX + D#**. Pressing **AUX + D#** again cycles the pages: **MIX → FX → FILTER → MASTER → SEND** (then back to MIX). The default page has four OP-1-style dials, one per tape track. Knobs set each track’s **level**. The title row includes left/right output meters and a `LIM` indicator when the master limiter is working.
 
 ![Mix pan screen](oled/08-mix-pan.png)
 

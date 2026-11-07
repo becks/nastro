@@ -225,7 +225,7 @@ s.save("synth-fm.pd")
 
 # ---------------------------------------------------------------- main.pd
 m = Patch(1100, 800)
-m.text(20, 5, "NASTRO - OP-1-style workstation for Organelle. AUX + key: C=SYNTH C#=DRUM D=TAPE D#=MIX E=SEQ / A#=oct- B=oct+ / F=play F#=rec G=rewind A=save")
+m.text(20, 5, "NASTRO - tape workstation for Organelle. AUX + key: C=SYNTH C#=DRUM D=TAPE D#=MIX E=SEQ / A#=oct- B=oct+ / F=play F#=rec G=rewind A=save")
 # --- aux handling
 raux = m.obj(20, 40, "r aux")
 tfff = m.obj(20, 70, "t f f f")

@@ -1,5 +1,7 @@
 # Nastro for Organelle
 
+> **Disclaimer.** Nastro is an independent, non-commercial hobby project. The teenage engineering OP-1 was an inspiration for its workflow (a tape-centred workstation), but Nastro is not a copy or a clone of it: it contains no code, sounds, graphics or other material from the OP-1, and everything in it was written from scratch in Pure Data (the base drum kit is synthesized by a script, `nastro-src/makekit.py`). Nastro is not affiliated with, endorsed by or connected to teenage engineering. It is also an independent patch, not affiliated with Critter & Guitari. *OP-1* is a trademark of teenage engineering; *Organelle* is a trademark of Critter & Guitari. They are mentioned only to describe the inspiration and the hardware Nastro runs on.
+
 Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.5× / 2× recording), a mixer with per-track DJ filters and effect sends, delay, reverb, a master compressor and limiter, four sequencer pages, project saving and a tape editor.
 
 This manual describes the current generated source in `nastro-src`. Screen images are rendered with the project’s bundled OLED simulator at the real 128 × 64 pixel resolution; values in the images are examples.
@@ -154,7 +156,7 @@ Enter TAPE with **AUX + D**. There are four mono tracks, each up to 60 seconds, 
 
 Tape knobs:
 
-1. **Speed** — seven octave steps from -2 to +2. With AUX held it is continuous and has detents at -1, 0 and +1. At **0.5×** and **2×** the tape keeps its speed while recording, like the OP-1: record at 0.5× and the new part plays an octave higher (and twice as fast) at 1×; record at 2× and it plays an octave lower. At any other speed (continuous, 0 or reverse) recording runs at 1×.
+1. **Speed** — seven octave steps from -2 to +2. With AUX held it is continuous and has detents at -1, 0 and +1. At **0.5×** and **2×** the tape keeps its speed while recording (the classic tape trick): record at 0.5× and the new part plays an octave higher (and twice as fast) at 1×; record at 2× and it plays an octave lower. At any other speed (continuous, 0 or reverse) recording runs at 1×.
 2. **Track** — selects tracks 1–4.
 3. **Overdub** — 0 replaces the signal, 1 adds fully; intermediate positions blend old and new material.
 4. **Wow** — tape-style pitch movement; it is disabled while recording. The amount is shown on the bottom row as `WOW 0–100`, between `DUB` and `LOOP`.
@@ -182,7 +184,7 @@ Recording or loading a project clears the tape editor undo memory. Copy/paste an
 
 ![Mix level screen](oled/07-mix-level.png)
 
-Enter MIX with **AUX + D#**. Pressing **AUX + D#** again cycles the pages: **MIX → FX → FILTER → MASTER → SEND** (then back to MIX). The default page has four OP-1-style dials, one per tape track. Knobs set each track’s **level**. The title row includes left/right output meters and a `LIM` indicator when the master limiter is working.
+Enter MIX with **AUX + D#**. Pressing **AUX + D#** again cycles the pages: **MIX → FX → FILTER → MASTER → SEND** (then back to MIX). The default page has four round dials, one per tape track. Knobs set each track’s **level**. The title row includes left/right output meters and a `LIM` indicator when the master limiter is working.
 
 ![Mix pan screen](oled/08-mix-pan.png)
 

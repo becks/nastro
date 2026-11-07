@@ -1,5 +1,5 @@
 #N canvas 40 40 1100 800 12;
-#X text 20 5 NASTRO - OP-1-style workstation for Organelle. AUX + key: C=SYNTH C#=DRUM D=TAPE D#=MIX E=SEQ / A#=oct- B=oct+ / F=play F#=rec G=rewind A=save;
+#X text 20 5 NASTRO - tape workstation for Organelle. AUX + key: C=SYNTH C#=DRUM D=TAPE D#=MIX E=SEQ / A#=oct- B=oct+ / F=play F#=rec G=rewind A=save;
 #X obj 20 40 r aux;
 #X obj 20 70 t f f f;
 #X obj 20 100 == 0;

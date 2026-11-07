@@ -18,8 +18,8 @@ def c(a, b, o=0, i=0):
     C.append(f"#X connect {a} {o} {b} {i};")
 
 
-add("text", 20, 10, "NASTRO - simulatore Organelle per Mac. Clicca su questa finestra prima di suonare.")
-add("text", 20, 34, "Tasti: A W S E D F T G Y H U J K O L P = note (Do..Mi) / SPAZIO = Aux / Z = footswitch / [ ] = tasti 82-83 (Spazio+[ ] = ottava) / tasti punto-e-virgola e apostrofo = 76-77 (con Spazio = campiona ingresso / uscita) / backslash = tasto 78 (con Spazio = monitor ingresso)")
+add("text", 20, 10, "NASTRO - Organelle simulator for the Mac. Click this window before playing.")
+add("text", 20, 34, "Keys: A W S E D F T G Y H U J K O L P = notes (C..E) / SPACE = Aux / Z = footswitch / [ ] = keys 82-83 (Space+[ ] = octave) / semicolon and apostrophe = keys 76-77 (with Space = sample input / output) / backslash = key 78 (with Space = input monitor)")
 
 # knobs
 names = ["knob1", "knob2", "knob3", "knob4"]
@@ -27,7 +27,7 @@ for k, nm in enumerate(names):
     add("obj", 20, 80 + k * 30,
         f"hsl 200 18 0 1 0 0 {nm} empty {nm} 205 9 0 12 #fcfcfc #000000 #000000 0 1")
 # aux toggle (mouse) -> s aux
-add("obj", 320, 80, "tgl 25 0 aux empty Aux(spazio) 30 12 0 12 #fcfcfc #000000 #000000 0 1")
+add("obj", 320, 80, "tgl 25 0 aux empty Aux(space) 30 12 0 12 #fcfcfc #000000 #000000 0 1")
 
 # display
 add("text", 20, 220, "--- OLED ---")
@@ -80,7 +80,7 @@ c(es, add("msg", 900, 480, "\\; enc 0"), 0)
 c(es, add("msg", 960, 480, "\\; enc 1"), 1)
 c(es, add("msg", 1020, 480, "\\; encbut 1"), 2)
 c(eus, add("msg", 1000, 510, "\\; encbut 0"), 0)
-add("text", 900, 390, "encoder: virgola / punto = gira - barra = premi")
+add("text", 900, 390, "encoder: comma / period = turn - slash = press")
 
 # audio
 add("text", 480, 400, "--- audio ---")
@@ -97,7 +97,7 @@ c(adc, sinl, 0, 0); c(adc, sinr, 1, 0)
 c(cl, dac, 0, 0); c(cr, dac, 0, 1)
 
 # OLED -> oled-sim.py (browser view) over UDP
-add("text", 20, 700, "--- OLED grafico: avvia oled-sim.py e apri http://localhost:8123 ---")
+add("text", 20, 700, "--- graphic OLED: run oled-sim.py and open http://localhost:8123 ---")
 ns = add("obj", 20, 760, "netsend -u")
 lb2 = add("obj", 20, 720, "loadbang")
 tb2 = add("obj", 20, 740, "t b b")

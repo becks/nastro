@@ -1,11 +1,11 @@
 #N canvas 60 60 760 560 12;
-#X text 20 10 NASTRO - simulatore Organelle per Mac. Clicca su questa finestra prima di suonare.;
-#X text 20 34 Tasti: A W S E D F T G Y H U J K O L P = note (Do..Mi) / SPAZIO = Aux / Z = footswitch / [ ] = tasti 82-83 (Spazio+[ ] = ottava) / tasti punto-e-virgola e apostrofo = 76-77 (con Spazio = campiona ingresso / uscita) / backslash = tasto 78 (con Spazio = monitor ingresso);
+#X text 20 10 NASTRO - Organelle simulator for the Mac. Click this window before playing.;
+#X text 20 34 Keys: A W S E D F T G Y H U J K O L P = notes (C..E) / SPACE = Aux / Z = footswitch / [ ] = keys 82-83 (Space+[ ] = octave) / semicolon and apostrophe = keys 76-77 (with Space = sample input / output) / backslash = key 78 (with Space = input monitor);
 #X obj 20 80 hsl 200 18 0 1 0 0 knob1 empty knob1 205 9 0 12 #fcfcfc #000000 #000000 0 1;
 #X obj 20 110 hsl 200 18 0 1 0 0 knob2 empty knob2 205 9 0 12 #fcfcfc #000000 #000000 0 1;
 #X obj 20 140 hsl 200 18 0 1 0 0 knob3 empty knob3 205 9 0 12 #fcfcfc #000000 #000000 0 1;
 #X obj 20 170 hsl 200 18 0 1 0 0 knob4 empty knob4 205 9 0 12 #fcfcfc #000000 #000000 0 1;
-#X obj 320 80 tgl 25 0 aux empty Aux(spazio) 30 12 0 12 #fcfcfc #000000 #000000 0 1;
+#X obj 320 80 tgl 25 0 aux empty Aux(space) 30 12 0 12 #fcfcfc #000000 #000000 0 1;
 #X text 20 220 --- OLED ---;
 #X obj 480 240 r screenLine1;
 #X obj 590 240 list prepend set;
@@ -177,7 +177,7 @@
 #X msg 960 480 \; enc 1;
 #X msg 1020 480 \; encbut 1;
 #X msg 1000 510 \; encbut 0;
-#X text 900 390 encoder: virgola / punto = gira - barra = premi;
+#X text 900 390 encoder: comma / period = turn - slash = press;
 #X text 480 400 --- audio ---;
 #X obj 480 420 loadbang;
 #X msg 480 450 \; pd dsp 1;
@@ -187,7 +187,7 @@
 #X obj 700 420 adc~;
 #X obj 700 450 s~ inL;
 #X obj 760 470 s~ inR;
-#X text 20 700 --- OLED grafico: avvia oled-sim.py e apri http://localhost:8123 ---;
+#X text 20 700 --- graphic OLED: run oled-sim.py and open http://localhost:8123 ---;
 #X obj 20 760 netsend -u;
 #X obj 20 720 loadbang;
 #X obj 20 740 t b b;

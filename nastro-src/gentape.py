@@ -148,7 +148,7 @@ fRt = t.obj(1500, 950, "route 1 2 3 4")
 t.c(t.obj(1500, 920, "r tfilt-knob"), fRt); t.c(t.obj(1600, 920, "r tfilt-set"), fRt)
 rRt = t.obj(1700, 950, "route 1 2 3 4")
 t.c(t.obj(1700, 920, "r tres-knob"), rRt); t.c(t.obj(1800, 920, "r tres-set"), rRt)
-fDef = t.msg(1900, 920, "1 0.3 \\, 2 0.3 \\, 3 0.3 \\, 4 0.3")
+fDef = t.msg(1900, 920, "1 0 \\, 2 0 \\, 3 0 \\, 4 0")
 t.c(t.obj(1900, 890, "loadbang"), fDef); t.c(fDef, rRt)
 # --- tracks: read, level, overdub write
 rin = t.obj(400, 680, "r~ tape-in")
@@ -183,13 +183,49 @@ for k in range(4):
     gLp = t.obj(x, 930, "*~"); gRp = t.obj(x + 60, 930, "*~")
     t.c(rpan, panE); t.c(panE, pmL, 0); t.c(panE, pmR, 1); t.c(pmL, plL); t.c(pmR, plR)
     # DJ filter (apply_trackfilter.py): one biquad~ after the level, before pan and VU
-    bq = t.obj(x, 875, "biquad~ 0 0 1 0 0")
-    t.c(lv, bq)
+    # two filters, crossfaded (apply_filterxfade.py); bq = their sum, feeds pan and VU as before
+    bq = t.obj(x, 875, "+~")
+    bqA = t.obj(x + 1000, 860, "biquad~ 0 0 1 0 0"); bqB = t.obj(x + 1100, 860, "biquad~ 0 0 1 0 0")
+    lnA = t.obj(x + 1000, 830, "line~"); lnB = t.obj(x + 1100, 830, "line~")
+    mA = t.obj(x + 1000, 890, "*~"); mB = t.obj(x + 1100, 890, "*~")
+    t.c(lv, bqA); t.c(lv, bqB)
+    t.c(bqA, mA, 0, 0); t.c(lnA, mA, 0, 1); t.c(bqB, mB, 0, 0); t.c(lnB, mB, 0, 1)
+    t.c(mA, bq, 0, 0); t.c(mB, bq, 0, 1)
+    lbA = t.obj(x + 1200, 800, "loadbang"); oneA = t.msg(x + 1200, 815, "1")
+    t.c(lbA, oneA); t.c(oneA, lnA)                                # A plays first
     cE = t.obj(x + 300, 1060, "expr if((($f1<0.47) || ($f1>0.53)) \\,  2*cos((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100)))/(1+(sin((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100)))/(2*(0.6+$f2*6)))) \\,  0) \\;  if((($f1<0.47) || ($f1>0.53)) \\,  -(1-(sin((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100)))/(2*(0.6+$f2*6))))/(1+(sin((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100)))/(2*(0.6+$f2*6)))) \\,  0) \\;  if((($f1<0.47) || ($f1>0.53)) \\,  if(($f1<0.47) \\,  (1-cos((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100))))/2 \\,  (1+cos((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100))))/2)/(1+(sin((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100)))/(2*(0.6+$f2*6)))) \\,  1) \\;  if((($f1<0.47) || ($f1>0.53)) \\,  if(($f1<0.47) \\,  1-cos((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100))) \\,  -(1+cos((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100)))))/(1+(sin((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100)))/(2*(0.6+$f2*6)))) \\,  0) \\;  if((($f1<0.47) || ($f1>0.53)) \\,  if(($f1<0.47) \\,  (1-cos((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100))))/2 \\,  (1+cos((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100))))/2)/(1+(sin((6.2831853*min(if($f1<0.47 \\,  80*pow(225 \\,  $f1/0.47) \\,  20*pow(400 \\,  ($f1-0.53)/0.47)) \\,  0.45*if($f3>0 \\,  $f3 \\,  44100))/if($f3>0 \\,  $f3 \\,  44100)))/(2*(0.6+$f2*6)))) \\,  0)")
     cP = t.obj(x + 300, 1090, "pack f f f f f")
     for o in range(5):
         t.c(cE, cP, o, o)
-    t.c(cP, bq)
+    # coefficient scheduler: store the latest list, fire when not crossfading
+    cpT = t.obj(x + 1000, 1120, "t b b l")
+    pend = t.obj(x + 1200, 1150, "list")
+    m1d = t.msg(x + 1100, 1150, "1"); dirtyF = t.obj(x + 1000, 1180, "f 0")
+    busySp = t.obj(x + 1000, 1150, "spigot 1")
+    t.c(cP, cpT); t.c(cpT, pend, 2, 1); t.c(cpT, m1d, 1); t.c(m1d, dirtyF, 0, 1); t.c(cpT, busySp, 0)
+    t.c(busySp, dirtyF)
+    dS = t.obj(x + 1000, 1210, "sel 1")
+    fire = t.obj(x + 1000, 1240, "t b b b")                      # 2) clear dirty  1) busy 6 ms  0) apply
+    t.c(dirtyF, dS); t.c(dS, fire)
+    m0d = t.msg(x + 1150, 1270, "0"); t.c(fire, m0d, 2); t.c(m0d, dirtyF, 0, 1)
+    m0b = t.msg(x + 1100, 1270, "0"); dl = t.obj(x + 1100, 1300, "delay 6")
+    t.c(fire, m0b, 1); t.c(m0b, busySp, 0, 1); t.c(fire, dl, 1)
+    dlT = t.obj(x + 1100, 1330, "t b b"); m1b = t.msg(x + 1150, 1360, "1")
+    t.c(dl, dlT); t.c(dlT, m1b, 1); t.c(m1b, busySp, 0, 1); t.c(dlT, busySp, 0)   # free again, apply what came meanwhile
+    sideF = t.obj(x + 1000, 1270, "f 0")                         # active filter: 0 = A, 1 = B
+    idE = t.obj(x + 1000, 1300, "expr 1-$f1")
+    idT = t.obj(x + 1000, 1330, "t f f f")                      # 2) new active  1) list prefix  0) send + fade
+    t.c(fire, sideF, 0); t.c(sideF, idE); t.c(idE, idT); t.c(idT, sideF, 2, 1)
+    lpp = t.obj(x + 1200, 1360, "list prepend 0"); rtq = t.obj(x + 1200, 1390, "route 0 1")
+    t.c(idT, lpp, 1, 1); t.c(pend, lpp); t.c(lpp, rtq); t.c(rtq, bqA, 0); t.c(rtq, bqB, 1)
+    fT = t.obj(x + 1000, 1360, "t f b")                          # coefficients first, then the crossfade
+    t.c(idT, fT, 0); t.c(fT, pend, 1)
+    fS = t.obj(x + 1000, 1390, "sel 0 1")
+    t.c(fT, fS, 0)
+    a1 = t.msg(x + 1000, 1420, "1 5"); b0 = t.msg(x + 1050, 1420, "0 5")
+    b1 = t.msg(x + 1100, 1420, "1 5"); a0 = t.msg(x + 1150, 1420, "0 5")
+    t.c(fS, a1, 0); t.c(fS, b0, 0); t.c(fS, b1, 1); t.c(fS, a0, 1)
+    t.c(a1, lnA); t.c(a0, lnA); t.c(b1, lnB); t.c(b0, lnB)
     t.c(srT, cE, 0, 2)
     vF = t.obj(x + 300, 1030, "f 0.5")
     fIn = t.obj(x + 300, 1000, "t f f")
@@ -291,7 +327,7 @@ for db in dubs:
     t.c(k3t, db, 0, 1)
 # 4 wow
 k4t = t.obj(1100, 170, "t f f")
-t.c(krt, k4t, 3); t.c(k4t, we, 0)
+t.c(krt, k4t, 3); t.c(k4t, we, 0); t.c(k4t, t.obj(1200, 200, "s tp-wow"), 1)
 
 # --- publish state for tape-screen.pd
 t.c(playT, t.obj(1000, 700, "s tp-play"), 0)

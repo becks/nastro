@@ -49,6 +49,10 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
   but before that tick's `[bang~]` updates the tape position, so rec started the writer one block behind the
   head (a 64-sample silent gap at every restart). Tape keys, footswitch, navigation and track changes now go
   through `[pipe 0]`, which runs them after the position update. Mac batch tests can't reproduce the device order.
+- Track DJ filter, no zipper (`apply_filterxfade.py`, `test_filtersweep.py`): `biquad~` (direct form II) clicks
+  for a sample whenever its coefficients change while audio runs. Each track has two `biquad~`s: new coefficients
+  go to the silent one and a 5 ms crossfade moves to it; while a knob turns, updates follow at most every 6 ms and
+  the latest value is always applied. Resonance defaults to 0 (`apply_resdefault.py`).
 - Sample-accurate wrap (`apply_xfadeauto.py`): just before the head reaches a loop edge each track is checked. If
   the loop start continues the audio at the end (recorded in loop mode), its read index wraps per sample
   (`expr~` offset) with no crossfade; otherwise it reads past the end and crossfades as before. The 3 samples

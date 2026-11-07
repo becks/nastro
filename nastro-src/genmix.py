@@ -461,7 +461,7 @@ fvR = x_.obj(2600, 520, "route 1 2 3 4"); frR = x_.obj(2800, 520, "route 1 2 3 4
 x_.c(x_.obj(2600, 490, "r tfilt-knob"), fvR); x_.c(x_.obj(2650, 470, "r tfilt-set"), fvR)
 x_.c(x_.obj(2800, 490, "r tres-knob"), frR); x_.c(x_.obj(2850, 470, "r tres-set"), frR)
 for k in range(4):
-    a = x_.obj(2600 + k * 50, 550, "f 0.5"); b = x_.obj(2800 + k * 50, 550, "f 0.3")
+    a = x_.obj(2600 + k * 50, 550, "f 0.5"); b = x_.obj(2800 + k * 50, 550, "f 0")
     x_.c(fvR, a, k, 1); x_.c(frR, b, k, 1)
     fltV.append(a); resV.append(b)
 x_.c(x_.obj(2900, 490, "r tres-knob"), dOne); x_.c(x_.obj(2950, 490, "r tfilt-set"), dOne)

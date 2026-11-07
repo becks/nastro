@@ -293,13 +293,13 @@
 #X obj 2800 490 r tres-knob;
 #X obj 2850 470 r tres-set;
 #X obj 2600 550 f 0.5;
-#X obj 2800 550 f 0.3;
+#X obj 2800 550 f 0;
 #X obj 2650 550 f 0.5;
-#X obj 2850 550 f 0.3;
+#X obj 2850 550 f 0;
 #X obj 2700 550 f 0.5;
-#X obj 2900 550 f 0.3;
+#X obj 2900 550 f 0;
 #X obj 2750 550 f 0.5;
-#X obj 2950 550 f 0.3;
+#X obj 2950 550 f 0;
 #X obj 2900 490 r tres-knob;
 #X obj 2950 490 r tfilt-set;
 #X obj 3000 490 r tfilt-knob;

@@ -157,7 +157,7 @@ Tape knobs:
 1. **Speed** — seven octave steps from -2 to +2. With AUX held it is continuous and has detents at -1, 0 and +1. At **0.5×** and **2×** the tape keeps its speed while recording, like the OP-1: record at 0.5× and the new part plays an octave higher (and twice as fast) at 1×; record at 2× and it plays an octave lower. At any other speed (continuous, 0 or reverse) recording runs at 1×.
 2. **Track** — selects tracks 1–4.
 3. **Overdub** — 0 replaces the signal, 1 adds fully; intermediate positions blend old and new material.
-4. **Wow** — tape-style pitch movement; it is disabled while recording.
+4. **Wow** — tape-style pitch movement; it is disabled while recording. The amount is shown on the bottom row as `WOW 0–100`, between `DUB` and `LOOP`.
 
 ![Tape loop screen](oled/06-tape-loop.png)
 

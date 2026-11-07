@@ -15,3 +15,6 @@ Nastro-Organelle/Patches/Nastro/p[0-9]*-*
 Nastro-Organelle/Patches/Nastro/projects.txt
 Nastro-Organelle/Patches/Nastro/current.txt
 Nastro-Organelle/Patches/Nastro/mirror.txt
+
+# release builds
+dist/

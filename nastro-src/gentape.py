@@ -16,7 +16,8 @@ rak = t.obj(20, 100, "r aux-key")
 selk = t.obj(20, 130, "sel 65 66 67 69 68")
 rfs = t.obj(260, 100, "r fs")
 fs1 = t.obj(260, 130, "sel 1")
-t.c(rak, selk); t.c(rfs, fs1)
+kDf = t.obj(20, 115, "pipe 0"); fDf = t.obj(260, 115, "pipe 0")
+t.c(rak, kDf); t.c(kDf, selk); t.c(rfs, fDf); t.c(fDf, fs1)     # after the tape position update (apply_keydefer.py)
 
 # play toggle
 pf = t.obj(20, 170, "f")
@@ -144,6 +145,9 @@ thL = t.obj(20, 960, "throw~ tape-busL")
 thR = t.obj(200, 960, "throw~ tape-busR")
 stop_all = t.msg(900, 680, "stop")
 tws, dubs = [], []
+xAs, xBs, rds = [], [], []
+# punch fade gain (apply_punchfade.py): written = old + g*(dub*old + in - old)
+pG = t.obj(900, 640, "line~")
 for k in range(4):
     x = 20 + k * 200
     rd = t.obj(x, 720, f"tabread4~ tape{k+1}")
@@ -157,9 +161,9 @@ for k in range(4):
     rdB = t.obj(x, 740, f"tabread4~ tape{k+1}")
     xA = t.obj(x, 790, "*~"); xB = t.obj(x + 40, 790, "*~"); xS = t.obj(x, 820, "+~")
     t.c(idx, rdB); t.c(bAdd, rdB, 0, 1)
-    t.c(rd, xA, 0, 0); t.c(gA, xA, 0, 1); t.c(rdB, xB, 0, 0); t.c(gB, xB, 0, 1)
+    t.c(rd, xA, 0, 0); t.c(rdB, xB, 0, 0); xAs.append(xA); xBs.append(xB); rds.append(rd)
     t.c(xA, xS, 0, 0); t.c(xB, xS, 0, 1); t.c(xS, lv)
-    t.c(idx, rd); t.c(rl, rlm); t.c(rlm, rll); t.c(rll, lv, 0, 1)
+    t.c(rl, rlm); t.c(rlm, rll); t.c(rll, lv, 0, 1)
     # pan (balance law: centre = full level on both sides)
     rpan = t.obj(x + 130, 880, f"r tape-pan{k+1}")
     panE = t.obj(x + 130, 900, "expr min(1 \\, 2*(1-$f1)) \\; min(1 \\, 2*$f1)")
@@ -185,7 +189,10 @@ for k in range(4):
     t.c(gLp, thL); t.c(gRp, thR)
     vuEnv = t.obj(x, 990, "env~ 2048 1024")
     t.c(bq, vuEnv); t.c(vuEnv, t.obj(x, 1020, f"s tape-vu{k+1}"))
-    t.c(rd, db); t.c(db, ad, 0, 0); t.c(rin, ad, 0, 1); t.c(ad, tw)
+    t.c(rd, db); t.c(db, ad, 0, 0); t.c(rin, ad, 0, 1)
+    pD = t.obj(x + 70, 795, "-~"); pM = t.obj(x + 110, 795, "*~"); pS = t.obj(x + 150, 795, "+~")
+    t.c(ad, pD, 0, 0); t.c(rd, pD, 0, 1); t.c(pD, pM, 0, 0); t.c(pG, pM, 0, 1)
+    t.c(pM, pS, 0, 0); t.c(rd, pS, 0, 1); t.c(pS, tw)
     t.c(stop_all, tw); t.c(T, rd, 0, 1)
     tws.append(tw); dubs.append(db)
 
@@ -199,7 +206,17 @@ wspA = t.obj(1000, 470, "+ 1")
 lpre = t.obj(900, 540, "list prepend 1")
 rte = t.obj(900, 570, "route 1 2 3 4")
 t.c(recT, recst, 0); t.c(recst, rfst, 1, 1); t.c(recst, ru, 0)
-t.c(ru, stop_all, 1); t.c(ru, rfst, 0); t.c(rfst, rsel); t.c(rsel, recA)
+t.c(ru, rfst, 0); t.c(rfst, rsel)
+# stop: fade out, then stop the writers ; start: cancel a pending stop, stop now, fade in, then start
+pOut = t.obj(1000, 330, "t b b")
+pOutM = t.msg(1100, 360, "0 8")
+pDl = t.obj(1000, 390, "delay 10")
+t.c(ru, pOut, 1); t.c(pOut, pOutM, 1); t.c(pOutM, pG); t.c(pOut, pDl, 0); t.c(pDl, stop_all)
+pIn = t.obj(800, 420, "t b b b b")
+pInM = t.msg(860, 450, "0 \\, 1 8")
+pStp = t.msg(820, 450, "stop")
+t.c(rsel, pIn); t.c(pIn, pStp, 3); t.c(pStp, pDl); t.c(pIn, stop_all, 2); t.c(pIn, pInM, 1); t.c(pInM, pG)
+t.c(pIn, recA, 0)
 t.c(recA, set0, 1); t.c(recA, onsetF, 0)
 t.c(onsetF, wspA); t.c(wspA, lpre); t.c(lpre, rte)
 for k in range(4):
@@ -207,7 +224,12 @@ for k in range(4):
     t.c(rte, sm, k); t.c(sm, tws[k])
 # wrap while recording -> restart writer at 0
 wsp = t.obj(1350, 430, "spigot")
-t.c(wsel, wsp); t.c(recst, wsp, 1, 1); t.c(wsp, onsetF); t.c(rewT, wsp, 0)
+t.c(wsel, wsp)
+wOn = t.obj(1450, 400, "sel 0")
+t.c(recst, wOn, 1); t.c(wOn, wsp, 1, 1)                       # rec on -> open now
+wOff = t.msg(1500, 400, "0")
+t.c(pDl, wOff); t.c(wOff, wsp, 0, 1)                          # rec off -> close after the fade
+t.c(wsp, onsetF); t.c(rewT, wsp, 0)
 
 # --- knobs
 rk = t.obj(600, 100, "r tape-knob")
@@ -227,7 +249,8 @@ t.c(krt, k1b, 0); t.c(k1b, k1t); t.c(k1t, spdin, 0)
 k2a = t.obj(780, 260, "expr int($f1*3.99)+1")
 k2c = t.obj(780, 290, "change")
 k2t = t.obj(780, 320, "t b f f")
-t.c(krt, k2a, 1); t.c(k2a, k2c); t.c(k2c, k2t)
+k2D = t.obj(780, 305, "pipe 0")
+t.c(krt, k2a, 1); t.c(k2a, k2c); t.c(k2c, k2D); t.c(k2D, k2t)
 t.c(k2t, lpre, 1, 1); t.c(k2t, ru, 0)
 # 3 dub
 k3t = t.obj(960, 170, "t f f")
@@ -353,7 +376,8 @@ navK = t.obj(1800, 700, "r aux-key")
 navS = t.obj(1800, 730, "sel 73 75")
 navB = t.msg(1800, 760, "-1")
 navF = t.msg(1860, 760, "1")
-t.c(navK, navS); t.c(navS, navB, 0); t.c(navS, navF, 1)
+nDf = t.obj(1800, 715, "pipe 0")
+t.c(navK, nDf); t.c(nDf, navS); t.c(navS, navB, 0); t.c(navS, navF, 1)
 navE = t.obj(1800, 800, f"expr $f5==2 \\; "
                         f"if($f5==2 \\, min(max($f3+$f1*($f4-$f3) \\, 0) \\, {N}-($f4-$f3)) \\, $f3) \\; "
                         f"if($f5==2 \\, min(max($f3+$f1*($f4-$f3) \\, 0) \\, {N}-($f4-$f3))+($f4-$f3) \\, $f4) \\; "
@@ -434,7 +458,9 @@ t.c(svG, svS)
 fxT = t.obj(2200, 1600, "t b b b b b b")
 t.c(wsp, fxT)
 nE = t.obj(2200, 1660, f"expr if($f2==2 && $f4<{N}-70 \\, max(0 \\, min(65 \\, $f1-$f3+1)) \\, 0)")
-valE = t.obj(2400, 1760, "expr $s2[$f4+$f1]-$f5*seamsave[$f1]+$f5*$s2[$f3+$f1]")
+valE = t.obj(2400, 1760, "expr if(xwm[$f7] \\, $s2[$f4+$f1]+($s2[$f3+$f1]-$s2[max($f3+$f1 \\, 1)])*(1-pgbuf[64-$f6+$f1]*(1-$f5)) \\, $s2[$f4+$f1]-seamsave[$f1]+$s2[$f3+$f1]+pgbuf[64-$f6+$f1]*(1-$f5)*(seamsave[$f1]-$s2[$f3+$f1]))")
+smK = t.obj(2500, 1730, "- 1")
+t.c(smTrk, smK); t.c(smK, valE, 0, 6)
 loAdd = t.obj(2200, 1760, "+ 0"); hiAdd = t.obj(2300, 1760, "+ 0")
 w1 = t.obj(2200, 1820, "tabwrite tape1"); w2 = t.obj(2350, 1820, "tabwrite tape1")
 setM = t.msg(2500, 1700, "set \\$1")
@@ -447,8 +473,8 @@ t.c(fxT, smHi, 2); t.c(smHi, nE, 0, 3); t.c(smHi, hiAdd, 0, 1); t.c(smHi, valE, 
 t.c(fxT, smDub, 1); t.c(smDub, valE, 0, 4)
 t.c(fxT, smT, 0); t.c(smT, nE, 0, 0)                        # c) n (hot)
 # loop j = 0 .. n-1
-nT = t.obj(2200, 1690, "t f b")
-t.c(nE, nT)
+nT = t.obj(2200, 1690, "t f b f")
+t.c(nE, nT); t.c(nT, valE, 2, 5)
 jz = t.msg(2300, 1690, "0")
 jU = t.obj(2200, 1710, "until")
 jF = t.obj(2200, 1730, "f")
@@ -463,4 +489,113 @@ t.c(jT, hiAdd, 2); t.c(hiAdd, w2, 0, 1)                     # restore index hi+j
 t.c(jT, valE, 1); t.c(valE, w1, 0, 0)                       # new value at lo+j (reads hi+j before it is restored)
 sr = t.obj(2350, 1790, "tabread seamsave")
 t.c(jT, sr, 0); t.c(sr, w2, 0, 0)                           # restore hi+j
+t.obj(2600, 1480, "table pgbuf 64")
+pgW = t.obj(2600, 1530, "tabwrite~ pgbuf")
+t.c(pG, pgW)
+pgSp = t.obj(2700, 1500, "spigot")
+t.c(bng, pgSp); t.c(pgSp, pgW)
+t.c(wOn, pgSp, 1, 1); t.c(wOff, pgSp, 0, 1)                    # only while the writer runs
+# --- sample-accurate wrap / per-track crossfade (apply_xfadeauto.py)
+# dW = offset that wraps the absolute read position (idx + onset) into [lo, hi)
+dW = t.obj(2600, 1900, "expr~ ($v1+$f2>=$f3)*(-$f4)+($v1+$f2<$f5)*$f4")
+t.c(idx, dW, 0, 0); t.c(T, dW, 0, 1)
+wHi = t.obj(2600, 1640, f"f {N}"); wLo = t.obj(2700, 1640, "f 0")
+wLen = t.obj(2800, 1640, "expr $f1-$f2")
+wHT = t.obj(2600, 1610, "t f f f"); wLT = t.obj(2700, 1610, "t b f f")
+t.c(hiT, wHT, 0); t.c(loT, wLT, 0)
+t.c(wHT, dW, 2, 2); t.c(wHT, wHi, 1, 1); t.c(wHT, wLen, 0, 0)
+t.c(wLT, dW, 2, 4); t.c(wLT, wLo, 1, 1); t.c(wLT, wLen, 1, 1); t.c(wLT, wHi, 0); t.c(wHi, wLen, 0, 0)
+t.c(wLen, dW, 0, 3)
+# decide before the block that crosses an edge: near hi when going forward, near lo when going backward
+nearE = t.obj(2600, 1700, "expr if($f4>=0 \\, if($f1>$f2-200 \\, 1 \\, 0) \\, if($f1<$f3+200 \\, 2 \\, 0))")
+t.c(T, nearE, 0, 0); t.c(wHT, nearE, 1, 1); t.c(wLT, nearE, 1, 2); t.c(st, nearE, 0, 3)   # direction = speed sign
+nearC = t.obj(2600, 1730, "change")
+nearS = t.obj(2600, 1760, "sel 1 2")
+t.c(nearE, nearC)
+dirF = t.msg(2600, 1790, "1"); dirR = t.msg(2650, 1790, "0")
+t.c(nearS, dirF, 0); t.c(nearS, dirR, 1)
+dP = t.obj(2600, 1850, "pack f f f")              # direction, hi, lo
+dT = t.obj(2600, 1820, "t f b b")
+t.c(dirF, dT); t.c(dirR, dT)
+t.c(dT, wLo, 2); t.c(wLo, dP, 0, 2)
+t.c(dT, wHi, 1); t.c(wHi, dP, 0, 1)
+t.c(dT, dP, 0, 0)
+t.obj(2600, 1580, "table xwm 4")                  # per-track wrap mode, read by the seam fix
+# leaving the edge zone (after the wrap): restore the guarded samples first, then act on the new zone
+nearT = t.obj(2800, 1760, "t f b")
+restB = t.obj(2800, 1790, "t b")
+t.c(nearC, nearT); t.c(nearT, restB, 1); t.c(nearT, nearS, 0)
+# guard sample m: forward (index, source), backward (index, source), valid forward, valid backward
+GUARD = (("$f2", "$f3", "$f3-1", "$f2-1", "1", "$f3>0"),
+         ("$f2+1", "$f3+1", "$f3-2", "$f2-2", f"$f2+1<{N}", "$f3>1"),
+         ("$f3-1", "$f2-1", "$f2", "$f3", "$f3>0", "1"))
+for k in range(4):
+    x = 2900 + k * 400
+    tb = f"tape{k+1}"
+    # $f1 direction (1 forward), $f2 hi, $f3 lo. forward: e = hi-1, e2 = hi-2, wrapped = lo, past = hi
+    # backward: e = lo, e2 = lo+1, wrapped = hi-1, past = lo-1
+    e = "if($f1 \\, $f2-1 \\, $f3)"; e2 = "if($f1 \\, $f2-2 \\, $f3+1)"
+    w = "if($f1 \\, $f3 \\, $f2-1)"; c = "if($f1 \\, $f2 \\, $f3-1)"
+    pr = f"(2*{tb}[{e}]-{tb}[{e2}])"
+    dPt = t.obj(x, 1860, "t l l")
+    t.c(dP, dPt)
+    dec = t.obj(x, 1880, f"expr abs({tb}[{w}]-{pr})<=abs({tb}[{c}]-{pr})+0.002")
+    t.c(dPt, dec, 1)                                     # decision first
+    decT = t.obj(x, 1905, "t f f f")
+    t.c(dec, decT)
+    xwmW = t.obj(x + 200, 1930, "tabwrite xwm")
+    lbK = t.obj(x + 200, 1880, "loadbang"); mK = t.msg(x + 200, 1905, f"{k}")
+    t.c(lbK, mK); t.c(mK, xwmW, 0, 1)                    # table index = track
+    t.c(decT, xwmW, 2, 0)
+    wF = t.obj(x, 1935, "f 0")
+    t.c(decT, wF, 1, 1)
+    mW = t.obj(x, 1990, "*~ 0"); aW = t.obj(x, 2020, "+~")
+    t.c(decT, mW, 0, 1)
+    t.c(dW, mW, 0, 0); t.c(mW, aW, 0, 0); t.c(idx, aW, 0, 1); t.c(aW, rds[k], 0, 0)   # read index: idx + w*dW
+    # at the wrap: wrapped tracks play straight (A = 1, B = 0), the others crossfade
+    lA = t.obj(x, 2110, "line~"); lB = t.obj(x + 80, 2110, "line~")
+    sl = t.obj(x, 2050, "sel 0")
+    mAx = t.msg(x, 2080, "0 \\, 1 5"); mBx = t.msg(x + 60, 2080, "1 \\, 0 5")
+    tN = t.obj(x + 120, 2050, "t b b")
+    mAn = t.msg(x + 120, 2080, "1"); mBn = t.msg(x + 160, 2080, "0")
+    t.c(xW, wF, 0); t.c(wF, sl)
+    t.c(sl, mAx, 0); t.c(sl, mBx, 0); t.c(sl, tN, 1); t.c(tN, mAn, 0); t.c(tN, mBn, 1)
+    t.c(mAx, lA); t.c(mAn, lA); t.c(mBx, lB); t.c(mBn, lB)
+    t.c(lA, xAs[k], 0, 1); t.c(lB, xBs[k], 0, 1)
+    t.c(lbL, mAn); t.c(lbL, mBn)
+    # interpolation guard
+    for m, (fi, fs, ri, rs, okf, okr) in enumerate(GUARD):
+        gx = x + m * 130
+        # outlet 0: index to guard (-1 = none), outlet 1: where its continuation is. $f4 wrap mode, $f5 rec
+        iE = t.obj(gx, 2160, f"expr if($f4 && !$f5 && if($f1 \\, {okf} \\, {okr}) \\, if($f1 \\, {fi} \\, {ri}) \\, -1) \\; if($f1 \\, {fs} \\, {rs})")
+        t.c(dec, iE, 0, 3); t.c(recst, iE, 1, 4)              # rec state gates the guard
+        t.c(dPt, iE, 0, 0)                               # after the decision (t l l: right outlet first)
+        iP = t.obj(gx, 2190, "pack f f")                 # expr outlets are lazy: collect both
+        t.c(iE, iP, 1, 1); t.c(iE, iP, 0, 0)
+        iU = t.obj(gx, 2220, "unpack f f")
+        t.c(iP, iU)
+        srcF = t.obj(gx + 70, 2250, "f")
+        t.c(iU, srcF, 1, 1)
+        iS = t.obj(gx, 2250, "moses 0")
+        t.c(iU, iS, 0, 0)
+        gT = t.obj(gx, 2280, "t b f f f")               # 3: remember index, 2: save original, 1: write index, 0: copy
+        t.c(iS, gT, 1)
+        idxF = t.obj(gx, 2460, "f -1")
+        t.c(gT, idxF, 3, 1)
+        svR = t.obj(gx + 70, 2310, f"tabread {tb}"); svF = t.obj(gx + 70, 2340, "f")
+        t.c(gT, svR, 2); t.c(svR, svF, 0, 1)
+        wG = t.obj(gx, 2370, f"tabwrite {tb}")
+        t.c(gT, wG, 1, 1)
+        cpR = t.obj(gx, 2340, f"tabread {tb}")
+        t.c(gT, srcF, 0); t.c(srcF, cpR); t.c(cpR, wG, 0, 0)
+        # restore: idx >= 0 -> write the saved value back there, idx = -1
+        t.c(restB, idxF, 0)
+        rS = t.obj(gx, 2490, "moses 0")
+        t.c(idxF, rS)
+        rT = t.obj(gx, 2520, "t b b f")
+        t.c(rS, rT, 1)
+        wR = t.obj(gx, 2580, f"tabwrite {tb}")
+        t.c(rT, wR, 2, 1); t.c(rT, svF, 1); t.c(svF, wR, 0, 0)
+        mNone = t.msg(gx + 70, 2550, "-1")
+        t.c(rT, mNone, 0); t.c(mNone, idxF, 0, 1)
 t.save("tape.pd")

@@ -42,6 +42,17 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
   each pass wrote up to 65 samples past the loop end and left a seam at the loop start. While recording a loop,
   the samples written past the end are moved to the start (re-mixed for overdub) and the area after the end is
   restored from a copy saved when recording starts / the loop end moves.
+- Punch-in/out fades (`apply_punchfade.py`, `test_punch.py`): the writer blends old → new over 8 ms at rec start
+  and back at rec stop, and keeps running until the fade-out is done, so punches leave no step on tape. The gain
+  of the last block is kept in `pgbuf` so the seam fix stays exact when a fade crosses the loop end.
+- Key timing on the device (`apply_keydefer.py`, `test_devorder.py`): the Organelle delivers keys after a DSP tick
+  but before that tick's `[bang~]` updates the tape position, so rec started the writer one block behind the
+  head (a 64-sample silent gap at every restart). Tape keys, footswitch, navigation and track changes now go
+  through `[pipe 0]`, which runs them after the position update. Mac batch tests can't reproduce the device order.
+- Sample-accurate wrap (`apply_xfadeauto.py`): just before the head reaches a loop edge each track is checked. If
+  the loop start continues the audio at the end (recorded in loop mode), its read index wraps per sample
+  (`expr~` offset) with no crossfade; otherwise it reads past the end and crossfades as before. The 3 samples
+  `tabread4~` reads across the edge are temporarily replaced with the continuation and restored after the wrap.
 - Lanes under the reels update 4x/s while recording (was 10x/s with a full rebuild each time).
 - Speed, knob 1 in TAPE: 7 octave steps (-2 -1 -0.5 0 0.5 1 2) spread over the knob travel; with AUX held it is
   continuous (-2..2, magnets at 1 / 0 / -1). Global for all tracks. Recording forces 1x.
@@ -77,6 +88,9 @@ a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_vo
 ## Mix and effects
 - Limiter on the master (`apply_limiter.py`): per-block peak (`tabsend~` + `array max`), threshold 0.89, instant
   attack, ~150 ms release, final `clip~`. No added latency. Metronome and tape input are outside it.
+- Master compressor (`apply_comp.py`, `test_comp.py`): MIX page 4 MASTER, COMP amount (threshold -2..-30 dBFS RMS,
+  ratio 4:1, auto make-up up to +8 dB) and SPEED (attack 5–50 ms, release 50–800 ms). Feed-forward: `env~ 1024 128`
+  on (L+R)/2 -> gain -> `line~`, before the limiter; off = no control work. GR shown live. Pickup ctx 22 (`pkval` 92).
 - Reverb (`genrev.py` → `reverb.pd`, `apply_reverb.py`): pre-delay (`vd~`) → 4 series allpasses → 8-line FDN
   (31.7–73.7 ms, Hadamard butterflies), per-line `lop~` and decay gain (10^(-3L/T60)/sqrt 8), 2 modulated lines.
   AUX + knobs on the FX page: DEC (T60 0.4–12 s), TONE (1.5–12 kHz), PRE (0–120 ms), MOD (ctx 16). `switch~`: on

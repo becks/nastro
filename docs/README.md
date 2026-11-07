@@ -210,6 +210,17 @@ Press **AUX + D#** once more for the FILTER page.
 
 The FILTER page has a DJ-style filter for each tape track: knob 1–4 = track 1–4. The centre is off (a small dead zone makes it easy to find); turning left gives a low-pass filter (from 18 kHz down to 80 Hz), turning right a high-pass filter (from 20 Hz up to 8 kHz). Each dial shows `LP`, `HP` or `--` and the cutoff frequency in Hz. Hold AUX to set each track’s **resonance** (`Q`). Filters affect playback only, not what is recorded on the tape, and are saved with the project.
 
+Press **AUX + D#** once more for the MASTER page.
+
+![Master compressor screen](oled/19-master-comp.png)
+
+The MASTER page has a compressor on the whole output, before the limiter:
+
+1. **COMP** — amount. At 0 it is off; turning it up lowers the threshold (down to −30 dB) and adds make-up gain automatically, so the mix gets denser and more even without getting quieter.
+2. **SPEED** — from fast (5 ms attack, 50 ms release: audible pumping) to slow (50 ms / 800 ms: glue).
+
+**GR** shows the current gain reduction in dB. The compressor settings are saved with the project.
+
 The master has a fast limiter with no added latency. The metronome and tape input are outside the limiter.
 
 ## Sequencers and tempo

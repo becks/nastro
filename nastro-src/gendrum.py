@@ -387,7 +387,7 @@ fArmB = d.obj(450, 880, "t b")                          # [sel 1] reject passes 
 d.c(fRecS, fArmB, 1); d.c(fArmB, fArmD)
 fArmS = d.obj(450, 940, "sel 1")
 d.c(fArmD, fArmS)
-d.c(fArmS, d.msg(450, 970, osc4("gFillArea", "iiiiii", "88 0 21 10 1") + " " + osc4("gPrintln", "iiiiis", "90 1 8 0 ATT")))
+d.c(fArmS, d.msg(450, 970, osc4("gFillArea", "iiiiii", "88 0 21 10 1") + " " + osc4("gPrintln", "iiiiis", "90 1 8 0 ARM")))
 
 # kit per project: save it, load the base kit then the project's kit (if there is one)
 dkS = d.obj(2300, 100, "makefilename p%d-drums.wav")

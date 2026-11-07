@@ -1,5 +1,5 @@
 #N canvas 40 40 900 600 12;
-#X text 20 5 mirror: copy of the OLED to a computer - menu SCHERMO SU MAC toggles it - mirror.txt = its IP address;
+#X text 20 5 mirror: copy of the OLED to a computer - menu SCREEN TO MAC toggles it - mirror.txt = its IP address;
 #X obj 20 30 text define nst-mirror;
 #X obj 150 450 netsend -u;
 #X obj 20 90 f 0;
@@ -13,17 +13,17 @@
 #X obj 20 240 moses 1;
 #X obj 20 270 t b b;
 #X msg 120 300 0;
-#X msg 20 300 \; nst-proj-status symbol MANCA-MIRROR.TXT \; nst-mirror-on 0;
+#X msg 20 300 \; nst-proj-status symbol NO-MIRROR.TXT \; nst-mirror-on 0;
 #X msg 150 255 0;
 #X obj 150 280 text get nst-mirror;
 #X msg 150 310 connect \$1 9123;
 #X obj 300 180 t b b;
 #X msg 300 210 disconnect;
-#X msg 400 210 \; nst-proj-status symbol SCHERMO-OFF \; nst-mirror-on 0;
+#X msg 400 210 \; nst-proj-status symbol SCREEN-OFF \; nst-mirror-on 0;
 #X obj 300 480 spigot;
 #X obj 150 480 sel 1;
 #X obj 150 510 delay 200;
-#X msg 250 510 \; nst-proj-status symbol SCHERMO-ON \; nst-mirror-on 1;
+#X msg 250 510 \; nst-proj-status symbol SCREEN-ON \; nst-mirror-on 1;
 #X msg 150 540 \; nst-redraw bang;
 #X obj 300 390 list prepend send;
 #X obj 300 420 list trim;

@@ -246,7 +246,7 @@
 #X obj 960 410 r aux;
 #X obj 900 455 sel 0 1;
 #X obj 1600 470 t b b b b b b;
-#X msg 1600 500 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 1 RIVERBERO \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 15 8 1 DEC \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 27 8 1 TONO \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 39 8 1 PRE \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 51 8 1 MOD \; oscOut sendtyped /oled/gBox iiiiii 3 34 14 93 9 1 \; oscOut sendtyped /oled/gBox iiiiii 3 34 26 93 9 1 \; oscOut sendtyped /oled/gBox iiiiii 3 34 38 93 9 1 \; oscOut sendtyped /oled/gBox iiiiii 3 34 50 93 9 1;
+#X msg 1600 500 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 1 REVERB \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 15 8 1 DEC \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 27 8 1 TONE \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 39 8 1 PRE \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 51 8 1 MOD \; oscOut sendtyped /oled/gBox iiiiii 3 34 14 93 9 1 \; oscOut sendtyped /oled/gBox iiiiii 3 34 26 93 9 1 \; oscOut sendtyped /oled/gBox iiiiii 3 34 38 93 9 1 \; oscOut sendtyped /oled/gBox iiiiii 3 34 50 93 9 1;
 #X obj 1600 560 f;
 #X obj 1670 560 f;
 #X obj 1740 560 f;

@@ -43,16 +43,16 @@ ENGINES = [
         ("ATK", "expr int(10+pow($f1 \\, 2)*3990)", "air-atk", 0.5, "t f"),
         ("REL", "expr int(100+pow($f1 \\, 2)*7900)", "air-rel", 0.5, "t f"),
         ("Q", "expr 2*pow(30 \\, $f1)", "air-q", 0.5, "expr int($f1)"),
-        ("MOTO", "t f", "air-mot", 0.4, "expr int($f1*100)"),
+        ("MOVE", "t f", "air-mot", 0.4, "expr int($f1*100)"),
     ]),
     ("bell", 6, "bell-voice", 0.3, [
         ("DECAY", "expr int(300+pow($f1 \\, 2)*14700)", "bell-dec", 0.4, "expr int($f1/100)/10.0"),
         ("BRITE", "expr 0.2+$f1*0.8", "bell-brite", 0.5, "expr int($f1*100)"),
-        ("INARM", "t f", "bell-str", 0.7, "expr int($f1*100)"),
-        ("BATT", "expr $f1*2.5", "bell-beat", 0.3, "expr int($f1*10)/10.0"),
+        ("INHAR", "t f", "bell-str", 0.7, "expr int($f1*100)"),
+        ("BEAT", "expr $f1*2.5", "bell-beat", 0.3, "expr int($f1*10)/10.0"),
     ], 6),
 ]
-NAMES = ["FM", "SUB", "PLUK", "PAD", "SMPL", "ARIA", "VETRO"]
+NAMES = ["FM", "SUB", "PLUK", "PAD", "SMPL", "AIR", "GLASS"]
 
 
 # ---------------------------------------------------------------- voices
@@ -381,7 +381,7 @@ for args in ENGINES:
 
 # ---------------------------------------------------------------- synth.pd (dispatcher + screen)
 s = Patch(1300, 900)
-s.text(20, 5, "synth: SYNTH mode. AUX+C again while in SYNTH = next engine (FM SUB PLUK PAD SMPL ARIA VETRO)")
+s.text(20, 5, "synth: SYNTH mode. AUX+C again while in SYNTH = next engine (FM SUB PLUK PAD SMPL AIR GLASS)")
 s.obj(700, 5, "text define syn-rows")
 lb = s.obj(20, 40, "loadbang")
 lbT = s.obj(20, 70, "t b b b")
@@ -502,7 +502,7 @@ s.c(s.obj(1550, 310, "r smp-armed"), fArm, 0, 1)
 s.c(s.obj(1650, 310, "r smp-armed"), dirty)
 armS = s.obj(1550, 370, "sel 1 0")
 s.c(recS, fArm, 1); s.c(fArm, armS)
-s.c(armS, s.msg(1550, 400, osc5("gFillArea", "iiiiii", "67 0 21 10 1") + " " + osc5("gPrintln", "iiiiis", "69 1 8 0 ATT")), 0)
+s.c(armS, s.msg(1550, 400, osc5("gFillArea", "iiiiii", "67 0 21 10 1") + " " + osc5("gPrintln", "iiiiis", "69 1 8 0 ARM")), 0)
 s.c(armS, fMon, 1); s.c(fMon, monS); s.c(monS, monM)
 s.c(octF, octM)
 # 4 parameter rows: label, value, bar

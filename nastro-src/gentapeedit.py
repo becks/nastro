@@ -213,9 +213,9 @@ J_UNDO_A = ujob(2300, 900, ["$f2", "$f3", "6", "0", "$f4"])         # swap: tape
 J_UNDO_B = ujob(2500, 900, ["8", "$f5", "$f2", "$f3", "$f4"])         #       te-undo -> tape
 J_UNDO_C = ujob(2700, 900, ["6", "0", "8", "$f5", "$f4"])             #       te-tmp -> te-undo
 R = {}
-for i, (pend, outs) in enumerate((("TAGLIATO", ["$f2", "$f3", "$f4"]), ("INCOLLATO", ["$f2", "$f3", f"min($f5 \\, {N}-$f3)"]),
-                                  ("INVERTITO", ["$f2", "$f3", "$f4"]), ("CANCELLATO", ["$f2", "$f3", "$f4"]),
-                                  ("DUPLICATO", ["$f2", "$f3+$f4", f"min($f4 \\, {N}-$f3-$f4)"]))):
+for i, (pend, outs) in enumerate((("CUT", ["$f2", "$f3", "$f4"]), ("PASTED", ["$f2", "$f3", f"min($f5 \\, {N}-$f3)"]),
+                                  ("REVERSED", ["$f2", "$f3", "$f4"]), ("CLEARED", ["$f2", "$f3", "$f4"]),
+                                  ("DUPLICATED", ["$f2", "$f3+$f4", f"min($f4 \\, {N}-$f3-$f4)"]))):
     R[pend] = rescan(20 + i * 220, 1000, outs, pend)
 
 # ================================================= requests
@@ -238,7 +238,7 @@ te.c(opT, busy1, 1); te.c(busy1, busyF, 0, 1)
 opS = te.obj(20, 600, "sel 1 2 3 4 5 6 7")
 te.c(opT, opS, 0)
 # 1 CUT / 2 COPY: clipboard = region (size and length), then copy
-for k, (label, cont) in enumerate((("TAGLIO...", 11), ("COPIO...", 21))):
+for k, (label, cont) in enumerate((("CUTTING", 11), ("COPYING", 21))):
     x = 20 + k * 250
     t = te.obj(x, 640, "t b b b")
     te.c(opS, t, k)
@@ -261,13 +261,13 @@ psE = te.obj(520, 670, "> 0")
 psS = te.obj(520, 700, "sel 1 0")
 te.c(clipF, psE); te.c(psE, psS)
 psGo = te.obj(520, 730, "t b b")
-te.c(psS, psGo, 0); te.c(psGo, status(620, 730, "INCOLLO..."), 1); te.c(psGo, backup(520, 760, 30, BK_PASTE), 0)
+te.c(psS, psGo, 0); te.c(psGo, status(620, 730, "PASTING"), 1); te.c(psGo, backup(520, 760, 30, BK_PASTE), 0)
 psNo = te.obj(700, 730, "t b b")
-te.c(psS, psNo, 1); te.c(psNo, status(760, 760, "MEMORIA-VUOTA"), 1); te.c(psNo, busy0, 0)
+te.c(psS, psNo, 1); te.c(psNo, status(760, 760, "CLIP-EMPTY"), 1); te.c(psNo, busy0, 0)
 # 4 REVERSE: region -> te-tmp ; play te-tmp backwards into te-rev (real time) ; te-rev -> region
 rvT = te.obj(800, 640, "t b b b")
 te.c(opS, rvT, 3)
-te.c(rvT, status(900, 640, "INVERTO..."), 2)
+te.c(rvT, status(900, 640, "REVERSING"), 2)
 rvL = te.obj(900, 670, "f")
 te.c(regE, rvL, 1, 1)
 te.c(rvT, rvL, 1); te.c(rvL, te.msg(900, 700, "\\; te-tmp resize \\$1 \\; te-rev resize \\$1"))
@@ -309,7 +309,7 @@ te.c(rvDel, go(1800, 970, 42, J_REV_BACK))
 # 5 CLEAR
 clT = te.obj(1100, 640, "t b b")
 te.c(opS, clT, 4)
-te.c(clT, status(1200, 640, "CANCELLO..."), 1)
+te.c(clT, status(1200, 640, "CLEARING"), 1)
 te.c(clT, backup(1100, 670, 50, BK_REGION), 0)
 # 6 DUPLICATE (needs room after the region)
 dpE = pexpr(1350, 640, f"expr {N}-$f3-$f4>64")
@@ -318,9 +318,9 @@ te.c(opS, dpB, 5); te.c(dpB, dpE)
 dpS = te.obj(1350, 700, "sel 1 0")
 te.c(dpE, dpS)
 dpGo = te.obj(1350, 730, "t b b")
-te.c(dpS, dpGo, 0); te.c(dpGo, status(1450, 730, "DUPLICO..."), 1); te.c(dpGo, backup(1350, 760, 60, BK_DUP), 0)
+te.c(dpS, dpGo, 0); te.c(dpGo, status(1450, 730, "DUPLICATING"), 1); te.c(dpGo, backup(1350, 760, 60, BK_DUP), 0)
 dpNo = te.obj(1500, 730, "t b b")
-te.c(dpS, dpNo, 1); te.c(dpNo, status(1560, 760, "FINE-NASTRO"), 1); te.c(dpNo, busy0, 0)
+te.c(dpS, dpNo, 1); te.c(dpNo, status(1560, 760, "TAPE-END"), 1); te.c(dpNo, busy0, 0)
 
 # 7 UNDO (swap te-undo <-> tape region; pressed again = redo)
 unB = te.obj(1700, 610, "t b")
@@ -332,12 +332,12 @@ unS = te.obj(1700, 670, "sel 1 0")
 te.c(unE, unS)
 unGo = te.obj(1700, 700, "t b b b")
 te.c(unS, unGo, 0)
-te.c(unGo, status(1800, 700, "ANNULLO..."), 2)
+te.c(unGo, status(1800, 700, "UNDOING"), 2)
 unV2 = uv(1800, 715, "len")
 te.c(unGo, unV2, 1); te.c(unV2, te.msg(1800, 730, "\\; te-tmp resize \\$1"))
 te.c(unGo, go(1700, 760, 71, J_UNDO_A), 0)
 unNo = te.obj(1900, 670, "t b b")
-te.c(unS, unNo, 1); te.c(unNo, status(1950, 700, "NIENTE-DA-ANNULLARE"), 1); te.c(unNo, busy0, 0)
+te.c(unS, unNo, 1); te.c(unNo, status(1950, 700, "NO-UNDO"), 1); te.c(unNo, busy0, 0)
 # recording or loading a project makes the backup meaningless: forget it
 unF0 = te.msg(2000, 600, "0")
 te.c(unF0, uv(2000, 630, "len"))
@@ -358,7 +358,7 @@ te.c(cdB, go(2300, 1290, 72, J_UNDO_B), 5)        # undo swap steps
 te.c(cdB, go(2400, 1290, 73, J_UNDO_C), 6)
 unDone = te.obj(2500, 1290, "t b b b b")
 te.c(cdB, unDone, 7)
-te.c(unDone, te.msg(2600, 1320, "\\; te-pend symbol ANNULLATO"), 3)
+te.c(unDone, te.msg(2600, 1320, "\\; te-pend symbol UNDONE"), 3)
 unRs = te.obj(2500, 1380, "pack f f f")
 for o, nm, inl in ((2, "len", 2), (1, "st", 1), (0, "trk", 0)):
     r = uv(2500 + (2 - o) * 50, 1350, nm)
@@ -366,13 +366,13 @@ for o, nm, inl in ((2, "len", 2), (1, "st", 1), (0, "trk", 0)):
 te.c(unRs, te.obj(2500, 1410, "s te-rescan"))
 te.c(te.obj(1200, 1150, "r te-done"), contF); te.c(contF, cd)
 te.c(cd, go(1200, 1230, 12, J_ZERO), 0)                              # cut: now clear the region
-te.c(cd, R["TAGLIATO"], 1)
+te.c(cd, R["CUT"], 1)
 cpDone = te.obj(1300, 1260, "t b b")
-te.c(cd, cpDone, 2); te.c(cpDone, status(1300, 1290, "COPIATO"), 1); te.c(cpDone, busy0, 0)
-te.c(cd, R["INCOLLATO"], 3)
+te.c(cd, cpDone, 2); te.c(cpDone, status(1300, 1290, "COPIED"), 1); te.c(cpDone, busy0, 0)
+te.c(cd, R["PASTED"], 3)
 te.c(cd, rvPass, 4)                                                  # reverse: backwards pass
-te.c(cd, R["INVERTITO"], 5)
-te.c(cd, R["CANCELLATO"], 6)
+te.c(cd, R["REVERSED"], 5)
+te.c(cd, R["CLEARED"], 6)
 # duplicate: move the loop onto the copy (when looping), then rescan
 dpDone = te.obj(1600, 1230, "t b b")
 te.c(cd, dpDone, 7)
@@ -387,7 +387,7 @@ te.c(lsDs, mvE)
 mvP = te.obj(1700, 1350, "pack f f")
 te.c(mvE, mvP, 1, 1); te.c(mvE, mvP, 0, 0)
 te.c(mvP, te.msg(1700, 1380, "\\; tp-loop-set 2 \\$1 \\$2"))
-te.c(dpDone, R["DUPLICATO"], 0)
+te.c(dpDone, R["DUPLICATED"], 0)
 
 # ================================================= menu opened from TAPE: say what the edit will act on
 ctxS = te.obj(20, 1300, "sel 1")
@@ -397,8 +397,8 @@ te.c(te.obj(100, 1300, "r tp-ls"), lsM, 0, 1)
 te.c(ctxS, lsM)
 lsMs = te.obj(20, 1360, "sel 2")
 te.c(lsM, lsMs)
-te.c(lsMs, status(20, 1390, "SU-LOOP"), 0)
-te.c(lsMs, status(150, 1390, "SU-BATTUTA"), 1)
+te.c(lsMs, status(20, 1390, "ON-LOOP"), 0)
+te.c(lsMs, status(150, 1390, "ON-BAR"), 1)
 
 # ================================================= all-tracks driver
 # [r tape-edit] op -> 8 toggles the mode; 1..6 with TUTTE (and 7 after an all-tracks op) run for tracks 1..4
@@ -418,8 +418,8 @@ te.c(tg, tgT)
 te.c(tgT, te.obj(2700, 210, "s te-all"), 1)
 tgS = te.obj(2600, 210, "sel 1 0")
 te.c(tgT, tgS, 0)
-te.c(tgS, status(2600, 240, "TUTTE"), 0)
-te.c(tgS, status(2750, 240, "1-TRACCIA"), 1)
+te.c(tgS, status(2600, 240, "ALL-TRACKS"), 0)
+te.c(tgS, status(2750, 240, "1-TRACK"), 1)
 # other ops: sequence or straight through.  seqE: $f1 op, $f2 TUTTE on, $f3 last undo was all-tracks
 seqE = te.obj(2600, 280, "expr if($f1>=1 && $f1<=6 \\, $f2 \\, if($f1==7 \\, $f3 \\, 0))")
 te.c(tgT, seqE, 1, 1)                              # TUTTE on/off -> cold

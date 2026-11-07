@@ -1,5 +1,5 @@
 #N canvas 40 40 1200 700 12;
-#X text 20 5 synth-air: engine 5 (ARIA). knobs: ATK / REL / Q / MOTO;
+#X text 20 5 synth-air: engine 5 (AIR). knobs: ATK / REL / Q / MOVE;
 #X obj 20 40 r air-notes;
 #X obj 160 40 r synth-panic;
 #X obj 20 80 poly 4 1;
@@ -67,7 +67,7 @@
 #X obj 1050 260 expr int($f1*100);
 #X obj 1050 290 pack f f;
 #X obj 1050 320 spigot;
-#X msg 1050 350 \; syn-row 3 MOTO \$1 \$2;
+#X msg 1050 350 \; syn-row 3 MOVE \$1 \$2;
 #X connect 1 0 3 0;
 #X connect 2 0 3 0;
 #X connect 3 0 4 0;

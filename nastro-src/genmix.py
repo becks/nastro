@@ -353,8 +353,8 @@ x_.c(psel, fxPgAux, 1); x_.c(fxPgAux, fxPgS); x_.c(fxPgS, fxT, 0)
 rvT = x_.obj(1600, 470, "t b b b b b b")
 x_.c(fxPgS, rvT, 1)
 x_.c(rvT, x_.msg(1600, 500, " ".join(
-    [osc2("gPrintln", "iiiiis", "1 1 8 1 RIVERBERO")] +
-    [osc2("gPrintln", "iiiiis", f"1 {15 + k * 12} 8 1 {nm}") for k, nm in enumerate(("DEC", "TONO", "PRE", "MOD"))] +
+    [osc2("gPrintln", "iiiiis", "1 1 8 1 REVERB")] +
+    [osc2("gPrintln", "iiiiis", f"1 {15 + k * 12} 8 1 {nm}") for k, nm in enumerate(("DEC", "TONE", "PRE", "MOD"))] +
     [osc2("gBox", "iiiiii", f"34 {14 + k * 12} 93 9 1") for k in range(4)])), 5)
 rvV = []
 for k in range(4):

@@ -1,5 +1,5 @@
 #N canvas 40 40 1300 900 12;
-#X text 20 5 synth: SYNTH mode. AUX+C again while in SYNTH = next engine (FM SUB PLUK PAD SMPL ARIA VETRO);
+#X text 20 5 synth: SYNTH mode. AUX+C again while in SYNTH = next engine (FM SUB PLUK PAD SMPL AIR GLASS);
 #X obj 700 5 text define syn-rows;
 #X obj 20 40 loadbang;
 #X obj 20 70 t b b b;
@@ -83,8 +83,8 @@
 #X msg 1020 400 \; oscOut sendtyped /oled/gPrintln iiiiis 3 38 1 8 0 PLUK;
 #X msg 1130 400 \; oscOut sendtyped /oled/gPrintln iiiiis 3 38 1 8 0 PAD;
 #X msg 1240 400 \; oscOut sendtyped /oled/gPrintln iiiiis 3 38 1 8 0 SMPL;
-#X msg 1350 400 \; oscOut sendtyped /oled/gPrintln iiiiis 3 38 1 8 0 ARIA;
-#X msg 1460 400 \; oscOut sendtyped /oled/gPrintln iiiiis 3 38 1 8 0 VETRO;
+#X msg 1350 400 \; oscOut sendtyped /oled/gPrintln iiiiis 3 38 1 8 0 AIR;
+#X msg 1460 400 \; oscOut sendtyped /oled/gPrintln iiiiis 3 38 1 8 0 GLASS;
 #X obj 1100 340 f;
 #X obj 1100 310 r nst-oct;
 #X msg 1100 370 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 92 1 8 1 oct \$1;
@@ -102,7 +102,7 @@
 #X obj 1550 310 r smp-armed;
 #X obj 1650 310 r smp-armed;
 #X obj 1550 370 sel 1 0;
-#X msg 1550 400 \; oscOut sendtyped /oled/gFillArea iiiiii 3 67 0 21 10 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 69 1 8 0 ATT;
+#X msg 1550 400 \; oscOut sendtyped /oled/gFillArea iiiiii 3 67 0 21 10 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 69 1 8 0 ARM;
 #X obj 800 450 t b b b b;
 #X obj 700 420 f;
 #X obj 600 420 f;

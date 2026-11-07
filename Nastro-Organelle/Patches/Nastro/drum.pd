@@ -204,7 +204,7 @@
 #X obj 530 850 r drum-armed;
 #X obj 450 880 t b;
 #X obj 450 940 sel 1;
-#X msg 450 970 \; oscOut sendtyped /oled/gFillArea iiiiii 3 88 0 21 10 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 90 1 8 0 ATT;
+#X msg 450 970 \; oscOut sendtyped /oled/gFillArea iiiiii 3 88 0 21 10 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 90 1 8 0 ARM;
 #X obj 2300 100 makefilename p%d-drums.wav;
 #X obj 2300 70 r nst-save;
 #X msg 2300 130 write -wave -bytes 2 \$1 drums;

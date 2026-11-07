@@ -1,10 +1,10 @@
 # exec'd from gen.py: builds mirror.pd - mirrors the OLED (and the LED) to a computer over Wi-Fi, for screen recording.
-# Off at start. The projects menu item "SCHERMO SU MAC" toggles it ([r nst-mirror-toggle]); the state is published
+# Off at start. The projects menu item "SCREEN TO MAC" toggles it ([r nst-mirror-toggle]); the state is published
 # on [s nst-mirror-on]. The computer's IP address is read from mirror.txt next to the patch (e.g. "192.168.1.114;").
 # Commands go out as UDP FUDI text on port 9123, the format oled-sim.py understands.
 # On the computer: OLED_BIND=0.0.0.0 python3 oled-sim.py, then open http://localhost:8123
 mi = Patch(900, 600)
-mi.text(20, 5, "mirror: copy of the OLED to a computer - menu SCHERMO SU MAC toggles it - mirror.txt = its IP address")
+mi.text(20, 5, "mirror: copy of the OLED to a computer - menu SCREEN TO MAC toggles it - mirror.txt = its IP address")
 mi.obj(20, 30, "text define nst-mirror")
 ns = mi.obj(150, 450, "netsend -u")
 # toggle
@@ -30,7 +30,7 @@ mi.c(has, missT, 0)
 z0 = mi.msg(120, 300, "0")
 mi.c(missT, z0, 1)
 mi.c(z0, onF, 0, 1)
-mi.c(missT, mi.msg(20, 300, "\\; nst-proj-status symbol MANCA-MIRROR.TXT \\; nst-mirror-on 0"), 0)
+mi.c(missT, mi.msg(20, 300, "\\; nst-proj-status symbol NO-MIRROR.TXT \\; nst-mirror-on 0"), 0)
 gz = mi.msg(150, 255, "0")
 get = mi.obj(150, 280, "text get nst-mirror")
 mi.c(has, gz, 1)
@@ -44,7 +44,7 @@ mi.c(tgS, offT, 1)
 disc = mi.msg(300, 210, "disconnect")
 mi.c(offT, disc, 1)
 mi.c(disc, ns)
-mi.c(offT, mi.msg(400, 210, "\\; nst-proj-status symbol SCHERMO-OFF \\; nst-mirror-on 0"), 0)
+mi.c(offT, mi.msg(400, 210, "\\; nst-proj-status symbol SCREEN-OFF \\; nst-mirror-on 0"), 0)
 # connection status: gate the relay; when connected tell the menu and redraw everything for the computer
 ok = mi.obj(300, 480, "spigot")
 mi.c(ns, ok, 0, 1)
@@ -52,7 +52,7 @@ okS = mi.obj(150, 480, "sel 1")
 mi.c(ns, okS)
 dl = mi.obj(150, 510, "delay 200")
 mi.c(okS, dl)
-mi.c(okS, mi.msg(250, 510, "\\; nst-proj-status symbol SCHERMO-ON \\; nst-mirror-on 1"))
+mi.c(okS, mi.msg(250, 510, "\\; nst-proj-status symbol SCREEN-ON \\; nst-mirror-on 1"))
 mi.c(dl, mi.msg(150, 540, "\\; nst-redraw bang"))
 # relays: OLED commands and the LED (only while connected)
 lp = mi.obj(300, 390, "list prepend send")

@@ -3,7 +3,7 @@
 # (Pd 0.49 on the Organelle cannot create folders.) Modules save / load their own data on
 # [r nst-save] / [r nst-load] (project number); this file saves the knob state (pkval) and misc state.
 NP = 99
-EDIT_OPS = ["TAGLIA", "COPIA", "INCOLLA", "INVERTI", "CANCELLA", "DUPLICA", "ANNULLA"]
+EDIT_OPS = ["CUT", "COPY", "PASTE", "REVERSE", "CLEAR", "DUPLICATE", "UNDO"]
 ROWS = 5
 
 
@@ -82,15 +82,15 @@ p.c(mkPk, p.msg(650, 470, "\\; pkval write \\$1"))
 p.c(mkMs, p.msg(800, 470, "\\; nstmisc write \\$1"))
 p.c(saveT, p.obj(950, 440, "s nst-save"), 2)
 p.c(saveT, p.msg(1050, 440, "\\; pm-rebuild bang"), 1)
-svSt = p.obj(500, 500, "makefilename SALVATO-%d")
+svSt = p.obj(500, 500, "makefilename SAVED-%d")
 svOpen = p.obj(650, 530, "delay 150")
 svB0 = p.obj(650, 515, "t b")
 p.c(saveT, svB0, 0); p.c(svB0, svOpen); p.c(svOpen, p.msg(650, 560, "\\; nst-mute 1"))
 p.c(saveT, svSt, 0); p.c(svSt, p.obj(500, 530, "s nst-proj-status"))
-# a save shows SALVO... first, then saves a moment later (writing the tape blocks for a while)
+# a save shows SAVING first, then saves a moment later (writing the tape blocks for a while)
 doSave = p.obj(500, 340, "t f b")
 p.c(p.obj(500, 310, "r pm-save"), doSave)
-p.c(doSave, p.msg(600, 370, "\\; nst-proj-status symbol SALVO... \\; tp-stop bang \\; synth-panic stop \\; nst-mute 0"), 1)
+p.c(doSave, p.msg(600, 370, "\\; nst-proj-status symbol SAVING \\; tp-stop bang \\; synth-panic stop \\; nst-mute 0"), 1)
 svHold = p.obj(500, 370, "pipe 80")
 p.c(doSave, svHold, 0); p.c(svHold, saveT)
 
@@ -114,10 +114,10 @@ p.c(mkMs2, p.msg(1150, 660, "\\; nstmisc read \\$1"))
 p.c(loadT, p.obj(1300, 600, "s nst-load"), 1)
 apT0 = p.obj(1000, 700, "t b f")
 p.c(loadT, apT0, 0)
-ldSt = p.obj(1150, 730, "makefilename CARICATO-%d")
+ldSt = p.obj(1150, 730, "makefilename LOADED-%d")
 ldMo = p.obj(1150, 715, "moses 1")
 p.c(apT0, ldMo, 1); p.c(ldMo, ldSt, 1)
-p.c(ldMo, p.msg(1250, 730, "\\; nst-proj-status symbol NUOVO"), 0); p.c(ldSt, p.obj(1150, 760, "s nst-proj-status"))
+p.c(ldMo, p.msg(1250, 730, "\\; nst-proj-status symbol NEW"), 0); p.c(ldSt, p.obj(1150, 760, "s nst-proj-status"))
 # apply the knob state to the modules, as if every knob had been turned
 CTX = [(0, "fm-knob"), (6, "sub-knob"), (7, "pluk-knob"), (8, "pad-knob"), (10, "smpl-knob"), (2, "tape-knob"),
        (3, "mix-lvl-set"), (11, "mix-pan-set"), (5, "mix-fx-set"), (4, "tempo-knob"), (9, "seq-step-set"),
@@ -242,7 +242,7 @@ p.c(p.obj(950, 1060, "r pm-cur"), svB, 0, 1)
 nwT = p.obj(1000, 1060, "t b b")
 p.c(svGate, nwT, 0)                              # unsaved new project: take the first free number
 nw0 = p.msg(1000, 1030, "0")
-p.c(actR, nw0, 2); p.c(nw0, p.obj(1000, 1045, "s pm-load"))       # + NUOVO: everything back to zero
+p.c(actR, nw0, 2); p.c(nw0, p.obj(1000, 1045, "s pm-load"))       # + NEW: everything back to zero
 nwC = p.obj(1100, 1120, "f")
 nwC1 = p.obj(1150, 1120, "+ 1")
 nwZ = p.msg(1200, 1090, "1")
@@ -279,7 +279,7 @@ p.c(n3Ld, p.obj(1400, 1240, "s pm-load"))
 rmT = p.obj(1500, 1240, "t f f")
 p.c(n3Rm, rmT)
 p.c(rmT, p.msg(1500, 1270, "\\; nstproj \\$1 0 \\; nstproj write projects.txt \\; pm-rebuild bang"), 1)
-rmSt = p.obj(1600, 1270, "makefilename RIMOSSO-%d")
+rmSt = p.obj(1600, 1270, "makefilename REMOVED-%d")
 p.c(rmT, rmSt, 0); p.c(rmSt, p.obj(1600, 1300, "s nst-proj-status"))
 # 4 system: back to the Organelle menu
 p.c(actR, p.msg(1700, 1060, "\\; goHome bang"), 4)
@@ -307,7 +307,7 @@ ttF = p.obj(250, 1480, "f")
 p.c(p.obj(250, 1450, "r pm-ctx"), ttF, 0, 1)
 ttS = p.obj(250, 1510, "sel 0 1")
 p.c(ttT, ttF); p.c(ttF, ttS)
-p.c(ttS, p.msg(250, 1540, oscp("gPrintln", "iiiiis", "1 1 8 1 PROGETTI")), 0)
+p.c(ttS, p.msg(250, 1540, oscp("gPrintln", "iiiiis", "1 1 8 1 PROJECTS")), 0)
 trkF = p.obj(350, 1540, "f 1")
 p.c(p.obj(350, 1510, "r tp-trk"), trkF, 0, 1)
 allT = p.obj(450, 1540, "f 0")
@@ -325,8 +325,8 @@ p.c(dT, szD, 1); p.c(szD, p.obj(600, 1480, "s pm-size"))
 rowsT = p.obj(700, 1450, "t " + " ".join(["b"] * ROWS))
 p.c(dT, rowsT, 1)
 p.c(dT, p.msg(150, 1510, "\\; oscOut sendtyped /oled/gFlip i 3"), 0)
-TXT = {0: ("iiiiiss", "< INDIETRO"), 1: ("iiiiissf", "SALVA PROG \\$1"), 2: ("iiiiiss", "+ NUOVO"),
-       3: ("iiiiisf", "PROG \\$1"), 4: ("iiiiiss", "SISTEMA (Organelle)")}
+TXT = {0: ("iiiiiss", "< BACK"), 1: ("iiiiissf", "SAVE PROJ \\$1"), 2: ("iiiiiss", "+ NEW"),
+       3: ("iiiiisf", "PROG \\$1"), 4: ("iiiiiss", "SYSTEM (Organelle)")}
 for i in range(ROWS):
     X0 = 20 + i * 330
     Y = 13 + i * 10
@@ -363,13 +363,13 @@ for i in range(ROWS):
     mrN = p.obj(X0 + 640, 1860, "== 0")
     p.c(p.obj(X0 + 640, 1830, "r nst-mirror-on"), mrN); p.c(mrN, mrA, 0, 1)
     p.c(p.obj(X0 + 570, 1830, "r nst-mirror-on"), mrB, 0, 1)
-    p.c(mrA, p.msg(X0 + 500, 1920, oscp("gPrintln", "iiiiis", f"4 {Y} 8 \\$1 SCHERMO SU MAC: OFF")))
-    p.c(mrB, p.msg(X0 + 570, 1920, oscp("gPrintln", "iiiiis", f"4 {Y} 8 \\$1 SCHERMO SU MAC: ON")))
+    p.c(mrA, p.msg(X0 + 500, 1920, oscp("gPrintln", "iiiiis", f"4 {Y} 8 \\$1 SCREEN TO MAC: OFF")))
+    p.c(mrB, p.msg(X0 + 570, 1920, oscp("gPrintln", "iiiiis", f"4 {Y} 8 \\$1 SCREEN TO MAC: ON")))
     opR = p.obj(X0 + 260, 1830, "route 1 2 3 4 5 6 7 8")
     p.c(lblR, opR, 5)
     for j, nm in enumerate(EDIT_OPS):
         p.c(opR, p.msg(X0 + 260 + (j % 3) * 70, 1860 + (j // 3) * 30, oscp("gPrintln", "iiiiis", f"4 {Y} 8 \\$1 {nm}")), j)
-    p.c(lblR, p.msg(X0 + 260, 1950, oscp("gPrintln", "iiiiiss", f"4 {Y} 8 \\$2 PROGETTI >")), 6)
+    p.c(lblR, p.msg(X0 + 260, 1950, oscp("gPrintln", "iiiiiss", f"4 {Y} 8 \\$2 PROJECTS >")), 6)
     # op 8: the mode switch; its label shows the current mode
     m8T = p.obj(X0 + 260, 1980, "t f f")
     p.c(opR, m8T, 7)
@@ -378,8 +378,8 @@ for i in range(ROWS):
     m8n = p.obj(X0 + 400, 1980, "== 0")
     p.c(p.obj(X0 + 400, 1950, "r te-all"), m8n); p.c(m8n, m8a, 0, 1)
     p.c(p.obj(X0 + 330, 1950, "r te-all"), m8b, 0, 1)
-    p.c(m8a, p.msg(X0 + 260, 2040, oscp("gPrintln", "iiiiis", f"4 {Y} 8 \\$1 MODO: 1 TRACCIA")))
-    p.c(m8b, p.msg(X0 + 330, 2040, oscp("gPrintln", "iiiiis", f"4 {Y} 8 \\$1 MODO: TUTTE")))
+    p.c(m8a, p.msg(X0 + 260, 2040, oscp("gPrintln", "iiiiis", f"4 {Y} 8 \\$1 MODE: 1 TRACK")))
+    p.c(m8b, p.msg(X0 + 330, 2040, oscp("gPrintln", "iiiiis", f"4 {Y} 8 \\$1 MODE: ALL")))
     p.c(lblP, lblR)
     for code in range(5):
         types, text = TXT[code]
@@ -387,7 +387,7 @@ for i in range(ROWS):
         if code == 1:
             r0 = p.obj(X0 + 100, 1845, "route 0")
             p.c(lblR, r0, 1); p.c(r0, m, 1)
-            p.c(r0, p.msg(X0 + 100, 1875, oscp("gPrintln", "iiiiiss", f"4 {Y} 8 \\$1 SALVA NUOVO")), 0)
+            p.c(r0, p.msg(X0 + 100, 1875, oscp("gPrintln", "iiiiiss", f"4 {Y} 8 \\$1 SAVE NEW")), 0)
         else:
             p.c(lblR, m, code)
     # open project marker

@@ -296,16 +296,16 @@ tb.c(txP, txT)
 tb.c(txT, tb.msg(1500, 540,
                  osc7("gShowInfoBar", "ii", "0") + " " + osc7("gClear", "ii", "1") + " " +
                  osc7("gPrintln", "iiiiis", "1 1 8 1 TOMBOLA") + " " +
-                 osc7("gPrintln", "iiiiisf", "80 14 8 1 GIRO \\$1") + " " +
+                 osc7("gPrintln", "iiiiisf", "80 14 8 1 SPIN \\$1") + " " +
                  osc7("gPrintln", "iiiiisf", "80 26 8 1 GRAV \\$2") + " " +
-                 osc7("gPrintln", "iiiiisf", "80 38 8 1 RIMB \\$3") + " " +
-                 osc7("gPrintln", "iiiiisf", "80 50 8 1 LATI \\$4") + " " +
-                 osc7("gPrintln", "iiiiisf", "68 1 8 1 palle \\$5")), 1)
+                 osc7("gPrintln", "iiiiisf", "80 38 8 1 BNCE \\$3") + " " +
+                 osc7("gPrintln", "iiiiisf", "80 50 8 1 SIDE \\$4") + " " +
+                 osc7("gPrintln", "iiiiisf", "68 1 8 1 balls \\$5")), 1)
 pauE = tb.obj(1400, 570, "expr tmbp[6]")
 tb.c(txT, pauE, 0)
 pauS = tb.obj(1500, 570, "sel 0")
 tb.c(pauE, pauS)
-tb.c(pauS, tb.msg(1500, 600, osc7("gFillArea", "iiiiii", "68 0 60 10 1") + " " + osc7("gPrintln", "iiiiis", "70 1 8 0 PAUSA")))
+tb.c(pauS, tb.msg(1500, 600, osc7("gFillArea", "iiiiii", "68 0 60 10 1") + " " + osc7("gPrintln", "iiiiis", "70 1 8 0 PAUSE")))
 tb.c(tdS, tb.msg(1650, 480, osc7("gFillArea", "iiiiii", f"0 11 {CX + RC + 4} {64 - 11} 0")), 1)
 # polygon edges
 pgN = tb.obj(1700, 640, "expr tmbp[4]")

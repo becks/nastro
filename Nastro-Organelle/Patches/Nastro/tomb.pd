@@ -162,10 +162,10 @@
 #X obj 1500 480 expr int(tmbp[1]*100/1.2+0.5*(tmbp[1]>0)-0.5*(tmbp[1]<0)) \;  int(tmbp[2]/0.6*100+0.5) \;  int((tmbp[3]-0.3)/0.7*100+0.5) \;  tmbp[4] \;  tmbp[7] \;  tmbp[6];
 #X obj 1500 510 pack f f f f f f;
 #X obj 1400 525 t b l;
-#X msg 1500 540 \; oscOut sendtyped /oled/gShowInfoBar ii 3 0 \; oscOut sendtyped /oled/gClear ii 3 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 1 TOMBOLA \; oscOut sendtyped /oled/gPrintln iiiiisf 3 80 14 8 1 GIRO \$1 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 80 26 8 1 GRAV \$2 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 80 38 8 1 RIMB \$3 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 80 50 8 1 LATI \$4 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 68 1 8 1 palle \$5;
+#X msg 1500 540 \; oscOut sendtyped /oled/gShowInfoBar ii 3 0 \; oscOut sendtyped /oled/gClear ii 3 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 1 TOMBOLA \; oscOut sendtyped /oled/gPrintln iiiiisf 3 80 14 8 1 SPIN \$1 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 80 26 8 1 GRAV \$2 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 80 38 8 1 BNCE \$3 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 80 50 8 1 SIDE \$4 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 68 1 8 1 balls \$5;
 #X obj 1400 570 expr tmbp[6];
 #X obj 1500 570 sel 0;
-#X msg 1500 600 \; oscOut sendtyped /oled/gFillArea iiiiii 3 68 0 60 10 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 70 1 8 0 PAUSA;
+#X msg 1500 600 \; oscOut sendtyped /oled/gFillArea iiiiii 3 68 0 60 10 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 70 1 8 0 PAUSE;
 #X msg 1650 480 \; oscOut sendtyped /oled/gFillArea iiiiii 3 0 11 67 53 0;
 #X obj 1700 640 expr tmbp[4];
 #X msg 1760 640 0;

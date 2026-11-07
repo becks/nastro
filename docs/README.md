@@ -8,7 +8,7 @@ This manual describes the current generated source in `nastro-src`. Screen image
 
 **Requirements:** an Organelle 1 with Organelle OS 4.x (Pd 0.49). Nastro uses only Pd vanilla objects, no externals. Other Organelle models have not been tested.
 
-**Files:** everything the device needs is in `Nastro-Organelle/Patches/Nastro/`: the `.pd` patches and `drums.wav` (the base drum kit).
+**Download:** get the latest **Nastro-rel*.zip** from the [Releases page](https://github.com/becks/nastro/releases/latest) and unzip it: it contains the ready-to-copy `Nastro` folder (the `.pd` patches and `drums.wav`, the base drum kit). The same folder is also in this repository at `Nastro-Organelle/Patches/Nastro/`.
 
 1. Copy the whole `Nastro` folder into the `Patches` folder of a USB stick (`Patches/Nastro/`), or into the `Patches` folder of the Organelle's SD card.
 2. Plug the stick into the Organelle (or restart it) and choose **Nastro** in the patch menu.

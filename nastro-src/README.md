@@ -38,6 +38,11 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
 - 4 tracks x 60 s, precise playhead (`rpole~` counter + per-block integer onset).
 - Loop wrap crossfade: a second head per track keeps playing past the jump and fades out in 5 ms while the main
   head fades in (`apply_xfade.py`, `test_loopclick.py`). Only the output is crossfaded; overdub reads the main head.
+- Loop recording seam fix (`apply_loopseam.py`, `test_loopseam.py`): the wrap is handled per 64-sample block, so
+  each pass wrote up to 65 samples past the loop end and left a seam at the loop start. While recording a loop,
+  the samples written past the end are moved to the start (re-mixed for overdub) and the area after the end is
+  restored from a copy saved when recording starts / the loop end moves.
+- Lanes under the reels update 4x/s while recording (was 10x/s with a full rebuild each time).
 - Speed, knob 1 in TAPE: 7 octave steps (-2 -1 -0.5 0 0.5 1 2) spread over the knob travel; with AUX held it is
   continuous (-2..2, magnets at 1 / 0 / -1). Global for all tracks. Recording forces 1x.
 

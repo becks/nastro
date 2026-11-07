@@ -58,7 +58,7 @@
 #X obj 20 560 pack f f;
 #X obj 300 380 r tp-rec;
 #X obj 300 410 t f f;
-#X obj 300 440 metro 50;
+#X obj 300 440 metro 250;
 #X obj 400 440 sel 0;
 #X obj 300 470 t b b;
 #X obj 400 500 s tp-ask;

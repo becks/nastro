@@ -20,6 +20,8 @@ p.obj(280, 50, "table nstmisc 8")
 p.obj(400, 50, "text define nst-menu")
 
 # misc state, always current: engine, octave, loop state / start / end
+spd10 = p.obj(1150, 50, "+ 10")                   # tape speed, stored +10 (0 = old project without it)
+p.c(p.obj(1150, 20, "r tp-spd"), spd10); p.c(spd10, p.msg(1150, 80, "\\; nstmisc 5 \\$1"))
 for i, nm in enumerate(("synth-engine", "nst-oct", "tp-ls", "tp-lo", "tp-hi")):
     p.c(p.obj(600 + i * 110, 50, f"r {nm}"), p.msg(600 + i * 110, 80, f"\\; nstmisc {i} \\$1"))
 
@@ -105,13 +107,16 @@ ldOpen = p.obj(1100, 530, "delay 250")
 ldB0 = p.obj(1100, 515, "t b")                  # a float into [delay] would set its time
 p.c(ldHold, ldB0); p.c(ldB0, ldOpen); p.c(ldOpen, p.msg(1100, 560, "\\; nst-mute 1"))
 p.c(loadT, setCur, 4)
-p.c(loadT, p.msg(1150, 590, "\\; nst-pk-defaults bang \\; nstmisc 0 0 0 0 0 2646000"), 3)
+p.c(loadT, p.msg(1150, 590, "\\; nst-pk-defaults bang \\; nstmisc 0 0 0 0 0 2646000 0"), 3)
 mkPk2 = p.obj(1000, 600, "makefilename p%d-pk.txt")
 mkMs2 = p.obj(1150, 630, "makefilename p%d-misc.txt")
 p.c(loadT, mkPk2, 2); p.c(loadT, mkMs2, 2)
 p.c(mkPk2, p.msg(1000, 630, "\\; pkval read \\$1"))
 p.c(mkMs2, p.msg(1150, 660, "\\; nstmisc read \\$1"))
-p.c(loadT, p.obj(1300, 600, "s nst-load"), 1)
+ldSnap = p.obj(1300, 585, "t f b")                     # right after the files are read: keep the saved speed
+p.c(loadT, ldSnap, 1); p.c(ldSnap, p.obj(1300, 600, "s nst-load"), 0)
+spSnap = p.obj(1400, 600, "expr nstmisc[5]")
+p.c(ldSnap, spSnap, 1); p.c(spSnap, p.msg(1400, 630, "\\; nstmisc 6 \\$1"))
 apT0 = p.obj(1000, 700, "t b f")
 p.c(loadT, apT0, 0)
 ldSt = p.obj(1150, 730, "makefilename LOADED-%d")
@@ -147,12 +152,12 @@ for i, (ctx, dest) in enumerate(CTX):
         p.c(e, pk, o, o)
     m = p.msg(x, y + 60, " ".join(f"\\; {dest} {k + 1} \\${k + 1}" for k in range(4)))
     p.c(apT, e, len(CTX) - i); p.c(pk, m)
-misc = p.obj(1000, 1170, "expr nstmisc[0] \\; nstmisc[1] \\; nstmisc[2] \\; nstmisc[3] \\; nstmisc[4]")
-mpk = p.obj(1000, 1200, "pack f f f f f")
-for o in range(5):
+misc = p.obj(1000, 1170, "expr nstmisc[0] \\; nstmisc[1] \\; nstmisc[2] \\; nstmisc[3] \\; nstmisc[4] \\; nstmisc[6]")
+mpk = p.obj(1000, 1200, "pack f f f f f f")
+for o in range(6):
     p.c(misc, mpk, o, o)
 p.c(apT, misc, 0)
-p.c(mpk, p.msg(1000, 1230, "\\; synth-engine-set \\$1 \\; nst-oct-set \\$2 \\; tp-loop-set \\$3 \\$4 \\$5 \\; pkpick const 0 \\; nst-redraw bang"))
+p.c(mpk, p.msg(1000, 1230, "\\; synth-engine-set \\$1 \\; nst-oct-set \\$2 \\; tp-loop-set \\$3 \\$4 \\$5 \\; tp-spd-set \\$6 \\; pkpick const 0 \\; nst-redraw bang"))
 
 # ------------------------------------------------ startup: take the encoder, read the index, open the last project
 lb = p.obj(20, 600, "loadbang")

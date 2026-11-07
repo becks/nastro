@@ -55,7 +55,12 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
   `tabread4~` reads across the edge are temporarily replaced with the continuation and restored after the wrap.
 - Lanes under the reels update 4x/s while recording (was 10x/s with a full rebuild each time).
 - Speed, knob 1 in TAPE: 7 octave steps (-2 -1 -0.5 0 0.5 1 2) spread over the knob travel; with AUX held it is
-  continuous (-2..2, magnets at 1 / 0 / -1). Global for all tracks. Recording forces 1x.
+  continuous (-2..2, magnets at 1 / 0 / -1). Global for all tracks.
+- Recording at 0.5x / 2x (`apply_varirec.py`, `test_varirec.py`): the rec factor is frozen at rec start (0.5 or 2
+  if the speed is on that step, else 1x as before). 2x / 0.5x use `tape-vw.pd`, a writer in a resampled
+  `[switch~ 128 1 2]` / `[switch~ 32 1 0.5]` (DSP on only while writing) that reads the old tape at its own write
+  index (overdub, punch fades as at 1x). A 4-pole 9.5 kHz Butterworth low-pass feeds the 0.5x writer
+  (anti-aliasing). Seam fix: overshoot up to 128 samples at 2x (`seamsave` 130), fade gain looked up per sample.
 
 ### Tape editing (`gentapeedit.py` → `tapeedit.pd`)
 Encoder press in TAPE → menu `EDIT-T n`: CUT, COPY, PASTE, REVERSE, CLEAR, DUPLICATE, UNDO on the selected track,
@@ -132,10 +137,7 @@ window.
 All on-screen text is English (`apply_english.py`).
 
 ## Future ideas (agreed with the user, for later)
-- **Tape recording at speeds other than 1x** (like the OP-1: record at half speed, play at 1x one octave up).
-  Today rec forces 1x because `tabwrite~` only writes forward. Plan: record into a temporary buffer at 1x and, at
-  stop (or each loop pass), resample it to the tape speed and mix it onto the track (overdub), chunked over many
-  blocks so the Organelle does not glitch. Reverse recording too.
+- Tape recording at continuous and reverse speeds (0.5x and 2x are done, see above).
 - Undo of the last recording in a DRUM key / restore the key's base sound.
 - Fine START/END adjustment (e.g. AUX + knob = 20x smaller steps).
 - More tape editing (free selection beyond loop/bar, undo a recording), MIDI in/clock, project names, save only

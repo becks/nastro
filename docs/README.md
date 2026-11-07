@@ -154,7 +154,7 @@ Enter TAPE with **AUX + D**. There are four mono tracks, each up to 60 seconds, 
 
 Tape knobs:
 
-1. **Speed** — seven octave steps from -2 to +2. With AUX held it is continuous and has detents at -1, 0 and +1. Recording is forced to 1× speed.
+1. **Speed** — seven octave steps from -2 to +2. With AUX held it is continuous and has detents at -1, 0 and +1. At **0.5×** and **2×** the tape keeps its speed while recording, like the OP-1: record at 0.5× and the new part plays an octave higher (and twice as fast) at 1×; record at 2× and it plays an octave lower. At any other speed (continuous, 0 or reverse) recording runs at 1×.
 2. **Track** — selects tracks 1–4.
 3. **Overdub** — 0 replaces the signal, 1 adds fully; intermediate positions blend old and new material.
 4. **Wow** — tape-style pitch movement; it is disabled while recording.
@@ -297,6 +297,6 @@ To mirror the OLED on a computer, put the computer IP address in `mirror.txt` ne
 ## Practical limits
 
 - Tape is four tracks × 60 seconds; projects save tape WAVs, synth/kit/sequencer settings and samples.
-- Recording tape at speeds other than 1× is not implemented.
+- Tape recording is possible at 0.5×, 1× and 2× only (not at continuous or reverse speeds).
 - Tape editor operations are destructive, but the last edit has undo/redo. Recorded audio itself cannot be undone.
 - Nastro is designed for Organelle 1 / Pd 0.49. Avoid launching a second headless Pd instance on the device while the patch is running.

@@ -257,7 +257,7 @@ OLED = Oled()
 
 def udp_loop():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(("127.0.0.1", UDP_PORT))
+    sock.bind((os.environ.get("OLED_BIND", "127.0.0.1"), UDP_PORT))   # OLED_BIND=0.0.0.0: mirror from the Organelle
     while True:
         data, _ = sock.recvfrom(65536)
         for msg in data.decode("utf-8", "replace").split(";"):

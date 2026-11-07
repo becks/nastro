@@ -172,6 +172,13 @@ phM = g.msg(1150, 450, osc("gInvertArea", "iiiii", "\\$1 54 2 10"))
 g.c(phT, fPos3, 0); g.c(fPos3, phX); g.c(phX, phM)
 steps.append(phT)
 
+# overdub amount, bottom left above the timeline
+fDub = g.obj(1300, 330, "f 1")
+g.c(g.obj(1300, 300, "r tp-dub"), fDub, 0, 1)
+dubE = g.obj(1300, 360, "expr int($f1*100+0.5)")
+g.c(fDub, dubE)
+g.c(dubE, g.msg(1300, 390, osc("gPrintln", "iiiiisf", "1 45 8 1 DUB \\$1")))
+steps.append(fDub)
 flip = g.msg(1150, 450, "\\; oscOut sendtyped /oled/gFlip i 3")
 steps.append(flip)
 
@@ -206,4 +213,5 @@ gChg = g.obj(1800, 210, "change")
 g.c(gT, gPos, 0); g.c(gPos, gPT); g.c(gPT, gChg, 1); g.c(gChg, dOne); g.c(gPT, dF, 0)
 for i, st in enumerate(steps):
     g.c(seq, st, len(steps) - 1 - i)
+g.c(g.obj(1600, 90, "r tp-dub"), dOne)
 g.save("tape-screen.pd")

@@ -53,7 +53,7 @@ for line in out.splitlines():
             got[cur][k] = float(v); print("    first", k, float(v))
     elif "error" in line and "no such object" not in line and "soundfiler" not in line and "seq-" not in line:
         print(line)
-w = wave.open(f"{T}/tape-1.wav"); d = w.readframes(w.getnframes())
+w = wave.open(f"{T}/p1-tape-1.wav"); d = w.readframes(w.getnframes())
 s = struct.unpack("<%dh" % (len(d) // 2), d)
 nz = [i for i, v in enumerate(s) if abs(v) > 300]
 print("recorded audio on track 1 from sample", nz[0] if nz else None, "to", nz[-1] if nz else None,

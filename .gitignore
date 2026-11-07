@@ -1,3 +1,17 @@
 .DS_Store
 __pycache__/
 *.py[cod]
+
+# backups made by the apply_*.py scripts
+*.pre-*
+*.bak
+*.bak[0-9]
+# personal data: projects, recordings, state
+Nastro/p[0-9]*-*
+Nastro/projects.txt
+Nastro/current.txt
+Nastro/mirror.txt
+Nastro-Organelle/Patches/Nastro/p[0-9]*-*
+Nastro-Organelle/Patches/Nastro/projects.txt
+Nastro-Organelle/Patches/Nastro/current.txt
+Nastro-Organelle/Patches/Nastro/mirror.txt

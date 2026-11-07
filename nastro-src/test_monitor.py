@@ -53,7 +53,7 @@ s = [v / 32768 for v in struct.unpack("<%dh" % (len(d) // 2), d)]
 pk = lambda a, b: round(max(abs(v) for v in s[int(a * 44100):int(b * 44100)]), 3)
 print("output level  before monitor:", pk(0.5, 0.9), " monitor on:", pk(1.3, 1.9), " monitor off:", pk(2.3, 2.9),
       " while sampling input:", pk(3.3, 3.9), " after sampling:", pk(4.3, 4.9))
-w = wave.open(f"{T}/tape-1.wav"); d = w.readframes(w.getnframes())
+w = wave.open(f"{T}/p1-tape-1.wav"); d = w.readframes(w.getnframes())
 t1 = struct.unpack("<%dh" % (len(d) // 2), d)
 nz = [i for i, v in enumerate(t1) if abs(v) > 1000]
 print("input recorded on tape track 1:", f"{len(nz)} loud samples, from {nz[0]} to {nz[-1]}" if nz else "nothing")

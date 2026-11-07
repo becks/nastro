@@ -48,6 +48,7 @@ codes = [ord(ch) for ch in keys]
 notes_for = [60 + i for i in range(len(keys))]
 # extra keys: [ and ] are the top two Organelle keys (A#5 / B5: with AUX = octave down / up)
 codes += [ord("["), ord("]"), ord(";"), ord("'"), ord("\\")]
+ENC = [ord(","), ord("."), ord("/")]   # encoder: turn back / forward, press
 notes_for += [82, 83, 76, 77, 78]
 kd = add("obj", 20, 420, "key")
 ku = add("obj", 200, 420, "keyup")
@@ -68,6 +69,18 @@ for idx in range(len(codes) + 2):
     else:
         sa = add("obj", 20 + idx * 40, 600, "s aux" if idx == len(codes) else "s fs")
         c(ch, sa)
+
+# encoder (the Organelle sends /encoder/turn 0|1 and /encoder/button 1|0 to [s enc] / [s encbut])
+ek = add("obj", 900, 420, "key")
+eku = add("obj", 1000, 420, "keyup")
+es = add("obj", 900, 450, "sel " + " ".join(str(c) for c in ENC))
+eus = add("obj", 1000, 450, "sel " + str(ENC[2]))
+c(ek, es); c(eku, eus)
+c(es, add("msg", 900, 480, "\\; enc 0"), 0)
+c(es, add("msg", 960, 480, "\\; enc 1"), 1)
+c(es, add("msg", 1020, 480, "\\; encbut 1"), 2)
+c(eus, add("msg", 1000, 510, "\\; encbut 0"), 0)
+add("text", 900, 390, "encoder: virgola / punto = gira - barra = premi")
 
 # audio
 add("text", 480, 400, "--- audio ---")

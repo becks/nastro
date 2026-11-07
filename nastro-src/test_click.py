@@ -10,7 +10,8 @@ for f in os.listdir(SRC):
         shutil.copy(os.path.join(SRC, f), T)
 BS = "\\"
 A = lambda k: ["aux 1", f"notes {k} 100", f"notes {k} 0", "aux 0"]
-ev = [(200, A(76)), (1200, A(76)), (1300, A(60) + A(60) + A(60) + A(60))]
+# start after the project has been loaded (the patch loads the last project ~300 ms after opening)
+ev = [(700, A(76)), (1200, A(76)), (1300, A(60) + A(60) + A(60) + A(60))]
 t = 1500
 for i in range(14):                                   # fast retriggers, voices get reused
     ev.append((t, [f"notes {60 + (i % 3) * 4} 100"])); ev.append((t + 90, [f"notes {60 + (i % 3) * 4} 0"])); t += 100

@@ -11,7 +11,7 @@ BS = "\\"
 A = lambda k: ["aux 1", f"notes {k} 100", f"notes {k} 0", "aux 0"]
 events = [
     (100, ["synth-knob 2 0", "synth-knob 4 0.05"]),
-    (200, ["dbg SAMPLE-INPUT"] + A(76)), (1200, A(76)),
+    (700, ["dbg SAMPLE-INPUT"] + A(76)), (1200, A(76)),
     (1300, A(60) + A(60) + A(60) + A(60)),                      # FM -> SUB -> PLUK -> PAD -> SMPL
     (1500, ["dbg C4", "notes 60 100"]), (1900, ["notes 60 0"]),
     (2100, ["dbg C5", "notes 72 100"]), (2500, ["notes 72 0"]),

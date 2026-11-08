@@ -2,7 +2,7 @@
 
 > **Disclaimer.** Nastro is an independent, non-commercial hobby project. The teenage engineering OP-1 was an inspiration for its workflow (a tape-centred workstation), but Nastro is not a copy or a clone of it: it contains no code, sounds, graphics or other material from the OP-1, and everything in it was written from scratch in Pure Data (the base drum kit is synthesized by a script, `nastro-src/makekit.py`). Nastro is not affiliated with, endorsed by or connected to teenage engineering. It is also an independent patch, not affiliated with Critter & Guitari. *OP-1* is a trademark of teenage engineering; *Organelle* is a trademark of Critter & Guitari. They are mentioned only to describe the inspiration and the hardware Nastro runs on.
 
-Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a mixer with per-track DJ filters and effect sends, delay, reverb, a master compressor and limiter, four sequencer pages, project saving and a tape editor.
+Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages, project saving and a tape editor.
 
 This manual describes the current generated source in `nastro-src`. Screen images are rendered with the project’s bundled OLED simulator at the real 128 × 64 pixel resolution; values in the images are examples.
 
@@ -80,6 +80,7 @@ Hold **AUX** and press a mode key:
 | D# | MIX | Tape levels/pan, delay and reverb, track filters, master compressor, FX sends. |
 | E | SEQ | Tempo, step sequencer, Tombola and Endless sequencer. |
 | A | SAVE | Save the open project from any page. |
+| high G | FREEZE | Freeze / release the reverb from any page (see Mix and effects). |
 | high A# / high B | OCTAVE | Transpose the keyboard down/up by octaves. |
 
 Turn the encoder to open the **PROJECTS** menu. Turn it to select an item and press it to confirm. In the desktop simulator, comma and full stop turn the encoder; slash presses it.
@@ -233,7 +234,7 @@ The MASTER page has a compressor on the whole output, before the limiter:
 
 The master has a fast limiter with no added latency. The metronome and tape input are outside the limiter.
 
-Press **AUX + D#** once more for the SEND page (after MASTER it goes back to the MIX page).
+Press **AUX + D#** once more for the SEND page (one more press goes back to the MIX page).
 
 ![FX send screen](oled/20-fx-send.png)
 

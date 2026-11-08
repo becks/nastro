@@ -303,9 +303,11 @@ gshow = m.msg(900, 270, "\\; oscOut sendtyped /oled/gShowInfoBar ii 3 1")
 m.c(tff, gfx, 1); m.c(gfx, gfxc); m.c(gfxc, gsel); m.c(gsel, ghide, 0); m.c(gsel, gshow, 1)
 m.c(psf, sp1); m.c(sp1, line1); m.c(tff, ne2, 1); m.c(ne2, sp1, 0, 1)
 m.c(toct, tbf, 0); m.c(tbf, psf, 1, 1); m.c(tbf, psf, 0, 0)
-ledp = m.obj(900, 70, "+ 1")
+ledp = m.obj(900, 70, "expr if($f2 \\, 7 \\, $f1+1)")              # white while the reverb is frozen
 ledm = m.msg(900, 100, "\\; led \\$1")
 m.c(tff, ledp, 1); m.c(ledp, ledm)
+ledFz = m.obj(1000, 40, "t b f")
+m.c(m.obj(1000, 10, "r rvb-freeze"), ledFz); m.c(ledFz, ledp, 1, 1); m.c(ledFz, ledp, 0, 0)
 # --- knob router
 m.text(20, 500, "knob router: knobs go to the active mode as [knob# value]")
 rks = []

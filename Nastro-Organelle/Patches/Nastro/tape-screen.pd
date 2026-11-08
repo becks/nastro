@@ -76,7 +76,7 @@
 #X msg 780 480 \; oscOut sendtyped /oled/gFillArea iiiiii 3 0 0 19 10 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 0 REC;
 #X msg 300 520 \; oscOut sendtyped /oled/gPrintln iiiiisi 3 34 1 8 1 T \$1;
 #X obj 500 520 sel 1;
-#X msg 500 550 \; oscOut sendtyped /oled/gPrintln iiiiisf 3 62 1 8 1 x \$1;
+#X msg 500 550 \; oscOut sendtyped /oled/gPrintln iiiiis 3 56 1 8 1 x\$1;
 #X obj 700 300 t b;
 #X obj 700 330 f;
 #X obj 700 270 r tp-pos;

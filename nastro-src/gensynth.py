@@ -37,7 +37,7 @@ ENGINES = [
         ("START", "t f", "smp-start", 0.0, "expr int($f1*100)"),
         ("END", "t f", "smp-end", 1.0, "expr int($f1*100)"),
         ("REL", "expr int(5+pow($f1 \\, 2)*2995)", "smp-rel", 0.3, "t f"),
-        ("LOOP", "expr $f1>0.5", "smp-loop", 0.0, "t f"),
+        ("MODE", "expr int(min($f1 \\, 0.999)*4)", "smp-mode", 0.0, "t f"),
     ]),
     ("air", 5, "air-voice", 1.8, [
         ("ATK", "expr int(10+pow($f1 \\, 2)*3990)", "air-atk", 0.5, "t f"),
@@ -738,6 +738,8 @@ for name in ("nst-oct", "nst-redraw", "synth-engine", "smp-live"):
     s.c(r, dirty)
 eq0 = s.obj(300, 140, "== 0")
 mtr = s.obj(300, 170, "metro 50")
+mtrI = s.obj(400, 140, "expr if($f1==4 \\, 150 \\, 50)")      # SMPL page: at most ~7 frames/s (apply_smplfast.py)
+s.c(s.obj(400, 110, "r synth-engine"), mtrI); s.c(mtrI, mtr, 0, 1)
 s.c(mT, eq0, 0); s.c(eq0, mtr); s.c(mT, dirty, 1)
 slow = s.obj(380, 200, "metro 500")
 s.c(eq0, slow)

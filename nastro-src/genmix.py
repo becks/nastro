@@ -443,6 +443,15 @@ fxStatic = x_.msg(800, 500, " ".join(
     [osc2("gPrintln", "iiiiis", f"1 {15 + k * 12} 8 1 {labels[k]}") for k in range(4)] +
     [osc2("gBox", "iiiiii", f"34 {14 + k * 12} 93 9 1") for k in range(4)]))
 x_.c(fxT, fxStatic, 5)
+# FRZ badge while the reverb is frozen (apply_freeze.py): FX title at x 24, REVERB title at x 44
+x_.c(x_.obj(2200, 440, "r rvb-freeze"), dOne)
+for trig, outl, bx in ((fxT, 5, 24), (rvT, 5, 44)):
+    fzB = x_.obj(2100 + bx * 5, 500, "f 0")
+    x_.c(x_.obj(2100 + bx * 5, 470, "r rvb-freeze"), fzB, 0, 1)        # freeze state, read at each redraw
+    fzS = x_.obj(2100 + bx * 5, 530, "sel 1")
+    x_.c(trig, fzB, outl); x_.c(fzB, fzS)
+    x_.c(fzS, x_.msg(2100 + bx * 5, 560, osc2("gFillArea", "iiiiii", f"{bx - 2} 0 21 10 1") + " " +
+                     osc2("gPrintln", "iiiiis", f"{bx} 1 8 0 FRZ")))
 msE = x_.obj(800, 560, "int")
 msM = x_.msg(800, 590, osc2("gPrintln", "iiiiifs", "70 1 8 1 \\$1 ms"))
 fT0 = x_.obj(800, 530, "t b")

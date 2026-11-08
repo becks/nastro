@@ -129,7 +129,7 @@ trk = g.msg(300, 520, osc("gPrintln", "iiiiisi", "34 1 8 1 T \\$1"))
 g.c(fTrk, trk); steps.append(fTrk)
 
 spdS = g.obj(500, 520, "sel 1")
-spdM = g.msg(500, 550, osc("gPrintln", "iiiiisf", "62 1 8 1 x \\$1"))
+spdM = g.msg(500, 550, osc("gPrintln", "iiiiisf", "56 1 8 1 x\\$1"))
 g.c(fSpd, spdS); g.c(spdS, spdM, 1); steps.append(fSpd)
 
 timeT = g.obj(700, 300, "t b")

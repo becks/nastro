@@ -2,7 +2,7 @@
 
 > **Disclaimer.** Nastro is an independent, non-commercial hobby project. The teenage engineering OP-1 was an inspiration for its workflow (a tape-centred workstation), but Nastro is not a copy or a clone of it: it contains no code, sounds, graphics or other material from the OP-1, and everything in it was written from scratch in Pure Data (the base drum kit is synthesized by a script, `nastro-src/makekit.py`). Nastro is not affiliated with, endorsed by or connected to teenage engineering. It is also an independent patch, not affiliated with Critter & Guitari. *OP-1* is a trademark of teenage engineering; *Organelle* is a trademark of Critter & Guitari. They are mentioned only to describe the inspiration and the hardware Nastro runs on.
 
-Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.5× / 2× recording), a mixer with per-track DJ filters and effect sends, delay, reverb, a master compressor and limiter, four sequencer pages, project saving and a tape editor.
+Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a mixer with per-track DJ filters and effect sends, delay, reverb, a master compressor and limiter, four sequencer pages, project saving and a tape editor.
 
 This manual describes the current generated source in `nastro-src`. Screen images are rendered with the project’s bundled OLED simulator at the real 128 × 64 pixel resolution; values in the images are examples.
 
@@ -120,7 +120,7 @@ With the SMPL engine selected:
 - **AUX + F#5** toggles input monitoring. The monitored input is heard dry and can be recorded onto tape (once on a track it can go through the effects with the track’s sends).
 - **AUX + A** saves the sample as part of the project.
 
-The four SMPL knobs set Start, End, Release and Loop. Start/end are aligned to an upward zero crossing to reduce clicks.
+The four SMPL knobs set Start, End, Release and **Mode**: `one` (plays once), `str` (time-stretch: every note lasts as long as the sample, whatever its pitch), `s+lp` (time-stretch and loop) and `loop`. Time-stretch is granular (50 ms grains): on very pure tones it can sound slightly detuned or chorused. Start/end are aligned to an upward zero crossing to reduce clicks.
 
 ## Drum sampler
 
@@ -156,7 +156,7 @@ Enter TAPE with **AUX + D**. There are four mono tracks, each up to 60 seconds, 
 
 Tape knobs:
 
-1. **Speed** — seven octave steps from -2 to +2. With AUX held it is continuous and has detents at -1, 0 and +1. At **0.5×** and **2×** the tape keeps its speed while recording (the classic tape trick): record at 0.5× and the new part plays an octave higher (and twice as fast) at 1×; record at 2× and it plays an octave lower. At any other speed (continuous, 0 or reverse) recording runs at 1×.
+1. **Speed** — nine steps: −2, −1, −0.5, −0.25, 0, 0.25, 0.5, 1, 2. With AUX held it is continuous and has detents at −1, 0 and +1. At **0.25×**, **0.5×** and **2×** the tape keeps its speed while recording (the classic tape trick): record at 0.5× and the new part plays an octave higher (and twice as fast) at 1×, at 0.25× two octaves higher; record at 2× and it plays an octave lower. At any other speed (continuous, 0 or reverse) recording runs at 1×.
 2. **Track** — selects tracks 1–4.
 3. **Overdub** — 0 replaces the signal, 1 adds fully; intermediate positions blend old and new material.
 4. **Wow** — tape-style pitch movement; it is disabled while recording. The amount is shown on the bottom row as `WOW 0–100`, between `DUB` and `LOOP`.
@@ -209,6 +209,10 @@ Hold AUX on the FX page for the reverb page:
 2. **TONE** — damping / brightness.
 3. **PRE** — pre-delay, 0–120 ms.
 4. **MOD** — modulation depth.
+
+**Reverb freeze — AUX + G5** (from any page) freezes the reverb: what is ringing in it hangs as an endless pad, and new sound no longer enters the reverb until you release it. Press **AUX + G5** again to release: the tail fades out with the current DEC. While frozen the Organelle LED turns white and the FX and REVERB pages show `FRZ`; DEC and TONE changes made meanwhile are applied on release. Loading a project releases the freeze.
+
+![Reverb freeze screen](oled/21-reverb-freeze.png)
 
 Press **AUX + D#** once more for the FILTER page.
 
@@ -305,7 +309,7 @@ To mirror the OLED on a computer, put the computer IP address in `mirror.txt` ne
 ## Practical limits
 
 - Tape is four tracks × 60 seconds; projects save tape WAVs, synth/kit/sequencer settings and samples.
-- Tape recording is possible at 0.5×, 1× and 2× only (not at continuous or reverse speeds).
+- Tape recording is possible at 0.25×, 0.5×, 1× and 2× only (not at continuous or reverse speeds).
 - Tape editor operations are destructive, but the last edit has undo/redo. Recorded audio itself cannot be undone.
 - Nastro is designed for Organelle 1 / Pd 0.49. Avoid launching a second headless Pd instance on the device while the patch is running.
 

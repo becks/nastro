@@ -23,8 +23,10 @@ srt = v.obj(600, 70, "samplerate~")
 v.c(lb, srt)
 # onset, length, phasor frequency, one-shot hold (from the note start)
 onE = v.obj(250, 220,
-            "expr $f2 \; max(64 \\, $f3-$f2) \; $f1*$f4/max(64 \\, $f3-$f2) \; "
-            "if($f5 \\, 1e+09 \\, max(1 \\, max(64 \\, $f3-$f2)/$f4*1000/$f1-15))+3")
+            "expr $f2 \; max(64 \\, $f3-$f2) \; if($f6 \\, 1 \\, $f1)*$f4/max(64 \\, $f3-$f2) \; "
+            "if($f5 \\, 1e+09 \\, max(1 \\, max(64 \\, $f3-$f2)/$f4*1000/if($f6 \\, 1 \\, $f1)-15))+3 \; "
+            "if($f6 \\, ($f1-1)*2205 \\, 0)")
+v.c(v.obj(700, 130, "r smp-stretch"), onE, 0, 5)                   # apply_smplstretch.py
 v.c(v.obj(400, 130, "r smp-s0"), onE, 0, 1)
 v.c(v.obj(500, 130, "r smp-s1"), onE, 0, 2)
 v.c(srt, onE, 0, 3)
@@ -37,14 +39,14 @@ v.c(onE, env, 3)
 venv = v.obj(400, 360, "vline~")
 v.c(env, venv)
 # playhead jump 1.5 ms later (when the voice is silent)
-pk = v.obj(250, 260, "pack f f f")
-v.c(onE, pk, 2, 2); v.c(onE, pk, 1, 1); v.c(onE, pk, 0, 0)
+pk = v.obj(250, 260, "pack f f f f")
+v.c(onE, pk, 4, 3); v.c(onE, pk, 2, 2); v.c(onE, pk, 1, 1); v.c(onE, pk, 0, 0)
 held = v.obj(250, 290, "list")
 v.c(pk, held, 0, 1)
 dl = v.obj(150, 260, "delay 1.5")
 v.c(onT, dl)
 v.c(dl, held)
-apU = v.obj(250, 320, "unpack f f f")
+apU = v.obj(250, 320, "unpack f f f f")
 v.c(held, apU)
 rd = v.obj(20, 460, "tabread4~ smpl")
 ph = v.obj(150, 400, "phasor~")
@@ -54,7 +56,25 @@ apT = v.obj(250, 340, "t b f")
 v.c(apU, ph, 2, 0)            # frequency
 v.c(apU, ln, 1, 1)            # length
 v.c(apU, apT, 0); v.c(apT, rd, 1, 1); v.c(apT, z, 0); v.c(z, ph, 0, 1)   # onset, then phase 0
-v.c(ph, ln); v.c(ln, rd)
+v.c(ph, ln)
+# grains (apply_smplstretch.py): idx = position + grain phase x offset, two heads half a grain apart
+gph = v.obj(450, 400, "phasor~ 20.0000")
+v.c(z, gph, 0, 1)                                                # grains restart with the note
+gD = v.obj(450, 430, "*~ 0"); v.c(apU, gD, 3, 1); v.c(gph, gD)
+gB0 = v.obj(560, 430, "+~ 0.5"); gBw = v.obj(560, 460, "wrap~"); gDB = v.obj(560, 490, "*~ 0")
+v.c(gph, gB0); v.c(gB0, gBw); v.c(gBw, gDB); v.c(apU, gDB, 3, 1)
+iA = v.obj(150, 460, "+~"); iB = v.obj(300, 460, "+~")
+v.c(ln, iA, 0, 0); v.c(gD, iA, 0, 1); v.c(ln, iB, 0, 0); v.c(gDB, iB, 0, 1)
+rdB = v.obj(300, 490, "tabread4~ smpl")
+v.c(apT, rdB, 1, 1)
+v.c(iA, rd); v.c(iB, rdB)
+gc = v.obj(650, 430, "cos~"); v.c(gph, gc)
+wA = v.obj(650, 460, "*~ -0.5"); wA1 = v.obj(650, 490, "+~ 0.5")       # 0.5 - 0.5 cos
+wB = v.obj(750, 460, "*~ 0.5"); wB1 = v.obj(750, 490, "+~ 0.5")        # 0.5 + 0.5 cos (half a grain later)
+v.c(gc, wA); v.c(wA, wA1); v.c(gc, wB); v.c(wB, wB1)
+mA = v.obj(20, 480, "*~"); mB = v.obj(300, 520, "*~"); gSum = v.obj(20, 490, "+~")
+v.c(rd, mA, 0, 0); v.c(wA1, mA, 0, 1); v.c(rdB, mB, 0, 0); v.c(wB1, mB, 0, 1)
+v.c(mA, gSum, 0, 0); v.c(mB, gSum, 0, 1)
 # note off: release
 # note off: release - in one-shot mode never longer than what is left of the sample
 # (otherwise the playhead would wrap to the start while the voice still sounds)
@@ -71,7 +91,7 @@ v.c(offT, tmr, 0, 1); v.c(tmr, relE)
 relM = v.msg(20, 280, "0 \\$1")
 v.c(relE, relM); v.c(relM, venv)
 vca = v.obj(20, 500, "*~")
-v.c(rd, vca, 0, 0); v.c(venv, vca, 0, 1)
+v.c(gSum, vca, 0, 0); v.c(venv, vca, 0, 1)
 v.c(vca, v.obj(20, 540, "outlet~"))
 v.save("smpl-voice.pd")
 
@@ -372,7 +392,10 @@ bU = r.obj(2000, 200, "until")
 bC = r.obj(2000, 230, "f")
 bC1 = r.obj(2050, 230, "+ 1")
 bT = r.obj(2000, 160, "t b b")
-r.c(dT, bT, 2); r.c(bT, bZ, 1); r.c(bZ, bC, 0, 1); r.c(bT, bN, 0)
+bLine = r.obj(2100, 140, "t b b")                  # baseline first, then the tall bars
+r.c(dT, bLine, 2); r.c(bLine, bT, 0)
+r.c(bLine, r.msg(2200, 140, "\\; oscOut sendtyped /oled/gLine iiiiii 3 1 26 126 26 1"), 1)
+r.c(bT, bZ, 1); r.c(bZ, bC, 0, 1); r.c(bT, bN, 0)
 r.c(bN, bU); r.c(bU, bC); r.c(bC, bC1); r.c(bC1, bC, 0, 1)
 bE = r.obj(2000, 260,
            f"expr 1+$f1*3 \\; "
@@ -383,7 +406,10 @@ r.c(pkT, bE, 0, 4)
 bP = r.obj(2000, 290, "pack f f f")
 for o in range(3):
     r.c(bE, bP, o, o)
-r.c(bP, r.msg(2000, 320, "\\; oscOut sendtyped /oled/gFillArea iiiiii 3 \\$1 \\$2 2 \\$3 1"))
+bTall = r.obj(1900, 290, "> 1")                    # 1-px bars are covered by the baseline (apply_smplfast.py)
+bGate = r.obj(2000, 305, "spigot")
+r.c(bE, bTall, 2); r.c(bTall, bGate, 0, 1); r.c(bP, bGate)
+r.c(bGate, r.msg(2000, 320, "\\; oscOut sendtyped /oled/gFillArea iiiiii 3 \\$1 \\$2 2 \\$3 1"))
 # 2) START / END markers
 mB = r.obj(2300, 160, "t b b")
 r.c(dT, mB, 1)
@@ -401,7 +427,7 @@ r.c(mP, r.msg(2300, 280, "\\; oscOut sendtyped /oled/gLine iiiiii 3 \\$1 10 \\$1
 vB = r.obj(2500, 160, "t b b b b b")
 r.c(dT, vB, 0)
 r.c(vB, r.msg(2500, 190, "\\; oscOut sendtyped /oled/gPrintln iiiiis 3 1 45 8 1 STA \\; oscOut sendtyped /oled/gPrintln iiiiis 3 33 45 8 1 END "
-                         "\\; oscOut sendtyped /oled/gPrintln iiiiis 3 65 45 8 1 REL \\; oscOut sendtyped /oled/gPrintln iiiiis 3 97 45 8 1 LOOP"), 4)
+                         "\\; oscOut sendtyped /oled/gPrintln iiiiis 3 65 45 8 1 REL \\; oscOut sendtyped /oled/gPrintln iiiiis 3 97 45 8 1 MODE"), 4)
 vals = [("smp-start", "expr int($f1*100)", 1), ("smp-end", "expr int($f1*100)", 33), ("smp-rel", "int", 65)]
 for i, (nm, ex, x) in enumerate(vals):
     f = r.obj(2500 + i * 120, 220, "f")
@@ -410,11 +436,18 @@ for i, (nm, ex, x) in enumerate(vals):
     r.c(vB, f, 3 - i); r.c(f, e)
     r.c(e, r.msg(2500 + i * 120, 310, f"\\; oscOut sendtyped /oled/gPrintln iiiiif 3 {x} 55 8 1 \\$1"))
 fLp = r.obj(2900, 220, "f")
-r.c(r.obj(2900, 250, "r smp-loop"), fLp, 0, 1)
-lpS = r.obj(2900, 280, "sel 0")
+r.c(r.obj(2900, 250, "r smp-mode"), fLp, 0, 1)
+lpS = r.obj(2900, 280, "sel 0 1 2 3")
 r.c(vB, fLp, 0); r.c(fLp, lpS)
-r.c(lpS, r.msg(2900, 310, "\\; oscOut sendtyped /oled/gPrintln iiiiis 3 97 55 8 1 off"), 0)
-r.c(lpS, r.msg(2980, 310, "\\; oscOut sendtyped /oled/gPrintln iiiiis 3 97 55 8 1 on"), 1)
+for i_, nm_ in enumerate(("one", "str", "s+lp", "loop")):
+    r.c(lpS, r.msg(2900 + i_ * 80, 310, f"\\; oscOut sendtyped /oled/gPrintln iiiiis 3 97 55 8 1 {nm_}"), i_)
+# mode -> loop / stretch flags for the voices
+mdR = r.obj(3300, 220, "r smp-mode")
+mdT = r.obj(3300, 250, "t f f")
+r.c(mdR, mdT)
+lpE = r.obj(3300, 280, "expr $f1>=2"); stE_ = r.obj(3400, 280, "expr $f1==1 || $f1==2")
+r.c(mdT, stE_, 1); r.c(mdT, lpE, 0)
+r.c(lpE, r.obj(3300, 310, "s smp-loop")); r.c(stE_, r.obj(3400, 310, "s smp-stretch"))
 
 # display copies: follow the real values, except while recording (then the live view drives them)
 recOn = r.obj(2600, 400, "r smp-recording")

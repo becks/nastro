@@ -30,7 +30,8 @@ rv.c(t60E, t60T)
 rv.c(t60T, rv.obj(700, 230, "v rvb-t60"), 1)
 # per line gain: 10^(-3 L / T60), times 1/sqrt(8) for the (unnormalised) Hadamard
 gE = rv.obj(600, 260, "expr " + " \\; ".join(f"pow(10 \\, -3*{L}/1000/$f1)*0.353553" for L in LINES))
-rv.c(t60T, gE, 0)
+gGate = rv.obj(600, 230, "spigot 1")
+rv.c(t60T, gGate, 0); rv.c(gGate, gE)
 defs = rv.msg(800, 60, "1 0.5 \\, 2 0.6 \\, 3 0.15 \\, 4 0.3")
 rv.c(rv.obj(800, 30, "loadbang"), defs); rv.c(defs, krt)
 preM = rv.msg(900, 200, "\\$1 50")
@@ -42,6 +43,8 @@ rmx = rv.obj(1300, 40, "r fx-rmix")
 rmxS = rv.obj(1300, 70, "> 0")
 rmxC = rv.obj(1300, 100, "change")
 rv.c(rmx, rmxS); rv.c(rmxS, rmxC)
+rmxF = rv.obj(1400, 70, "f 0")
+rv.c(rmxS, rmxF, 0, 1)
 onOff = rv.obj(1300, 130, "sel 1 0")
 rv.c(rmxC, onOff)
 on1 = rv.msg(1300, 160, "1")
@@ -50,7 +53,8 @@ offStop = rv.msg(1250, 190, "stop")
 rv.c(onOff, on1, 0); rv.c(onOff, offStop, 0); rv.c(offStop, offD)
 rv.c(on1, sw)
 offB = rv.obj(1400, 160, "t b")
-rv.c(onOff, offB, 1)
+offGate = rv.obj(1400, 145, "spigot 1")                  # REV to 0 while frozen: stay on
+rv.c(onOff, offGate, 1); rv.c(offGate, offB)
 offT = rv.obj(1400, 175, "v rvb-t60")
 offMs = rv.obj(1500, 175, "expr $f1*1000+500")
 rv.c(offB, offT); rv.c(offT, offMs); rv.c(offMs, offD)
@@ -61,7 +65,14 @@ rv.c(rv.obj(1500, 10, "loadbang"), lb0); rv.c(lb0, sw)
 
 # ---------------- pre-delay
 preW = rv.obj(20, 80, "delwrite~ rvb-pre 130")
-rv.c(inl, preW)
+inG = rv.obj(20, 60, "*~")                                    # freeze: input closed (apply_freeze.py); signal gain
+rv.c(inl, inG); rv.c(inG, preW)
+fzIn = rv.obj(1700, 40, "r rvb-freeze")
+fzT = rv.obj(1700, 70, "t f f f f")
+fzInv = rv.obj(1700, 100, "expr 1-$f1"); fzInM = rv.msg(1700, 130, "\\$1 50"); fzInL = rv.obj(1700, 160, "line~")
+rv.c(fzIn, fzT); rv.c(fzT, fzInv, 3); rv.c(fzInv, fzInM); rv.c(fzInM, fzInL); rv.c(fzInL, inG, 0, 1)
+lbG1 = rv.msg(1800, 130, "1")
+rv.c(rv.obj(1800, 100, "loadbang"), lbG1); rv.c(lbG1, fzInL)
 preR = rv.obj(20, 110, "vd~ rvb-pre")
 rv.c(preL, preR)
 x = preR
@@ -83,7 +94,7 @@ for k, (ms, g) in enumerate(AP):
 inj = rv.obj(20, 330, "*~ 0.5")
 injN = rv.obj(120, 330, "*~ -0.5")
 rv.c(x, inj); rv.c(x, injN)
-sums, damped = [], []
+sums, damped, lps = [], [], []
 lfo = {}
 for j, (li, hz) in enumerate(zip(MODL, MODHZ)):
     o = rv.obj(1600 + j * 200, 300, f"osc~ {hz}")
@@ -103,7 +114,7 @@ for i, L in enumerate(LINES):
     else:
         d = rv.obj(X, 470, f"delread~ rvb-l{i} {L}")
     lp = rv.obj(X, 500, "lop~ 5000")
-    rv.c(toneE, lp, 0, 1)
+    lps.append(lp)
     gm = rv.obj(X, 530, "*~ 0.3")
     rv.c(gE, gm, i, 1)
     rv.c(d, lp); rv.c(lp, gm)
@@ -129,4 +140,42 @@ oL = rv.obj(20, 1250, "*~ 5"); oR = rv.obj(200, 1250, "*~ 5")      # level match
 for i in range(8):
     rv.c(damped[i], oL if i % 2 == 0 else oR)
 rv.c(oL, outL); rv.c(oR, outR)
+
+# ---------------- freeze (apply_freeze.py): gains, damping, on/off
+fzSel = rv.obj(1700, 200, "sel 1 0")
+rv.c(fzT, fzSel, 0)
+gOpen = rv.obj(1850, 200, "== 0")
+rv.c(fzT, gOpen, 2); rv.c(gOpen, gGate, 0, 1)                  # DEC gate: closed while frozen
+rv.c(gOpen, offGate, 0, 1)                                     # no switch-off while frozen
+tGate = rv.obj(750, 200, "spigot 1")
+rv.c(gOpen, tGate, 0, 1)
+toneF = rv.obj(850, 200, "f 4800")
+rv.c(toneE, toneF, 0, 1); rv.c(toneE, tGate)
+fzOn = rv.obj(1700, 230, "t b b b")                             # frozen: 2) DSP on  1) lossless gains  0) damping open
+rv.c(fzSel, fzOn, 0)
+rv.c(fzOn, on1, 2); rv.c(fzOn, offStop, 2)
+fzG = rv.msg(1700, 260, "0.3535")
+rv.c(fzOn, fzG, 1)
+fzTone = rv.msg(1800, 260, "20000")
+rv.c(fzOn, fzTone, 0)
+fzOff = rv.obj(1900, 230, "t b b b")                            # released: 2) gains from DEC  1) damping from TONE  0) off?
+rv.c(fzSel, fzOff, 1)
+offT2 = rv.obj(1950, 260, "v rvb-t60")
+rv.c(fzOff, offT2, 2); rv.c(offT2, gE)
+rv.c(fzOff, toneF, 1)
+offChk = rv.obj(2050, 260, "sel 0")
+rv.c(fzOff, rmxF, 0); rv.c(rmxF, offChk); rv.c(offChk, offB)
+for i in range(8):
+    rv.c(fzG, damped[i], 0, 1)
+for lp_ in lps:
+    rv.c(fzTone, lp_, 0, 1); rv.c(toneF, lp_, 0, 1); rv.c(tGate, lp_, 0, 1)
+# AUX + G5 toggles; loading a project releases it
+fzK = rv.obj(1700, 320, "r aux-key")
+fzKs = rv.obj(1700, 350, "sel 79")
+fzState = rv.obj(1700, 380, "f 0")
+fzNot = rv.obj(1750, 380, "== 0")
+rv.c(fzK, fzKs); rv.c(fzKs, fzState); rv.c(fzState, fzNot); rv.c(fzNot, fzState, 0, 1)
+rv.c(fzNot, rv.obj(1700, 410, "s rvb-freeze"))
+fzRel = rv.msg(1850, 350, "0")
+rv.c(rv.obj(1850, 320, "r nst-load"), fzRel); rv.c(fzRel, fzState, 0, 1); rv.c(fzRel, rv.obj(1850, 380, "s rvb-freeze"))
 rv.save("reverb.pd")

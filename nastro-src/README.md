@@ -56,6 +56,10 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
 - OLED text types (`apply_oledtypes.py`): `Patch.msg` rebuilds every gPrintln type string (packOSC drops a text
   with more words than types and prints a number in an `s` field as "1.000000"); `$n` keep the hand-given type.
   `oled-sim.py` mimics all three device behaviours.
+- Reverb freeze, AUX + G5 toggle (`apply_freeze.py`, `test_freeze.py`): input gain to 0 (50 ms `line~` before the
+  pre-delay), every FDN line gain to 0.3535 (just under 1/sqrt(8): lossless Hadamard, no growth), damping `lop~`s
+  to 20 kHz (pass-through). DEC / TONE are gated while frozen and re-applied on release; the reverb `switch~` stays
+  on (also with REV at 0). LED white (7) while frozen, `FRZ` badge on FX / REVERB; `nst-load` releases it.
 - Track DJ filter, no zipper (`apply_filterxfade.py`, `test_filtersweep.py`): `biquad~` (direct form II) clicks
   for a sample whenever its coefficients change while audio runs. Each track has two `biquad~`s: new coefficients
   go to the silent one and a 5 ms crossfade moves to it; while a knob turns, updates follow at most every 6 ms and
@@ -64,14 +68,17 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
   the loop start continues the audio at the end (recorded in loop mode), its read index wraps per sample
   (`expr~` offset) with no crossfade; otherwise it reads past the end and crossfades as before. The 3 samples
   `tabread4~` reads across the edge are temporarily replaced with the continuation and restored after the wrap.
-- Lanes under the reels update 4x/s while recording (was 10x/s with a full rebuild each time).
-- Speed, knob 1 in TAPE: 7 octave steps (-2 -1 -0.5 0 0.5 1 2) spread over the knob travel; with AUX held it is
+- Lanes under the reels update 4x/s while recording (was 10x/s with a full rebuild each time). The rebuild runs in
+  32 chunks of 8 iterations, ~1 ms apart (`apply_lanechunks.py`): recording with the TAPE page shown no longer makes
+  block-long control bursts (slowest blocks 128 -> 65 us on the Mac, `test_reccost.py`). Pitfall fixed on the way:
+  the chunk counter went into `[delay 1]` as a float, which sets the delay time.
+- Speed, knob 1 in TAPE: 9 steps (-2 -1 -0.5 -0.25 0 0.25 0.5 1 2, `apply_speed025.py`) spread over the knob travel; with AUX held it is
   continuous (-2..2, magnets at 1 / 0 / -1). Global for all tracks.
-- Recording at 0.5x / 2x (`apply_varirec.py`, `test_varirec.py`): the rec factor is frozen at rec start (0.5 or 2
-  if the speed is on that step, else 1x as before). 2x / 0.5x use `tape-vw.pd`, a writer in a resampled
-  `[switch~ 128 1 2]` / `[switch~ 32 1 0.5]` (DSP on only while writing) that reads the old tape at its own write
-  index (overdub, punch fades as at 1x). A 4-pole 9.5 kHz Butterworth low-pass feeds the 0.5x writer
-  (anti-aliasing). Seam fix: overshoot up to 128 samples at 2x (`seamsave` 130), fade gain looked up per sample.
+- Recording at 0.25x / 0.5x / 2x (`apply_varirec.py`, `apply_speed025.py`, `test_varirec.py`): the rec factor is
+  frozen at rec start (0.25, 0.5 or 2 if the speed is on that step, else 1x as before). They use `tape-vw.pd`, a
+  writer in a resampled `[switch~ 128 1 2]` / `[switch~ 32 1 0.5]` / `[switch~ 16 1 0.25]` (DSP on only while writing) that reads the old tape at its own write
+  index (overdub, punch fades as at 1x). 4-pole Butterworth low-passes feed the 0.5x (9.5 kHz) and
+  0.25x (4.5 kHz) writers (anti-aliasing). Seam fix: overshoot up to 128 samples at 2x (`seamsave` 130), fade gain looked up per sample.
 
 ### Tape editing (`gentapeedit.py` → `tapeedit.pd`)
 Encoder press in TAPE → menu `EDIT-T n`: CUT, COPY, PASTE, REVERSE, CLEAR, DUPLICATE, UNDO on the selected track,
@@ -104,6 +111,12 @@ a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_vo
     vibrato + tremolo with its own rate per voice, 4 ms / 60 ms gate.
   - DRONE: two `phasor~` saws detuned +-DET/2 cents, each drifting (own slow LFO, up to +-15 cents), `vcf~`
     low-pass that breathes, squared envelope, attack = REL / 2 (0.5..15 s release).
+- SMPL time-stretch (`apply_smplstretch.py`, `test_smplstretch.py`): knob 4 is MODE one / str / s+lp / loop
+  (old LOOP off = one, on = loop). Stretch reads the sample at its own speed and two 50 ms grains (Hann, half a
+  grain apart) re-read it at the note's pitch: idx = position + grain phase x (pitch - 1) x 2205. Without stretch
+  the offset is 0 and the two heads sum to the old single read. Pure tones can drift up to +-20 Hz (grain phase).
+- SMPL page lighter (`apply_smplfast.py`): one baseline line for the flat bars, only taller bars as FillAreas, and
+  ~7 frames/s while SMPL is the engine: ~1200 -> ~370 OLED messages/s while a knob turns.
 - SMPL live view while recording: only the bar just measured is drawn (3 messages every 100 ms) instead of the
   whole SYNTH page (~60): from 610 to 30 OLED messages/s (`apply_smplive.py`).
 - Auto-start sampling (`apply_autorec.py`): AUX+E5 (input) arms recording (badge ARM); it starts when the signal

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Tape recording at 0.5x / 2x.
-1) no loop: a 440 Hz tone recorded for 1 s at 0.5x and at 2x. On tape (= played back at 1x) it must last 0.5 s /
-   2 s and sound at 880 / 220 Hz.
-2) loop: a continuous 220 Hz tone recorded over a 1-bar loop for 3.5 passes at 1x (reference), 2x and 0.5x
+"""Tape recording at 0.25x / 0.5x / 2x.
+1) no loop: a 440 Hz tone recorded for 1 s at 0.25x, 0.5x and 2x. On tape (= played back at 1x) it must last
+   0.25 / 0.5 / 2 s and sound at 1760 / 880 / 220 Hz.
+2) loop: a continuous 220 Hz tone recorded over a 1-bar loop for 3.5 passes at 1x (reference), 2x, 0.5x and 0.25x
    (replace). No discontinuities inside the loop (the punch-out fade excluded), nothing written past the end.
 3) overdub at 0.5x over a 300 Hz tone already on tape: both tones must be on tape, the old one unchanged in level."""
 import os, shutil, subprocess, tempfile, sys, math, struct, wave
 
 SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Nastro")
 SR, BS = 44100, "\\"
-KNOB = {0.5: 0.62, 1: 0.78, 2: 0.95}          # tape knob 1 positions for the speed steps
+KNOB = {0.25: 0.61, 0.5: 0.72, 1: 0.83, 2: 0.95}   # tape knob 1 positions for the speed steps (9 steps)
 
 
 def run(ev, frames, prefill=None, extra_print=()):
@@ -68,7 +68,7 @@ def freq(seg):
 
 bad = 0
 # 1) length and pitch
-for spd, exp_len, exp_f in ((0.5, 0.5, 880), (2, 2.0, 220)):
+for spd, exp_len, exp_f in ((0.25, 0.25, 1760), (0.5, 0.5, 880), (2, 2.0, 220)):
     ev = [(600, ["mode 2", f"tape-knob 1 {KNOB[spd]}", "tape-knob 3 1", "frq 440", "amp 0.4"]),
           (800, ["aux-key 66"]), (1800, ["aux-key 66", "amp 0"]), (2000, ["aux-key 65"])]
     x, errs, pr = run(ev, 4 * SR, extra_print=("tp-recf",))
@@ -82,7 +82,7 @@ for spd, exp_len, exp_f in ((0.5, 0.5, 880), (2, 2.0, 220)):
 
 # 2) loop seam at 2x and 0.5x (replace, continuous 220 Hz)
 B = 88320
-for spd in (1, 2, 0.5):
+for spd in (1, 2, 0.5, 0.25):
     pas = B / SR / spd * 1000                       # ms per loop pass at this speed
     ev = [(600, ["mode 2", f"tp-loop-set 2 0 {B}", f"tape-knob 1 {KNOB[spd]}", "tape-knob 3 0", "frq 220", "amp 0.4"]),
           (800, ["aux-key 66"]), (800 + int(3.5 * pas), ["aux-key 66"]), (800 + int(3.5 * pas) + 50, ["amp 0", "aux-key 65"])]

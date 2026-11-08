@@ -1,5 +1,5 @@
 #N canvas 40 40 1200 700 12;
-#X text 20 5 synth-smpl: engine 4 (SMPL). knobs: START / END / REL / LOOP;
+#X text 20 5 synth-smpl: engine 4 (SMPL). knobs: START / END / REL / MODE;
 #X obj 20 40 r smpl-notes;
 #X obj 160 40 r synth-panic;
 #X obj 20 80 poly 4 1;
@@ -61,13 +61,13 @@
 #X obj 1050 140 t f f f;
 #X obj 1130 170 f;
 #X obj 1110 200 expr int($f1*59);
-#X obj 1050 170 expr $f1>0.5;
+#X obj 1050 170 expr int(min($f1 \, 0.999)*4);
 #X obj 1050 200 t f f;
-#X obj 1090 230 s smp-loop;
+#X obj 1090 230 s smp-mode;
 #X obj 1050 260 t f;
 #X obj 1050 290 pack f f;
 #X obj 1050 320 spigot;
-#X msg 1050 350 \; syn-row 3 LOOP \$1 \$2;
+#X msg 1050 350 \; syn-row 3 MODE \$1 \$2;
 #X connect 1 0 3 0;
 #X connect 2 0 3 0;
 #X connect 3 0 4 0;

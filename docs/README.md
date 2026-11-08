@@ -128,6 +128,14 @@ With the SMPL engine selected:
 
 The four SMPL knobs set Start, End, Release and **Mode**: `one` (plays once), `str` (time-stretch: every note lasts as long as the sample, whatever its pitch), `s+lp` (time-stretch and loop) and `loop`. Time-stretch is granular (50 ms grains): on very pure tones it can sound slightly detuned or chorused. Start/end are aligned to an upward zero crossing to reduce clicks.
 
+![Sample instrument with loop points and playheads](oled/27-smpl-loop.png)
+
+**Loop points.** Hold AUX on SMPL: knob 2 sets **L-ST** (loop start) and knob 3 **L-END** (loop end), as a percentage of the START–END range; knob 1 stays the synth volume. In `loop` and `s+lp` a note plays from START, and once it reaches L-END it repeats the L-ST–L-END stretch for as long as you hold it, then fades with REL — the classic sustain loop, so a long pad or voice is not restarted from its attack. The defaults (0 and 100) loop the whole START–END range as before. Loop points also snap to zero crossings and are saved with the project. With AUX held the page shows VOL, L-ST and L-END, and two ticks at the top and bottom of the waveform mark the loop (in the loop modes).
+
+![SMPL page with AUX held](oled/28-smpl-loop-aux.png)
+
+While you play, every sounding note shows its **playhead** on the waveform: a white line in a black gutter, shorter than the START/END markers.
+
 ### Synth LFO
 
 ![Synth LFO page](oled/22-synth-lfo.png)

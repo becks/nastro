@@ -19,7 +19,7 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
 `test_tomb.py`, `test_endl.py`, `test_ambient.py`, `test_proj.py`, `test_startempty.py`, `test_nav.py`,
 `test_smpl.py`, `test_click.py`, `test_pan.py`, `test_drumrec.py`, `test_monitor.py`, `test_lfo.py`,
 `test_lfoproj.py`, `test_recblink.py`, `test_album.py`, `test_albumview.py`, `test_arp.py`, `test_guardedit.py`,
-`test_loopstart.py`.
+`test_loopstart.py`, `test_smplloop.py`.
 
 ## Review tools
 - `python3 review.py ../Nastro`: sends/receives without a counterpart, connections into `[r]`, `[delay]` fed with
@@ -119,6 +119,13 @@ a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_vo
     vibrato + tremolo with its own rate per voice, 4 ms / 60 ms gate.
   - DRONE: two `phasor~` saws detuned +-DET/2 cents, each drifting (own slow LFO, up to +-15 cents), `vcf~`
     low-pass that breathes, squared envelope, attack = REL / 2 (0.5..15 s release).
+- SMPL loop points and playheads (`apply_smplloop.py`, `test_smplloop.py`): AUX + knobs 2 / 3 on SMPL = loop start /
+  end, relative to START..END, snapped to zero crossings (same chunked searcher). Voice: the read position is a
+  counter ([rpole~] of the time rate); idx = c while c < E, then ls + fmod(c - E, B); folded back by B every block
+  once past E + B (precision on long notes). Playheads: each SMPL page frame sends `smp-ph-ask`, sounding voices
+  answer `smp-ph <index>`; the page asks for another frame (`smp-phd`) while a voice sounds and for 6 frames after
+  any note (the first frame can come before the voice has faded in). Knob context 42 (pkval 172): knob 1 = synth
+  volume, its raw value is written into both pickup slots (52 and 168).
 - SMPL time-stretch (`apply_smplstretch.py`, `test_smplstretch.py`): knob 4 is MODE one / str / s+lp / loop
   (old LOOP off = one, on = loop). Stretch reads the sample at its own speed and two 50 ms grains (Hann, half a
   grain apart) re-read it at the note's pitch: idx = position + grain phase x (pitch - 1) x 2205. Without stretch

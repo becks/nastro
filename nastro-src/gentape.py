@@ -390,7 +390,7 @@ for o in (posIn, posOut, posW):
 # state 0 -> mark start
 l0 = t.obj(600, 620, "t b b")
 m1 = t.msg(660, 620, "1")
-t.c(lsel, l0, 0); t.c(l0, posIn, 1); t.c(posIn, inV, 0, 1); t.c(l0, m1, 0); t.c(m1, lsF, 0, 1)
+t.c(lsel, l0, 0); t.c(l0, posIn, 1); t.c(posIn, inV, 0, 0); t.c(l0, m1, 0); t.c(m1, lsF, 0, 1)   # start into inV's hot inlet (apply_loopstart.py)
 # state 1 -> mark end, set lo/hi, wrap now
 l1 = t.obj(700, 620, "t b b b")
 m2 = t.msg(760, 590, "2")
@@ -614,6 +614,8 @@ t.obj(2600, 1580, "table xwm 4")                  # per-track wrap mode, read by
 # leaving the edge zone (after the wrap): restore the guarded samples first, then act on the new zone
 nearT = t.obj(2800, 1760, "t f b")
 restB = t.obj(2800, 1790, "t b")
+t.obj(2900, 1730, "v tebusy")
+t.c(t.obj(2900, 1760, "r tp-guard-restore"), restB)         # an edit starts: guarded samples back first (apply_guardedit.py)
 t.c(nearC, nearT); t.c(nearT, restB, 1); t.c(nearT, nearS, 0)
 # guard sample m: forward (index, source), backward (index, source), valid forward, valid backward
 GUARD = (("$f2", "$f3", "$f2", "$f3", "1", "1"),
@@ -657,7 +659,7 @@ for k in range(4):
     for m, (fi, fs, ri, rs, okf, okr) in enumerate(GUARD):
         gx = x + m * 130
         # outlet 0: index to guard (-1 = none), outlet 1: where its continuation is. $f4 wrap mode, $f5 rec
-        iE = t.obj(gx, 2160, f"expr if($f4 && !$f5 && if($f1 \\, {okf} \\, {okr}) \\, if($f1 \\, {fi} \\, {ri}) \\, -1) \\; if($f1 \\, {fs} \\, {rs})")
+        iE = t.obj(gx, 2160, f"expr if($f4 && !$f5 && tebusy==0 && if($f1 \\, {okf} \\, {okr}) \\, if($f1 \\, {fi} \\, {ri}) \\, -1) \\; if($f1 \\, {fs} \\, {rs})")
         t.c(dec, iE, 0, 3); t.c(recst, iE, 1, 4)              # rec state gates the guard
         t.c(dPt, iE, 0, 0)                               # after the decision (t l l: right outlet first)
         iP = t.obj(gx, 2190, "pack f f")                 # expr outlets are lazy: collect both

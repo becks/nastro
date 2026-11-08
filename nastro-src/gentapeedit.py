@@ -62,6 +62,7 @@ pendS = te.obj(1900, 620, "symbol")
 te.c(te.obj(1900, 590, "r te-pend"), pendS, 0, 1)
 busyF = te.obj(700, 80, "f 0")
 busy0 = te.msg(1800, 650, "0")
+te.c(busy0, te.obj(1800, 680, "v tebusy"))
 te.c(busy0, busyF, 0, 1)
 rsIn = te.obj(1800, 60, "r te-rescan")
 rsT = te.obj(1800, 90, "t b l")
@@ -234,6 +235,8 @@ te.c(opT, rgE, 3); te.c(rgE, rgS); te.c(rgS, rgT)
 te.c(rgT, te.msg(220, 285, "\\; tp-ask bang"), 1)                # refresh tp-pos
 te.c(rgT, lsF, 0)                                                  # region -> every expression
 busy1 = te.msg(100, 270, "1")
+te.c(busy1, te.msg(100, 300, "\\; tp-guard-restore bang"))      # apply_guardedit.py: loop guard back, then off
+te.c(busy1, te.obj(180, 300, "v tebusy"))
 te.c(opT, busy1, 1); te.c(busy1, busyF, 0, 1)
 opS = te.obj(20, 600, "sel 1 2 3 4 5 6 7")
 te.c(opT, opS, 0)

@@ -18,7 +18,8 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
 `test_edit.py`, `test_editall.py`, `test_loopclick.py`, `test_limiter.py`, `test_autorec.py`, `test_reverb.py`,
 `test_tomb.py`, `test_endl.py`, `test_ambient.py`, `test_proj.py`, `test_startempty.py`, `test_nav.py`,
 `test_smpl.py`, `test_click.py`, `test_pan.py`, `test_drumrec.py`, `test_monitor.py`, `test_lfo.py`,
-`test_lfoproj.py`, `test_recblink.py`, `test_album.py`, `test_albumview.py`, `test_arp.py`.
+`test_lfoproj.py`, `test_recblink.py`, `test_album.py`, `test_albumview.py`, `test_arp.py`, `test_guardedit.py`,
+`test_loopstart.py`.
 
 ## Review tools
 - `python3 review.py ../Nastro`: sends/receives without a counterpart, connections into `[r]`, `[delay]` fed with
@@ -69,6 +70,12 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
   the loop start continues the audio at the end (recorded in loop mode), its read index wraps per sample
   (`expr~` offset) with no crossfade; otherwise it reads past the end and crossfades as before. The 3 samples
   `tabread4~` reads across the edge are temporarily replaced with the continuation and restored after the wrap.
+  The tape editor and this guard must not overlap (`apply_guardedit.py`, `test_guardedit.py`): a DUPLICATE that
+  copied the loop to hi.. while the guard was on got its first 3 samples overwritten by the guard's restore (a
+  click at every restart of the duplicated loop, found in a saved project). An edit now restores the guard first
+  (`tp-guard-restore`) and the guard stays off while the editor is busy (`[v tebusy]`).
+- Loop from the keys (`apply_loopstart.py`, `test_loopstart.py`): the start (1st AUX+G#) went into the cold inlet
+  of an [f] that was never banged, so every key-made loop started at 0 (since the first version).
 - Lanes under the reels update 4x/s while recording (was 10x/s with a full rebuild each time). The rebuild runs in
   32 chunks of 8 iterations, ~1 ms apart (`apply_lanechunks.py`): recording with the TAPE page shown no longer makes
   block-long control bursts (slowest blocks 128 -> 65 us on the Mac, `test_reccost.py`). Pitfall fixed on the way:
@@ -174,6 +181,10 @@ a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_vo
   SAVE NEW) gives it the first free number (`apply_projnew.py`, `test_startempty.py`).
 - Saving / loading blocks Pd while the tape WAVs are written / read: before it the tape stops, synth notes are
   released, the output fades out (40 ms); it fades back in afterwards (`apply_savemute.py`).
+
+- TOMBOLA leaving its page (`apply_tombleave.py`): the page flag fanned out to a redraw request and to the page
+  gates; when the request went first, one last tombola frame was drawn over the new page (half tombola, half
+  the new page). A trigger now closes the gates first.
 
 ## Arpeggiator (`genarp.py` → `arp.pd`; `apply_arp.py`, `test_arp.py`)
 - 5th SEQ page (seq-page 4, AUX+E cycles 5 pages). Held keys: tables `arpm` (128, membership), `arpo` (press order,

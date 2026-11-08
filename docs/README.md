@@ -2,7 +2,7 @@
 
 > **Disclaimer.** Nastro is an independent, non-commercial hobby project. The teenage engineering OP-1 was an inspiration for its workflow (a tape-centred workstation), but Nastro is not a copy or a clone of it: it contains no code, sounds, graphics or other material from the OP-1, and everything in it was written from scratch in Pure Data (the base drum kit is synthesized by a script, `nastro-src/makekit.py`). Nastro is not affiliated with, endorsed by or connected to teenage engineering. It is also an independent patch, not affiliated with Critter & Guitari. *OP-1* is a trademark of teenage engineering; *Organelle* is a trademark of Critter & Guitari. They are mentioned only to describe the inspiration and the hardware Nastro runs on.
 
-Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a synth LFO per engine, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages, project saving, a tape editor and an album recorder with a player.
+Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a synth LFO per engine, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages and an arpeggiator, project saving, a tape editor and an album recorder with a player.
 
 This manual describes the current generated source in `nastro-src`. Screen images are rendered with the project’s bundled OLED simulator at the real 128 × 64 pixel resolution; values in the images are examples.
 
@@ -78,7 +78,7 @@ Hold **AUX** and press a mode key:
 | C# | DRUM | Play, edit and sample drum slots. |
 | D | TAPE | Four-track tape transport and looping. |
 | D# | MIX | Tape levels/pan, delay and reverb, track filters, master compressor, FX sends. |
-| E | SEQ | Tempo, step sequencer, Tombola and Endless sequencer. |
+| E | SEQ | Tempo, step sequencer, Tombola, Endless sequencer and arpeggiator. |
 | A | SAVE | Save the open project from any page. |
 | high G | FREEZE | Freeze / release the reverb from any page (see Mix and effects). |
 | high A | ALBUM | Record / stop an album (Nastro's output to a WAV file) from any page (see Album). |
@@ -262,7 +262,7 @@ The SEND page sets how much of each tape track goes into the effects: knob 1–4
 
 ## Sequencers and tempo
 
-Enter SEQ with **AUX + E**. Repeat **AUX + E** to cycle: **TEMPO → STEP → TOMBOLA → ENDLESS**.
+Enter SEQ with **AUX + E**. Repeat **AUX + E** to cycle: **TEMPO → STEP → TOMBOLA → ENDLESS → ARP**.
 
 ![Tempo screen](oled/11-tempo.png)
 
@@ -309,6 +309,23 @@ It runs only while its page is visible; balls remain stored when you leave it.
 While stopped, every played key appends a note (up to 64). **AUX + A#** appends a rest, **AUX + B** clears, and **AUX + C5** starts/stops. While running, a played key transposes the sequence relative to its first note.
 
 Knobs set Rate (1/4–1/32), Gate, Direction (`>>`, `<<`, alternating or random) and Probability. Its notes and parameters are saved with the project.
+
+![Arpeggiator screen](oled/26-arp.png)
+
+### Arpeggiator
+
+On the ARP page, hold a chord: the arpeggiator plays its notes in turn on the active instrument, in time; release the keys and it stops. On this page the keys do not play the instrument by themselves (on every other page they play as usual). The first note comes 20 ms after the first key, so a chord pressed together is taken whole. Knobs:
+
+1. **MODE** — `up`, `down`, `u/d` (up and down), `rand`, `play` (the order the keys were pressed).
+2. **RATE** — 1/4, 1/8, 1/8T, 1/16, 1/16T, 1/32.
+3. **OCT** — 1–4 octaves.
+4. **GATE** — note length, from staccato to legato.
+
+- **AUX + knob 1** — **PROB**: the chance that each step sounds (shown as `P` at the top). Below 100 the pattern breathes.
+- **AUX + C5** — **HOLD** on/off: the notes keep playing after the keys are released; a new chord, pressed after releasing all keys, replaces them. With HOLD the arpeggio keeps going when you change page, so you can play over it or record it hands-free.
+- **AUX + B** — clear.
+
+With the tape stopped it follows the TEMPO page; while the tape plays it steps on the tape's 16ths, so a recorded arpeggio stays in time with the loop. The screen shows the held notes (higher notes higher), the one playing as a bigger block. Settings are saved with the project.
 
 ## Album
 

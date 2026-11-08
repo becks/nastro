@@ -15,6 +15,11 @@ Nastro-Organelle/Patches/Nastro/p[0-9]*-*
 Nastro-Organelle/Patches/Nastro/projects.txt
 Nastro-Organelle/Patches/Nastro/current.txt
 Nastro-Organelle/Patches/Nastro/mirror.txt
+# albums (recordings) and their counter
+Nastro/album-*
+Nastro/album.txt
+Nastro-Organelle/Patches/Nastro/album-*
+Nastro-Organelle/Patches/Nastro/album.txt
 
 # release builds
 dist/

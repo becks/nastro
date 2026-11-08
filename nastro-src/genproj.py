@@ -26,7 +26,7 @@ for i, nm in enumerate(("synth-engine", "nst-oct", "tp-ls", "tp-lo", "tp-hi")):
     p.c(p.obj(600 + i * 110, 50, f"r {nm}"), p.msg(600 + i * 110, 80, f"\\; nstmisc {i} \\$1"))
 
 dirty = p.msg(1600, 120, "1")
-for i, nm in enumerate(("nst-proj-status", "mode", "nst-redraw", "pm-sel", "pm-cur", "pm-rebuilt")):
+for i, nm in enumerate(("nst-proj-status", "mode", "nst-redraw", "pm-sel", "pm-cur", "pm-rebuilt", "alb-dirty")):
     p.c(p.obj(1100 + i * 90, 90, f"r {nm}"), dirty)
 
 # ------------------------------------------------ menu list: "0 0" back, "1 0" save, "2 0" new, "3 N", "4 0" system
@@ -40,7 +40,12 @@ p.c(p.obj(500, 90, "r pm-ctx"), ctxF, 0, 1)
 spP1 = p.obj(150, 165, "spigot 1"); spP2 = p.obj(100, 195, "spigot 1"); spE = p.obj(400, 165, "spigot 0")
 ctxNot = p.obj(600, 120, "== 0")
 p.c(p.obj(600, 90, "r pm-ctx"), ctxNot); p.c(ctxNot, spP1, 0, 1); p.c(ctxNot, spP2, 0, 1)
-p.c(p.obj(700, 90, "r pm-ctx"), spE, 0, 1)
+spEc = p.obj(700, 105, "== 1")                    # apply_albumview.py: context 2 = albums
+p.c(p.obj(700, 90, "r pm-ctx"), spEc); p.c(spEc, spE, 0, 1)
+spA = p.obj(800, 165, "spigot 0")
+spAc = p.obj(800, 120, "== 2")
+p.c(p.obj(800, 90, "r pm-ctx"), spAc); p.c(spAc, spA, 0, 1)
+p.c(rebuild, spA, 3); p.c(spA, p.obj(800, 195, "s alb-menu"))
 p.c(rebuild, spP1, 3); p.c(spP1, fixed); p.c(fixed, ins)
 editL = p.msg(400, 195, "list 0 0 \\, " + " \\, ".join(f"list 5 {i + 1}" for i in range(8)) + " \\, list 6 0")
 p.c(rebuild, spE, 3); p.c(spE, editL); p.c(editL, ins)
@@ -62,9 +67,12 @@ p.c(rebuild, sysT, 1)
 spM = p.obj(380, 240, "spigot 1")
 ctxN2 = p.obj(450, 225, "== 0")
 p.c(p.obj(450, 210, "r pm-ctx"), ctxN2); p.c(ctxN2, spM, 0, 1)
-mirL = p.msg(380, 255, "list 7 0")
+mirL = p.msg(380, 255, "list 8 0 \\, list 7 0")
 p.c(sysT, spM, 1); p.c(spM, mirL); p.c(mirL, ins)
-p.c(sysT, sysL, 0); p.c(sysL, ins)
+sysSp = p.obj(300, 255, "spigot 1")
+sysNa = p.obj(220, 240, "!= 2")
+p.c(p.obj(220, 225, "r pm-ctx"), sysNa); p.c(sysNa, sysSp, 0, 1)
+p.c(sysT, sysSp, 0); p.c(sysSp, sysL); p.c(sysL, ins)
 p.c(rebuild, p.msg(300, 270, "\\; pm-rebuilt bang"), 0)
 
 # ------------------------------------------------ project number state
@@ -126,7 +134,7 @@ p.c(ldMo, p.msg(1250, 730, "\\; nst-proj-status symbol NEW"), 0); p.c(ldSt, p.ob
 # apply the knob state to the modules, as if every knob had been turned
 CTX = [(0, "fm-knob"), (6, "sub-knob"), (7, "pluk-knob"), (8, "pad-knob"), (10, "smpl-knob"), (2, "tape-knob"),
        (3, "mix-lvl-set"), (11, "mix-pan-set"), (5, "mix-fx-set"), (4, "tempo-knob"), (9, "seq-step-set"),
-       (13, "synth-vol-set"), (14, "drum-vol-set"), (15, "tomb-set"), (16, "rvb-set"), (17, "endl-set"), (18, "air-knob"), (19, "bell-knob"), (20, "tfilt-set"), (21, "tres-set"), (22, "comp-set"), (23, "wave-knob"), (24, "strg-knob"), (25, "organ-knob"), (26, "drone-knob"), (27, "dsend-set"), (28, "rsend-set")]
+       (13, "synth-vol-set"), (14, "drum-vol-set"), (15, "tomb-set"), (16, "rvb-set"), (17, "endl-set"), (18, "air-knob"), (19, "bell-knob"), (20, "tfilt-set"), (21, "tres-set"), (22, "comp-set"), (23, "wave-knob"), (24, "strg-knob"), (25, "organ-knob"), (26, "drone-knob"), (27, "dsend-set"), (28, "rsend-set"), (29, "fm-lfo-knob"), (30, "sub-lfo-knob"), (31, "pluk-lfo-knob"), (32, "pad-lfo-knob"), (33, "smpl-lfo-knob"), (34, "air-lfo-knob"), (35, "bell-lfo-knob"), (36, "wave-lfo-knob"), (37, "strg-lfo-knob"), (38, "organ-lfo-knob"), (39, "drone-lfo-knob")]
 apT = p.obj(1000, 790, "t " + " ".join(["b"] * (len(CTX) + 1)))
 fixT = p.obj(900, 760, "t b b")
 p.c(apT0, fixT, 0); p.c(fixT, apT, 0)
@@ -148,6 +156,15 @@ fixE7 = p.obj(300, 790, "expr pkval[88]+pkval[89]==0")
 fixS7 = p.obj(300, 820, "sel 1")
 fixE8 = p.obj(200, 790, "expr pkval[92]+pkval[93]+pkval[94]+pkval[95]+pkval[96]+pkval[97]+pkval[98]+pkval[99]+pkval[100]+pkval[101]+pkval[102]+pkval[103]+pkval[104]+pkval[105]+pkval[106]+pkval[107]==0")
 fixS8 = p.obj(200, 820, "sel 1")
+# projects saved before the LFO have 116 values: Pd fills the rest of the table with the last one, so all the
+# LFO slots equal pkval[115] -> defaults (apply_lfo.py)
+fixA10 = p.obj(0, 760, "expr abs(pkval[116]-pkval[115])+abs(pkval[117]-pkval[115])+abs(pkval[118]-pkval[115])+abs(pkval[119]-pkval[115])+abs(pkval[120]-pkval[115])+abs(pkval[121]-pkval[115])+abs(pkval[122]-pkval[115])+abs(pkval[123]-pkval[115])+abs(pkval[124]-pkval[115])+abs(pkval[125]-pkval[115])+abs(pkval[126]-pkval[115])+abs(pkval[127]-pkval[115])+abs(pkval[128]-pkval[115])+abs(pkval[129]-pkval[115])+abs(pkval[130]-pkval[115])+abs(pkval[131]-pkval[115])+abs(pkval[132]-pkval[115])+abs(pkval[133]-pkval[115])+abs(pkval[134]-pkval[115])+abs(pkval[135]-pkval[115])+abs(pkval[136]-pkval[115])+abs(pkval[137]-pkval[115])")
+fixB10 = p.obj(0, 775, "expr abs(pkval[138]-pkval[115])+abs(pkval[139]-pkval[115])+abs(pkval[140]-pkval[115])+abs(pkval[141]-pkval[115])+abs(pkval[142]-pkval[115])+abs(pkval[143]-pkval[115])+abs(pkval[144]-pkval[115])+abs(pkval[145]-pkval[115])+abs(pkval[146]-pkval[115])+abs(pkval[147]-pkval[115])+abs(pkval[148]-pkval[115])+abs(pkval[149]-pkval[115])+abs(pkval[150]-pkval[115])+abs(pkval[151]-pkval[115])+abs(pkval[152]-pkval[115])+abs(pkval[153]-pkval[115])+abs(pkval[154]-pkval[115])+abs(pkval[155]-pkval[115])+abs(pkval[156]-pkval[115])+abs(pkval[157]-pkval[115])+abs(pkval[158]-pkval[115])+abs(pkval[159]-pkval[115])")
+fixE10 = p.obj(0, 790, "expr $f1+$f2==0")
+fixT10 = p.obj(0, 745, "t b b")
+fixS10 = p.obj(0, 820, "sel 1")
+p.c(fixT, fixT10, 1); p.c(fixT10, fixB10, 1); p.c(fixB10, fixE10, 0, 1); p.c(fixT10, fixA10, 0); p.c(fixA10, fixE10)
+p.c(fixE10, fixS10); p.c(fixS10, p.msg(0, 850, "\\; pkval 116 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0"))
 fixE9 = p.obj(100, 790, "expr pkval[108]+pkval[109]+pkval[110]+pkval[111]+pkval[112]+pkval[113]+pkval[114]+pkval[115]==0")
 fixS9 = p.obj(100, 820, "sel 1")
 p.c(fixT, fixE9, 1); p.c(fixE9, fixS9); p.c(fixS9, p.msg(100, 850, "\\; pkval 108 1 1 1 1 1 1 1 1"))
@@ -249,7 +266,7 @@ actSel = p.obj(800, 970, "f")
 p.c(p.obj(800, 940, "r pm-sel"), actSel, 0, 1)
 tg = p.obj(800, 1000, "text get nst-menu")
 p.c(ebSel, actSel, 1); p.c(actSel, tg)
-actR = p.obj(800, 1030, "route 0 1 2 3 4 5 6 7")
+actR = p.obj(800, 1030, "route 0 1 2 3 4 5 6 7 8 9")
 p.c(tg, actR)
 # 0 back
 p.c(actR, prevF, 0); p.c(prevF, p.msg(800, 1060, "\\; mode \\$1"))
@@ -306,6 +323,8 @@ p.c(actR, p.msg(1700, 1060, "\\; goHome bang"), 4)
 p.c(actR, p.msg(1800, 1060, "\\; nst-mirror-toggle bang"), 7)
 p.c(actR, p.obj(1700, 1090, "s tape-edit"), 5)
 p.c(actR, p.msg(1700, 1120, "\\; nst-proj-status symbol \\; pm-ctx 0 \\; pm-rebuild bang \\; pm-reset bang"), 6)
+p.c(actR, p.msg(1700, 1150, "\\; nst-proj-status symbol \\; pm-ctx 2 \\; pm-rebuild bang \\; pm-reset bang"), 8)
+p.c(actR, p.obj(1700, 1180, "s alb-press"), 9)
 
 # ------------------------------------------------ screen (mode 5): redraw on change
 mOn = p.obj(20, 1300, "== 5")
@@ -325,9 +344,10 @@ ttT = p.obj(250, 1420, "t b")
 p.c(dT, ttT, 3)
 ttF = p.obj(250, 1480, "f")
 p.c(p.obj(250, 1450, "r pm-ctx"), ttF, 0, 1)
-ttS = p.obj(250, 1510, "sel 0 1")
+ttS = p.obj(250, 1510, "sel 0 1 2")
 p.c(ttT, ttF); p.c(ttF, ttS)
 p.c(ttS, p.msg(250, 1540, oscp("gPrintln", "iiiiis", "1 1 8 1 PROJECTS")), 0)
+p.c(ttS, p.msg(250, 1570, oscp("gPrintln", "iiiiis", "1 1 8 1 ALBUMS")), 2)
 trkF = p.obj(350, 1540, "f 1")
 p.c(p.obj(350, 1510, "r tp-trk"), trkF, 0, 1)
 allT = p.obj(450, 1540, "f 0")
@@ -343,7 +363,12 @@ p.c(stF, p.msg(400, 1480, oscp("gPrintln", "iiiiis", "58 1 8 1 \\$1")))
 szD = p.obj(600, 1450, "text size nst-menu")
 p.c(dT, szD, 1); p.c(szD, p.obj(600, 1480, "s pm-size"))
 rowsT = p.obj(700, 1450, "t " + " ".join(["b"] * ROWS))
-p.c(dT, rowsT, 1)
+rwF = p.obj(700, 1420, "f 0")                     # context 2: album.pd draws the page instead of the rows
+p.c(p.obj(760, 1390, "r pm-ctx"), rwF, 0, 1)
+rwS = p.obj(700, 1435, "sel 2")
+p.c(dT, rwF, 1); p.c(rwF, rwS); p.c(rwS, p.obj(800, 1435, "s alb-draw"), 0)
+rwB = p.obj(650, 1440, "t b")
+p.c(rwS, rwB, 1); p.c(rwB, rowsT)
 p.c(dT, p.msg(150, 1510, "\\; oscOut sendtyped /oled/gFlip i 3"), 0)
 TXT = {0: ("iiiiiss", "< BACK"), 1: ("iiiiissf", "SAVE PROJ \\$1"), 2: ("iiiiiss", "+ NEW"),
        3: ("iiiiisf", "PROG \\$1"), 4: ("iiiiiss", "SYSTEM (Organelle)")}
@@ -375,7 +400,7 @@ for i in range(ROWS):
     lblP = p.obj(X0, 1800, "pack f f f f")
     for o in range(4):
         p.c(lblE, lblP, o, o)
-    lblR = p.obj(X0, 1830, "route 0 1 2 3 4 5 6 7")
+    lblR = p.obj(X0, 1830, "route 0 1 2 3 4 5 6 7 8")
     mrT = p.obj(X0 + 500, 1860, "unpack f f f")
     p.c(lblR, mrT, 7)
     mrA = p.obj(X0 + 500, 1890, "spigot 1"); mrB = p.obj(X0 + 570, 1890, "spigot 0")
@@ -390,6 +415,7 @@ for i in range(ROWS):
     for j, nm in enumerate(EDIT_OPS):
         p.c(opR, p.msg(X0 + 260 + (j % 3) * 70, 1860 + (j // 3) * 30, oscp("gPrintln", "iiiiis", f"4 {Y} 8 \\$1 {nm}")), j)
     p.c(lblR, p.msg(X0 + 260, 1950, oscp("gPrintln", "iiiiiss", f"4 {Y} 8 \\$2 PROJECTS >")), 6)
+    p.c(lblR, p.msg(X0 + 360, 1950, oscp("gPrintln", "iiiiiss", f"4 {Y} 8 \\$2 ALBUMS >")), 8)
     # op 8: the mode switch; its label shows the current mode
     m8T = p.obj(X0 + 260, 1980, "t f f")
     p.c(opR, m8T, 7)

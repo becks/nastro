@@ -2,7 +2,7 @@
 
 > **Disclaimer.** Nastro is an independent, non-commercial hobby project. The teenage engineering OP-1 was an inspiration for its workflow (a tape-centred workstation), but Nastro is not a copy or a clone of it: it contains no code, sounds, graphics or other material from the OP-1, and everything in it was written from scratch in Pure Data (the base drum kit is synthesized by a script, `nastro-src/makekit.py`). Nastro is not affiliated with, endorsed by or connected to teenage engineering. It is also an independent patch, not affiliated with Critter & Guitari. *OP-1* is a trademark of teenage engineering; *Organelle* is a trademark of Critter & Guitari. They are mentioned only to describe the inspiration and the hardware Nastro runs on.
 
-Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages, project saving and a tape editor.
+Nastro is an OP-1-inspired tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a synth LFO per engine, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages, project saving, a tape editor and an album recorder with a player.
 
 This manual describes the current generated source in `nastro-src`. Screen images are rendered with the project’s bundled OLED simulator at the real 128 × 64 pixel resolution; values in the images are examples.
 
@@ -37,7 +37,7 @@ When a USB stick with a `Patches` folder is plugged in, the Organelle lists the 
 
 You can run Nastro on a computer with [Pure Data](https://puredata.info) (vanilla 0.51 or newer; developed with 0.54) and Python 3.
 
-1. In Pd, open `Nastro/main.pd` and then `Nastro/mac-sim.pd`. The simulator patch provides what the Organelle normally supplies: keys, knobs (sliders), AUX, encoder, audio input/output and the LED.
+1. In Pd, open `Nastro/mac-sim.pd` only (it already contains Nastro: opening `main.pd` as well would run two copies). The simulator patch provides what the Organelle normally supplies: keys, knobs (sliders), AUX, encoder, audio input/output and the LED.
 2. In a terminal: `cd Nastro && python3 oled-sim.py`, then open `http://localhost:8123` to see the 128 × 64 screen.
 3. Click the `mac-sim.pd` window before playing, so it receives the keyboard.
 
@@ -81,7 +81,12 @@ Hold **AUX** and press a mode key:
 | E | SEQ | Tempo, step sequencer, Tombola and Endless sequencer. |
 | A | SAVE | Save the open project from any page. |
 | high G | FREEZE | Freeze / release the reverb from any page (see Mix and effects). |
+| high A | ALBUM | Record / stop an album (Nastro's output to a WAV file) from any page (see Album). |
 | high A# / high B | OCTAVE | Transpose the keyboard down/up by octaves. |
+
+On SYNTH, **AUX + high D** opens the engine's LFO page (see Synth LFO).
+
+While anything records (tape, sampler, drum sampling or an album) the Organelle LED blinks.
 
 Turn the encoder to open the **PROJECTS** menu. Turn it to select an item and press it to confirm. In the desktop simulator, comma and full stop turn the encoder; slash presses it.
 
@@ -122,6 +127,21 @@ With the SMPL engine selected:
 - **AUX + A** saves the sample as part of the project.
 
 The four SMPL knobs set Start, End, Release and **Mode**: `one` (plays once), `str` (time-stretch: every note lasts as long as the sample, whatever its pitch), `s+lp` (time-stretch and loop) and `loop`. Time-stretch is granular (50 ms grains): on very pure tones it can sound slightly detuned or chorused. Start/end are aligned to an upward zero crossing to reduce clicks.
+
+### Synth LFO
+
+![Synth LFO page](oled/22-synth-lfo.png)
+
+Every engine has its own LFO, saved with the project. On SYNTH, press **AUX + high D** to open the LFO page of the selected engine; press it again (or leave SYNTH) to go back to the parameters. The four knobs:
+
+1. **TYPE** — `off`, `sine`, `tri`, `squ` (square), `ramp`, `rand` (a new random value each cycle), `drft` (smooth random drift), `trem` (vibrato and tremolo together; DEST is ignored), `env` (follows the level of the audio input: the synth breathes with another instrument).
+2. **RATE** — 0.05 Hz (one cycle every 20 seconds) to 10 Hz.
+3. **AMT** — depth, 0–100.
+4. **DEST** — one of the engine's four parameters (shown with its name, e.g. `CUT`), `PTCH` (vibrato) or `VOL` (tremolo).
+
+![Parameter moved by the LFO](oled/23-synth-lfo-row.png)
+
+On a parameter the LFO moves the value around the knob position (at 100 % by half the knob range each way): turn the knob and the centre moves. The modulated parameter's label is shown inverted and its bar moves. `PTCH` is a vibrato of up to ±50 cents (less below about 0.5 Hz) that works on every engine; while it is active the synth sounds 12 ms later. The LFO only acts on the synth engines: drums and the input monitor are not affected.
 
 ## Drum sampler
 
@@ -290,6 +310,16 @@ While stopped, every played key appends a note (up to 64). **AUX + A#** appends 
 
 Knobs set Rate (1/4–1/32), Gate, Direction (`>>`, `<<`, alternating or random) and Probability. Its notes and parameters are saved with the project.
 
+## Album
+
+![TAPE page while an album records](oled/24-album-rec.png)
+
+**AUX + high A** (from any page) records everything Nastro plays — tape, effects, live synth and drums, after the limiter — to a stereo 24-bit WAV file next to the patch on the USB stick: `album-1.wav`, `album-2.wav`, … If the tape is stopped it is rewound and started. Press **AUX + high A** again, or stop the tape with **AUX + F**, to close the file (the tape stops too). While an album records the LED blinks and the TAPE page shows `ALB` in place of `PLAY`. The file is streamed to disk while it records, so it does not use memory or cause glitches. The album numbering is kept in `album.txt`: if you delete that file, numbering starts again from 1 and overwrites `album-1.wav`.
+
+![Album player](oled/25-albums.png)
+
+To listen to your albums, open the PROJECTS menu with the encoder and choose **ALBUMS >**. Turn the encoder to choose an album (newest first) and press it to play or stop. The page shows the album number, its length (the position while playing), its waveform and the playhead. **AUX + C#5 / D#5** jumps 5 seconds back / forward while playing. Playback reads the file straight from the stick and stops at the end, when you choose another album or when you leave the page. **< BACK** at the top of the list leaves the page. The waveform is saved while the album records (`album-N.txt`); albums recorded before this version play but show `?` and no waveform.
+
 ## Projects and OLED mirror
 
 ![Projects menu](oled/16-projects.png)
@@ -300,6 +330,7 @@ Turn the encoder to open PROJECTS. Available entries are:
 - **SAVE** — save the current project. If you are in the empty project (0), this creates the first unused project number.
 - **+ NEW** — load a clean empty project.
 - **PROG n** — load a saved project.
+- **ALBUMS >** — listen to the recorded albums (see Album).
 - **SCREEN TO MAC: OFF/ON** — start/stop OLED mirroring to a Mac.
 - **SYSTEM (Organelle)** — return to the Organelle system menu.
 

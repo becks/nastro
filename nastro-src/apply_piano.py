@@ -61,8 +61,18 @@ def piano_voice():
     srt = v.obj(1500, 100, "samplerate~")
     v.c(v.obj(1500, 70, "loadbang"), srt)
     # ---- note-on: 4) DSP on  3) not released  2) mode coefficients  1) hammer pulse + click  0) timer, thump
+    # a stolen voice may still ring: fade it out in 1.5 ms, then (2 ms later) clear the resonators and strike
+    dcT = v.obj(20, 145, "t b b")
+    v.c(mos, dcT, 1)
+    outV = v.obj(100, 820, "vline~")
+    dcF = v.msg(100, 790, "0 1.5")
+    v.c(dcT, dcF, 1); v.c(dcF, outV)
+    dcD = v.obj(20, 152, "delay 2")
+    v.c(dcT, dcD, 0)
     onT = v.obj(20, 160, "t b b b b b")
-    v.c(mos, onT, 1)
+    v.c(dcD, onT)
+    dcUp = v.msg(180, 790, "1")
+    v.c(onT, dcUp, 0); v.c(dcUp, outV)                    # level back up once the strike is under way
     on1 = v.msg(1300, 210, "1")
     v.c(onT, on1, 4); v.c(on1, sw)
     rel0 = v.msg(1000, 100, "0")
@@ -124,6 +134,8 @@ def piano_voice():
         cm = v.msg(X, 380, "\\$1 \\$2 \\$3 0 0")
         bq = v.obj(X, 650, "biquad~")
         v.c(cp, cm); v.c(cm, bq); v.c(pG, bq); v.c(bq, mix)
+        clr = v.msg(X, 620, "set 0 0")                     # resonator state cleared before a new note
+        v.c(onT, clr, 4); v.c(clr, bq)
     # contact click (NOISE-independent, part of the tone): noise, about 3 ms
     nz = v.obj(1100, 470, "noise~")
     cE = v.obj(1100, 420, f"expr $f1/127*{PIANO_CLICK}*(0.3+1-$f2)")
@@ -174,7 +186,8 @@ def piano_voice():
     v.c(pUp, pRel)
     pRelS = v.obj(1000, 220, "sel 1")
     v.c(pRel, pRelS); v.c(pRelS, rel0); v.c(pRelS, dmp)
-    v.c(mix, v.obj(20, 860, "outlet~"))
+    outG = v.obj(20, 840, "*~")
+    v.c(mix, outG, 0, 0); v.c(outV, outG, 0, 1); v.c(outG, v.obj(20, 860, "outlet~"))
     v.save("piano-voice.pd")
 
 
@@ -257,8 +270,8 @@ def piano_post():
     hs = p_.obj(800, 690, "noise~"); hsH = p_.obj(800, 720, "hip~ 1500"); hsG = p_.obj(800, 750, "*~")
     p_.c(hs, hsH); p_.c(hsH, hsG, 0, 0); p_.c(evL, hsG, 0, 1)
     out_ = p_.obj(20, 800, "+~")
-    # soft limiter: below 0.6 untouched, above it rounded towards 1 (a struck chord's attack peaks)
-    lim = p_.obj(20, 830, "expr~ if(abs($v1)<0.6 \\, $v1 \\, (($v1>0)*2-1)*(0.6+(abs($v1)-0.6)/(1+2.5*(abs($v1)-0.6))))")
+    # soft limiter: below 0.8 untouched, above it rounded towards 1 (a struck chord's attack peaks)
+    lim = p_.obj(20, 830, "expr~ if(abs($v1)<0.8 \\, $v1 \\, (($v1>0)*2-1)*(0.8+(abs($v1)-0.8)/(1+5*(abs($v1)-0.8))))")
     p_.c(wR, out_); p_.c(hsG, out_); p_.c(out_, lim); p_.c(lim, outl)
     lb = p_.obj(1300, 40, "loadbang")
     lbM = p_.msg(1300, 70, "0.4")
@@ -278,7 +291,7 @@ a = '''    ("drone", 10, "drone-voice", 1.6, ['''
 assert s.count(a) == 1
 i = s.index(a)
 j = s.index("]),\n]", i) + len("]),\n")
-s = s[:j] + '''    ("piano", 11, "piano-voice", 0.4, [                                          # apply_piano.py
+s = s[:j] + '''    ("piano", 11, "piano-voice", 0.25, [                                          # apply_piano.py
         ("FELT", "t f", "piano-felt", 0.7, "expr int($f1*100)"),
         ("DECAY", "expr int(1500+pow($f1 \\\\, 2)*18500)", "piano-dec", 0.5, "expr int($f1/100)/10.0"),
         ("LOFI", "t f", "piano-lofi", 0.4, "expr int($f1*100)"),

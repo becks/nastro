@@ -2,7 +2,7 @@
 
 > Nastro is an independent, non-commercial hobby project, written from scratch in Pure Data (the base drum kit is synthesized by a script, `nastro-src/makekit.py`).
 
-Nastro is a tape workstation for Organelle 1. It combines twelve synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE, PIANO), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a synth LFO per engine, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages and an arpeggiator, project saving, a tape editor and an album recorder with a player.
+Nastro is a tape workstation for Organelle 1. It combines thirteen synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE, PIANO, MALLET), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a synth LFO per engine, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages and an arpeggiator, project saving, a tape editor and an album recorder with a player.
 
 This manual describes the current generated source in `nastro-src`. Screen images are rendered with the project’s bundled OLED simulator at the real 128 × 64 pixel resolution; values in the images are examples.
 
@@ -108,6 +108,7 @@ Enter SYNTH with **AUX + C**. Press **AUX + C** again to cycle the engines:
 - **ORGAN** — four drawbars (16', 8', 4', 2⅔', shown 0–8 like a real organ) with key click and a gentle leslie.
 - **DRONE** — two slowly drifting, detuned saws through a breathing filter: Detune, Drift, Filter and Release (the attack is half the release).
 - **PIANO** — a lo-fi felt piano with an audible sustain pedal: Felt, Decay, Lofi and Noise (see Piano below).
+- **MALLET** — struck instruments: toy piano, kalimba, handpan, steel pan, marimba, vibraphone, glockenspiel, bells, gamelan (see Mallet below).
 
 The four knobs control the parameters named on screen for the current engine. Hold AUX and use knob 1 for **SYNTH VOLUME**.
 
@@ -126,7 +127,20 @@ PIANO is a felt piano made by modal synthesis (no samples): every note is a set 
 3. **LOFI** — from clean to worn tape: high cut, a slow wow and a hiss that follows what you play.
 4. **NOISE** — level of the mechanical sounds: hammer thump, key release and the pedal.
 
-**Sustain pedal: the footswitch**, while the SYNTH page shows PIANO. With the pedal down, released notes keep ringing and the other strings resonate along with them; you hear the pedal going down and coming up, and lifting it damps the notes. On every other page (TAPE included) the footswitch still starts tape recording. Each note is struck up to a few milliseconds apart from the others, like fingers on a keyboard, and a soft limiter rounds off the peaks of loud chords.
+**Sustain pedal: the footswitch**, while the SYNTH page shows PIANO. With the pedal down, released notes keep ringing and the other strings resonate along with them; you hear the pedal going down and coming up, and lifting it damps the notes. On every other page (TAPE included) the footswitch still starts tape recording. Each note is struck up to a few milliseconds apart from the others, like fingers on a keyboard, and a soft limiter rounds off only the highest peaks of loud chords.
+
+### Mallet
+
+![Mallet screen](oled/30-synth-mallet.png)
+
+MALLET plays struck instruments, made the same way as PIANO (resonators struck by a mallet, no samples). It has 6 voices.
+
+1. **TYPE** — the instrument, shown by name: `toy` (toy piano), `kalim` (kalimba), `kbuzz` (kalimba with the buzz of loose metal), `hpan` (handpan), `steel` (steel pan), `marim` (marimba), `vibes` (vibraphone, with its motor tremolo), `glock` (glockenspiel), `bells`, `gamel` (gamelan, its pairs beating a few hertz apart).
+2. **HARD** — mallet hardness: harder gives a brighter, sharper strike.
+3. **DECAY** — how long the instrument rings, from a quarter to four times its natural length.
+4. **REL** — what a released key does: at the top the note rings on (these instruments have no dampers); lower values damp it, faster the lower you go.
+
+All the instruments have about the same loudness for a single note.
 
 ### Sample instrument
 

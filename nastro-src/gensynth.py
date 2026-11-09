@@ -75,14 +75,20 @@ ENGINES = [
         ("FILT", "expr int(150*pow(40 \\, $f1))", "dn-filt", 0.4, "t f"),
         ("REL", "expr int(500+pow($f1 \\, 2)*14500)", "dn-rel", 0.5, "expr int($f1/100)/10.0"),
     ]),
-    ("piano", 11, "piano-voice", 0.4, [                                          # apply_piano.py
+    ("piano", 11, "piano-voice", 0.25, [                                          # apply_piano.py
         ("FELT", "t f", "piano-felt", 0.7, "expr int($f1*100)"),
         ("DECAY", "expr int(1500+pow($f1 \\, 2)*18500)", "piano-dec", 0.5, "expr int($f1/100)/10.0"),
         ("LOFI", "t f", "piano-lofi", 0.4, "expr int($f1*100)"),
         ("NOISE", "t f", "piano-noise", 0.5, "expr int($f1*100)"),
     ], 6),
+    ("mallet", 12, "mallet-voice", 0.2, [                                       # apply_mallet.py
+        ("TYPE", "expr int(min($f1 \\, 0.999)*10)", "mlt-type", 0.05, "expr $f1+1"),
+        ("HARD", "t f", "mlt-hard", 0.5, "expr int($f1*100)"),
+        ("DECAY", "expr 0.25*pow(16 \\, $f1)", "mlt-dec", 0.5, "expr int($f1*100)/100"),
+        ("REL", "t f", "mlt-rel", 1.0, "expr int($f1*100)"),
+    ], 6),
 ]
-NAMES = ["FM", "SUB", "PLUK", "PAD", "SMPL", "AIR", "GLASS", "WAVE", "STRING", "ORGAN", "DRONE", "PIANO"]
+NAMES = ["FM", "SUB", "PLUK", "PAD", "SMPL", "AIR", "GLASS", "WAVE", "STRING", "ORGAN", "DRONE", "PIANO", "MALLET"]
 
 
 # ---------------------------------------------------------------- voices
@@ -632,8 +638,18 @@ def piano_voice():
     srt = v.obj(1500, 100, "samplerate~")
     v.c(v.obj(1500, 70, "loadbang"), srt)
     # ---- note-on: 4) DSP on  3) not released  2) mode coefficients  1) hammer pulse + click  0) timer, thump
+    # a stolen voice may still ring: fade it out in 1.5 ms, then (2 ms later) clear the resonators and strike
+    dcT = v.obj(20, 145, "t b b")
+    v.c(mos, dcT, 1)
+    outV = v.obj(100, 820, "vline~")
+    dcF = v.msg(100, 790, "0 1.5")
+    v.c(dcT, dcF, 1); v.c(dcF, outV)
+    dcD = v.obj(20, 152, "delay 2")
+    v.c(dcT, dcD, 0)
     onT = v.obj(20, 160, "t b b b b b")
-    v.c(mos, onT, 1)
+    v.c(dcD, onT)
+    dcUp = v.msg(180, 790, "1")
+    v.c(onT, dcUp, 0); v.c(dcUp, outV)                    # level back up once the strike is under way
     on1 = v.msg(1300, 210, "1")
     v.c(onT, on1, 4); v.c(on1, sw)
     rel0 = v.msg(1000, 100, "0")
@@ -695,6 +711,8 @@ def piano_voice():
         cm = v.msg(X, 380, "\\$1 \\$2 \\$3 0 0")
         bq = v.obj(X, 650, "biquad~")
         v.c(cp, cm); v.c(cm, bq); v.c(pG, bq); v.c(bq, mix)
+        clr = v.msg(X, 620, "set 0 0")                     # resonator state cleared before a new note
+        v.c(onT, clr, 4); v.c(clr, bq)
     # contact click (NOISE-independent, part of the tone): noise, about 3 ms
     nz = v.obj(1100, 470, "noise~")
     cE = v.obj(1100, 420, f"expr $f1/127*{PIANO_CLICK}*(0.3+1-$f2)")
@@ -745,7 +763,8 @@ def piano_voice():
     v.c(pUp, pRel)
     pRelS = v.obj(1000, 220, "sel 1")
     v.c(pRel, pRelS); v.c(pRelS, rel0); v.c(pRelS, dmp)
-    v.c(mix, v.obj(20, 860, "outlet~"))
+    outG = v.obj(20, 840, "*~")
+    v.c(mix, outG, 0, 0); v.c(outV, outG, 0, 1); v.c(outG, v.obj(20, 860, "outlet~"))
     v.save("piano-voice.pd")
 
 
@@ -828,8 +847,8 @@ def piano_post():
     hs = p_.obj(800, 690, "noise~"); hsH = p_.obj(800, 720, "hip~ 1500"); hsG = p_.obj(800, 750, "*~")
     p_.c(hs, hsH); p_.c(hsH, hsG, 0, 0); p_.c(evL, hsG, 0, 1)
     out_ = p_.obj(20, 800, "+~")
-    # soft limiter: below 0.6 untouched, above it rounded towards 1 (a struck chord's attack peaks)
-    lim = p_.obj(20, 830, "expr~ if(abs($v1)<0.6 \\, $v1 \\, (($v1>0)*2-1)*(0.6+(abs($v1)-0.6)/(1+2.5*(abs($v1)-0.6))))")
+    # soft limiter: below 0.8 untouched, above it rounded towards 1 (a struck chord's attack peaks)
+    lim = p_.obj(20, 830, "expr~ if(abs($v1)<0.8 \\, $v1 \\, (($v1>0)*2-1)*(0.8+(abs($v1)-0.8)/(1+5*(abs($v1)-0.8))))")
     p_.c(wR, out_); p_.c(hsG, out_); p_.c(out_, lim); p_.c(lim, outl)
     lb = p_.obj(1300, 40, "loadbang")
     lbM = p_.msg(1300, 70, "0.4")
@@ -838,6 +857,211 @@ def piano_post():
 
 
 piano_voice(); piano_post()
+
+MLT_TYPES = [
+    "\\; mltr 0 1.0 1.0 6.27 6.27 17.55 1.0 1.0 \\; mlta 0 0.8 0.3 0.45 0.15 0.2 0 0 \\; mltd 0 1.0 1.0 0.35 0.35 0.12 1.0 1.0 \\; mltt 0 0 2.0 0 9.0 0 0 0 \\; mlt-base 1.8 \\; mlt-click 0.15 \\; mlt-level 0.636 \\; mlt-buzz 0 \\; mlt-trem 0 0 \\; mlt-body 420 4 0.6 1600 3 0.3",
+    "\\; mltr 0 1.0 6.27 17.55 1.0 1.0 1.0 1.0 \\; mlta 0 1.0 0.3 0.1 0 0 0 0 \\; mltd 0 1.0 0.25 0.08 1.0 1.0 1.0 1.0 \\; mltt 0 0 0 0 0 0 0 0 \\; mlt-base 2.5 \\; mlt-click 0.12 \\; mlt-level 0.815 \\; mlt-buzz 0 \\; mlt-trem 0 0 \\; mlt-body 230 5 0.5 820 3 0.25",
+    "\\; mltr 0 1.0 6.27 17.55 1.0 1.0 1.0 1.0 \\; mlta 0 1.0 0.3 0.1 0 0 0 0 \\; mltd 0 1.0 0.25 0.08 1.0 1.0 1.0 1.0 \\; mltt 0 0 0 0 0 0 0 0 \\; mlt-base 2.5 \\; mlt-click 0.12 \\; mlt-level 0.786 \\; mlt-buzz 2.0 \\; mlt-trem 0 0 \\; mlt-body 230 5 0.5 820 3 0.25",
+    "\\; mltr 0 1.0 1.0 2.0 2.0 3.0 3.0 1.0 \\; mlta 0 0.7 0.5 0.45 0.3 0.25 0.15 0 \\; mltd 0 1.0 1.0 0.75 0.75 0.5 0.5 1.0 \\; mltt 0 0 0.7 0 1.1 0 1.6 0 \\; mlt-base 5.0 \\; mlt-click 0.02 \\; mlt-level 0.858 \\; mlt-buzz 0 \\; mlt-trem 0 0 \\; mlt-body 1000 1 0 1000 1 0",
+    "\\; mltr 0 1.0 2.0 2.0 3.0 4.0 1.0 1.0 \\; mlta 0 1.0 0.6 0.2 0.35 0.2 0 0 \\; mltd 0 1.0 0.6 0.6 0.4 0.3 1.0 1.0 \\; mltt 0 0 0 1.5 0 0 0 0 \\; mlt-base 1.6 \\; mlt-click 0.05 \\; mlt-level 0.972 \\; mlt-buzz 0 \\; mlt-trem 0 0 \\; mlt-body 1000 1 0 1000 1 0",
+    "\\; mltr 0 1.0 3.93 9.2 1.0 1.0 1.0 1.0 \\; mlta 0 1.0 0.35 0.12 0 0 0 0 \\; mltd 0 1.0 0.25 0.1 1.0 1.0 1.0 1.0 \\; mltt 0 0 0 0 0 0 0 0 \\; mlt-base 1.2 \\; mlt-click 0.05 \\; mlt-level 1.154 \\; mlt-buzz 0 \\; mlt-trem 0 0 \\; mlt-body 1000 1 0 1000 1 0",
+    "\\; mltr 0 1.0 4.0 10.0 1.0 1.0 1.0 1.0 \\; mlta 0 1.0 0.25 0.06 0 0 0 0 \\; mltd 0 1.0 0.3 0.1 1.0 1.0 1.0 1.0 \\; mltt 0 0 0 0 0 0 0 0 \\; mlt-base 4.0 \\; mlt-click 0.03 \\; mlt-level 1.599 \\; mlt-buzz 0 \\; mlt-trem 5.5 0.45 \\; mlt-body 1000 1 0 1000 1 0",
+    "\\; mltr 0 1.0 2.76 5.4 8.93 1.0 1.0 1.0 \\; mlta 0 1.0 0.4 0.2 0.1 0 0 0 \\; mltd 0 1.0 0.5 0.3 0.2 1.0 1.0 1.0 \\; mltt 0 0 0 0 0 0 0 0 \\; mlt-base 3.0 \\; mlt-click 0.08 \\; mlt-level 1.082 \\; mlt-buzz 0 \\; mlt-trem 0 0 \\; mlt-body 1000 1 0 1000 1 0",
+    "\\; mltr 0 0.5 1.0 1.2 1.5 2.0 2.5 3.0 \\; mlta 0 0.5 0.6 0.45 0.25 0.5 0.2 0.15 \\; mltd 0 1.6 1.0 0.8 0.6 0.5 0.35 0.3 \\; mltt 0 0 0 0 0 0 0 0 \\; mlt-base 6.0 \\; mlt-click 0.02 \\; mlt-level 0.69 \\; mlt-buzz 0 \\; mlt-trem 0 0 \\; mlt-body 1000 1 0 1000 1 0",
+    "\\; mltr 0 1.0 1.0 2.71 4.95 1.0 1.0 1.0 \\; mlta 0 0.7 0.5 0.3 0.12 0 0 0 \\; mltd 0 1.0 1.0 0.4 0.2 1.0 1.0 1.0 \\; mltt 0 0 5.0 0 0 0 0 0 \\; mlt-base 3.5 \\; mlt-click 0.06 \\; mlt-level 0.954 \\; mlt-buzz 0 \\; mlt-trem 0 0 \\; mlt-body 1000 1 0 1000 1 0",
+]
+MLT_NAMES = ["toy", "kalim", "kbuzz", "hpan", "steel", "marim", "vibes", "glock", "bells", "gamel"]
+
+
+# ---------------------------------------------------------------- mallet-voice.pd / mallet-post.pd (apply_mallet.py)
+MLT_NM = 7
+
+
+def mallet_voice():
+    v = Patch(1600, 900)
+    v.text(20, 5, "mallet-voice: modal struck instruments - up to 7 resonators from the tables mltr / mlta / mltd / mltt - half-sine strike - click")
+    inl = v.obj(20, 40, "inlet")
+    tl = v.obj(20, 55, "t l l")                           # 1) store note and velocity  0) then note-on / off
+    upS = v.obj(120, 85, "unpack f f")
+    up = v.obj(20, 70, "unpack f f")
+    v.c(inl, tl); v.c(tl, upS, 1); v.c(tl, up, 0)
+    mos = v.obj(20, 130, "moses 1")
+    noteF = v.obj(120, 130, "f")
+    v.c(upS, noteF, 0, 1); v.c(up, mos, 1)
+    velF = v.obj(300, 190, "f 100")
+    v.c(upS, velF, 1, 1)
+    for nm_ in ("mltbase", "mltclick", "mltlevel"):
+        v.obj(1450 + ("mltbase", "mltclick", "mltlevel").index(nm_) * 60, 10, f"v {nm_}")
+    # ---- DSP on at the note, off when damped or died away
+    sw = v.obj(1300, 300, "switch~")
+    z0 = v.msg(1400, 270, "0")
+    v.c(v.obj(1400, 240, "loadbang"), z0); v.c(z0, sw)
+    offD = v.obj(1300, 270, "delay")
+    v.c(offD, z0)
+    srt = v.obj(1500, 100, "samplerate~")
+    v.c(v.obj(1500, 70, "loadbang"), srt)
+    # ---- note-on: 3) DSP on  2) mode coefficients  1) strike + click  0) switch-off timer
+    # a stolen voice may still ring: fade it out in 1.5 ms, then (2 ms later) clear the resonators and strike
+    dcT = v.obj(20, 145, "t b b")
+    v.c(mos, dcT, 1)
+    outV = v.obj(100, 820, "vline~")
+    dcF = v.msg(100, 790, "0 1.5")
+    v.c(dcT, dcF, 1); v.c(dcF, outV)
+    dcD = v.obj(20, 152, "delay 2")
+    v.c(dcT, dcD, 0)
+    onT = v.obj(20, 160, "t b b b b")
+    v.c(dcD, onT)
+    dcUp = v.msg(180, 790, "1")
+    v.c(onT, dcUp, 0); v.c(dcUp, outV)                    # level back up once the strike is under way
+    on1 = v.msg(1300, 210, "1")
+    v.c(onT, on1, 3); v.c(on1, sw)
+    # parameters: $f1 frequency  $f2 decay scale  $f3 sample rate  $f4 damping T60 (0 = none)
+    hardF = v.obj(500, 190, "f 0.5"); decF = v.obj(600, 190, "f 1")
+    v.c(v.obj(500, 160, "r mlt-hard"), hardF, 0, 1); v.c(v.obj(600, 160, "r mlt-dec"), decF, 0, 1)
+    mt = v.obj(120, 220, "mtof")
+    prm = v.obj(120, 260, "pack f f f f")
+    v.c(srt, prm, 0, 2)
+    pT = v.obj(120, 190, "t b b b")                      # 2) decay scale  1) not damped  0) frequency (hot)
+    v.c(onT, pT, 2)
+    v.c(pT, decF, 2); v.c(decF, prm, 0, 1)
+    d0 = v.msg(200, 220, "0")
+    v.c(pT, d0, 1); v.c(d0, prm, 0, 3)
+    v.c(pT, noteF, 0); v.c(noteF, mt); v.c(mt, prm, 0, 0)
+    mix = v.obj(20, 760, "*~ 1")
+    # strike: half-sine pulse = cos~ of (ramp / 2 - 1/4), length from the hardness, fundamental compensated
+    hE = v.obj(500, 300, "expr min(0.008-0.0077*$f2 \\, 1/$f1)*1000")
+    hP = v.obj(500, 330, "t f f")
+    hX = v.obj(650, 360, "expr 2*$f2*$f1/1000")
+    hL = v.obj(650, 390, "expr if(abs(1-$f1*$f1)<0.001 \\, 0.7854 \\, abs(cos(3.14159*$f1/2)/(1-$f1*$f1)))")
+    hS = v.obj(650, 420, "expr $f2/127*3.14159/(2*max(2 \\, $f3*$f4/1000))/max($f1 \\, 0.3)")
+    hT = v.obj(500, 270, "t b b b")                       # 2) hardness  1) velocity (+ click)  0) frequency
+    v.c(onT, hT, 1)
+    fq = v.obj(400, 240, "f")
+    v.c(mt, fq, 0, 1)
+    v.c(hT, hardF, 2); v.c(hardF, hE, 0, 1)
+    v.c(hT, velF, 1); v.c(velF, hS, 0, 1)
+    v.c(srt, hS, 0, 2)
+    fqT = v.obj(400, 270, "t f f")
+    v.c(hT, fq, 0); v.c(fq, fqT); v.c(fqT, hX, 1, 1); v.c(fqT, hE, 0)
+    v.c(hE, hP); v.c(hP, hS, 1, 3); v.c(hP, hX, 0, 0)
+    v.c(hX, hL); v.c(hL, hS)
+    pRamp = v.msg(500, 470, "0 \\, 1 \\$1")
+    pV = v.obj(500, 500, "vline~"); pH = v.obj(500, 530, "*~ 0.5"); pH2 = v.obj(500, 560, "-~ 0.25")
+    pC = v.obj(500, 590, "cos~"); pG = v.obj(500, 620, "*~ 0")
+    v.c(hP, pRamp, 1); v.c(pRamp, pV); v.c(pV, pH); v.c(pH, pH2); v.c(pH2, pC); v.c(pC, pG)
+    v.c(hS, pG, 0, 1)
+    # resonators: ratio / level / decay / detune of mode k from the type tables
+    for k_ in range(MLT_NM):
+        X = 20 + k_ * 130
+        FR = f"($f1*mltr[{k_}]+mltt[{k_}])"
+        W = f"(6.28319*{FR}/$f3)"
+        T60N = f"max(0.001 \\, mltbase*$f2*mltd[{k_}]*min(3 \\, max(0.3 \\, sqrt(220/$f1))))"
+        T60 = f"if($f4>0 \\, min($f4 \\, {T60N}) \\, {T60N})"
+        R = f"exp(-6.9078/({T60}*$f3))"
+        ce = v.obj(X, 300 + (k_ % 2) * 20,
+                   f"expr 2*{R}*cos({W}) \\; -{R}*{R} \\; if({FR}<0.45*$f3 \\, mltlevel*mlta[{k_}]*sin({W}) \\, 0)")
+        cp = v.obj(X, 350, "pack f f f")
+        v.c(prm, ce)
+        v.c(ce, cp, 2, 2); v.c(ce, cp, 1, 1); v.c(ce, cp, 0, 0)
+        cm = v.msg(X, 380, "\\$1 \\$2 \\$3 0 0")
+        bq = v.obj(X, 650, "biquad~")
+        v.c(cp, cm); v.c(cm, bq); v.c(pG, bq); v.c(bq, mix)
+        clr = v.msg(X, 620, "set 0 0")                     # resonator state cleared before a new note
+        v.c(onT, clr, 3); v.c(clr, bq)
+    # contact click: high-passed noise, about 3 ms (as the minichord)
+    nz = v.obj(1100, 470, "noise~")
+    cHp = v.obj(1100, 500, "hip~ 2100")
+    cE = v.obj(1100, 420, "expr $f1/127*mltclick*(0.3+$f2)")
+    v.c(velF, cE); v.c(hardF, cE, 0, 1)
+    cM = v.msg(1100, 445, "\\$1 \\, 0 8")
+    cV = v.obj(1200, 500, "vline~"); cG = v.obj(1100, 530, "*~")
+    v.c(cE, cM); v.c(cM, cV); v.c(nz, cHp); v.c(cHp, cG, 0, 0); v.c(cV, cG, 0, 1); v.c(cG, mix)
+    # switch-off timer: the longest ring (a bell's hum mode decays 1.6 x the base)
+    offE = v.obj(1300, 240, "expr mltbase*$f2*1600*min(3 \\, max(0.3 \\, sqrt(220/$f1)))+400")
+    v.c(prm, offE); v.c(offE, offD, 0, 1)
+    v.c(onT, offD, 0)
+    # ---- note-off: REL at the top rings on; lower values damp (T60 0.08 .. 6 s), DSP off after that
+    relF = v.obj(20, 700, "f 1")
+    v.c(v.obj(120, 680, "r mlt-rel"), relF, 0, 1)
+    offT = v.obj(20, 690, "t b")
+    v.c(mos, offT, 0); v.c(offT, relF)
+    rlE = v.obj(20, 730, "expr if($f1<0.99 \\, 0.08+6*$f1*$f1 \\, -1)")
+    rlM = v.obj(20, 760, "moses 0")
+    v.c(relF, rlE); v.c(rlE, rlM)
+    rlT = v.obj(100, 790, "t f f")                        # 1) the damping T60 in, parameters re-sent  0) DSP off later
+    v.c(rlM, rlT, 1)
+    rlP = v.obj(200, 820, "t b f")
+    v.c(rlT, rlP, 1); v.c(rlP, prm, 1, 3); v.c(rlP, prm, 0, 0)
+    rlMs = v.obj(100, 820, "expr $f1*1000+400")
+    v.c(rlT, rlMs, 0); v.c(rlMs, offD)                    # a float into [delay]'s left inlet: set and start
+    outG = v.obj(20, 840, "*~")
+    v.c(mix, outG, 0, 0); v.c(outV, outG, 0, 1); v.c(outG, v.obj(20, 860, "outlet~"))
+    v.save("mallet-voice.pd")
+
+
+def mallet_post():
+    p_ = Patch(1600, 900)
+    p_.text(20, 5, "mallet-post: instrument types (tables) - body resonances - buzz - tremolo - soft limiter - TYPE name on the SYNTH page")
+    p_.obj(20, 30, f"table mltr {MLT_NM}"); p_.obj(140, 30, f"table mlta {MLT_NM}")
+    p_.obj(260, 30, f"table mltd {MLT_NM}"); p_.obj(380, 30, f"table mltt {MLT_NM}")
+    inl = p_.obj(20, 60, "inlet~")
+    outl = p_.obj(20, 860, "outlet~")
+    for k_, (rcv, var) in enumerate((("mlt-base", "mltbase"), ("mlt-click", "mltclick"), ("mlt-level", "mltlevel"))):
+        p_.c(p_.obj(600 + k_ * 100, 30, f"r {rcv}"), p_.obj(600 + k_ * 100, 60, f"v {var}"))
+    # type -> tables and values
+    tyR = p_.obj(1000, 30, "r mlt-type")
+    tyS = p_.obj(1000, 60, "sel " + " ".join(str(i_) for i_ in range(len(MLT_TYPES))))
+    p_.c(tyR, tyS)
+    for i_, msg_ in enumerate(MLT_TYPES):
+        p_.c(tyS, p_.msg(1000 + (i_ % 5) * 120, 90 + (i_ // 5) * 30, msg_), i_)
+    p_.c(p_.obj(1100, 30, "loadbang"), p_.msg(1100, 60, "\\; mlt-type 0"))
+    # body: dry + g1 bp1(dry) + g2 bp2(dry)
+    bU = p_.obj(300, 120, "unpack f f f f f f")
+    p_.c(p_.obj(300, 90, "r mlt-body"), bU)
+    sum_ = p_.obj(20, 300, "+~")
+    p_.c(inl, sum_)
+    for b_ in range(2):
+        X = 300 + b_ * 250
+        bp = p_.obj(X, 200, "bp~ 1000 1"); bg = p_.obj(X, 230, "*~ 0")
+        p_.c(bU, bp, 3 * b_, 1); p_.c(bU, bp, 3 * b_ + 1, 2); p_.c(bU, bg, 3 * b_ + 2, 1)
+        p_.c(inl, bp); p_.c(bp, bg); p_.c(bg, sum_)
+    # buzz: the part above 0.2, times (0.6 + 0.4 noise), high-passed, times the amount
+    bzE = p_.obj(800, 330, "expr~ ($v1-min(0.2 \\, max(-0.2 \\, $v1)))*(0.6+0.4*$v2)")
+    bzN = p_.obj(950, 300, "noise~")
+    bzH = p_.obj(800, 360, "hip~ 700"); bzG = p_.obj(800, 390, "*~ 0")
+    p_.c(inl, bzE, 0, 0); p_.c(bzN, bzE, 0, 1); p_.c(bzE, bzH); p_.c(bzH, bzG); p_.c(bzG, sum_)
+    p_.c(p_.obj(900, 360, "r mlt-buzz"), bzG, 0, 1)
+    # tremolo: 1 - depth (0.5 + 0.5 sin)
+    trU = p_.obj(500, 420, "unpack f f")
+    p_.c(p_.obj(500, 390, "r mlt-trem"), trU)
+    trO = p_.obj(500, 450, "osc~ 0"); trA = p_.obj(500, 480, "*~ 0.5"); trB = p_.obj(500, 510, "+~ 0.5")
+    trD = p_.obj(500, 540, "*~ 0"); trN = p_.obj(500, 570, "*~ -1"); trC = p_.obj(500, 600, "+~ 1")
+    p_.c(trU, trO, 0); p_.c(trU, trD, 1, 1)
+    p_.c(trO, trA); p_.c(trA, trB); p_.c(trB, trD); p_.c(trD, trN); p_.c(trN, trC)
+    trM = p_.obj(20, 620, "*~")
+    p_.c(sum_, trM, 0, 0); p_.c(trC, trM, 0, 1)
+    lim = p_.obj(20, 800, "expr~ if(abs($v1)<0.8 \\, $v1 \\, (($v1>0)*2-1)*(0.8+(abs($v1)-0.8)/(1+5*(abs($v1)-0.8))))")
+    p_.c(trM, lim); p_.c(lim, outl)
+    # the TYPE row shows the name: on [s mlt-draw] (synth.pd, after the rows) print it over the number
+    dwF = p_.obj(1000, 400, "f 0")
+    p_.c(p_.obj(1000, 370, "r mlt-type"), dwF, 0, 1)
+    dwG = p_.obj(1000, 430, "expr if($f2==12 && $f3==0 && $f4==0 \\, $f1 \\, -1)")
+    dwT = p_.obj(1000, 385, "t b b b b")
+    p_.c(p_.obj(1000, 355, "r mlt-draw"), dwT)
+    for k_, (rcv, x_) in enumerate((("synth-engine", 1100), ("aux", 1200), ("syn-lfo-page", 1300))):
+        f_ = p_.obj(x_, 400, "f 0")
+        p_.c(p_.obj(x_, 370, f"r {rcv}"), f_, 0, 1); p_.c(dwT, f_, 3 - k_); p_.c(f_, dwG, 0, k_ + 1)
+    p_.c(dwT, dwF, 0); p_.c(dwF, dwG)
+    dwS = p_.obj(1000, 460, "sel " + " ".join(str(i_) for i_ in range(len(MLT_NAMES))))
+    p_.c(dwG, dwS)
+    for i_, nm_ in enumerate(MLT_NAMES):
+        p_.c(dwS, p_.msg(1000 + (i_ % 5) * 110, 490 + (i_ // 5) * 30,
+                         "\\; oscOut sendtyped /oled/gFillArea iiiiii 3 34 13 29 10 0 "
+                         f"\\; oscOut sendtyped /oled/gPrintln iiiiis 3 34 14 8 1 {nm_}"), i_)
+    p_.save("mallet-post.pd")
+
+
+mallet_voice(); mallet_post()
 
 
 # ---------------------------------------------------------------- engines
@@ -855,8 +1079,8 @@ def engine(name, eid, voice, gain, params, voices=4):
     vG = e.obj(20, 195, "*~")
     e.c(vR, vM); e.c(vM, vL)
     e.c(pk, cl); e.c(cl, g); e.c(g, vG, 0, 0); e.c(vL, vG, 0, 1)
-    if name == "piano":                                   # felt piano: resonance, pedal noises, lo-fi, soft limiter (apply_piano.py)
-        post = e.obj(20, 205, "piano-post")
+    if name in ("piano", "mallet"):                       # their own output stage before the clip (apply_piano.py, apply_mallet.py)
+        post = e.obj(20, 205, f"{name}-post")
         e.c(vG, post); e.c(post, cp)
     else:
         e.c(vG, cp)
@@ -1061,6 +1285,7 @@ s.c(s.obj(1350, 310, "r smp-recording"), dirty)
 recS = s.obj(1250, 370, "sel 1 0")
 recM = s.msg(1250, 400, osc5("gFillArea", "iiiiii", "67 0 21 10 1") + " " + osc5("gPrintln", "iiiiis", "69 1 8 0 REC"))
 s.c(dT, fRec, 1); s.c(fRec, recS); s.c(recS, recM, 0)
+s.c(dT, s.msg(1250, 430, "\\; mlt-draw bang"), 1)              # MALLET: TYPE name over the number (apply_mallet.py)
 # IN badge when the input monitor is on (and not sampling)
 fMon = s.obj(1400, 340, "f")
 s.c(s.obj(1400, 310, "r smp-monitor"), fMon, 0, 1)

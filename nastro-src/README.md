@@ -19,7 +19,7 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
 `test_tomb.py`, `test_endl.py`, `test_ambient.py`, `test_proj.py`, `test_startempty.py`, `test_nav.py`,
 `test_smpl.py`, `test_click.py`, `test_pan.py`, `test_drumrec.py`, `test_monitor.py`, `test_lfo.py`,
 `test_lfoproj.py`, `test_recblink.py`, `test_album.py`, `test_albumview.py`, `test_arp.py`, `test_guardedit.py`,
-`test_loopstart.py`, `test_smplloop.py`, `test_piano.py`.
+`test_loopstart.py`, `test_smplloop.py`, `test_piano.py`, `test_mallet.py`.
 
 ## Review tools
 - `python3 review.py ../Nastro`: sends/receives without a counterpart, connections into `[r]`, `[delay]` fed with
@@ -101,7 +101,7 @@ counter + `tabwrite~` (block-aligned; `vline~` was ~80 samples off).
   (`apply_editall.py`, `apply_editall_menu.py`, `test_editall.py`).
 
 ## Synth engines
-FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE, PIANO. AUX+C again in SYNTH = next engine. Every voice switches its own DSP on at
+FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE, PIANO, MALLET. AUX+C again in SYNTH = next engine. Every voice switches its own DSP on at
 a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_voiceswitch.py`): about -42% DSP idle.
 - SUB ADSR (`apply_subadsr.py`, `test_subadsr.py`): AUX + knobs 2..4 on SUB = ATTACK (1–3000 ms), DECAY/RELEASE
   (10–5000 ms), SUSTAIN; knob 1 stays the synth volume. Amp ADSR (`vline~`), filter envelope attack + decay to 0.
@@ -130,6 +130,18 @@ a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_vo
   sounded like clipping), soft limiter above 0.6. Footswitch = pedal while mode 0 and engine 11 (gentape.py),
   else tape rec; leaving SYNTH / PIANO lifts it. Knob contexts 43 (engine) and 44 (its LFO): 27 and 40 were taken;
   pkval 180. A first additive version (sines + envelopes) sounded fake and was replaced.
+- MALLET, engine 12 (`apply_mallet.py`, `test_mallet.py`): the same modal voice, with the 10 struck instruments
+  of the minichord (toy piano, kalimba, kalimba with buzz, handpan, steel pan, marimba, vibraphone, glockenspiel,
+  bells, gamelan). Mode ratios / levels / decays / detunes in the tables mltr / mlta / mltd / mltt, filled when
+  TYPE changes; mallet-post.pd: up to 2 body band-passes, buzz (part above 0.2, with noise, high-passed),
+  vibraphone tremolo, soft limiter. Levels re-balanced so every type's single note peaks about 0.25 (the
+  minichord evened them out with a tanh at its output). The TYPE row's name is printed by mallet-post on
+  [s mlt-draw] (sent by synth.pd after the rows). Knob contexts 45 / 46 (pkval 188).
+- PIANO and MALLET levels: a 6-note chord at full velocity stays under the clip (engine gains 0.25 / 0.2, soft
+  limiter only above 0.8). A stolen voice (more keys than voices) fades out in 1.5 ms, its resonators are cleared
+  ("set 0 0" to [biquad~]) and the strike comes 2 ms later: retuning a ringing resonator snapped.
+- CPU: the resonators cost: 6 voices x 7 [biquad~] are about 9 of the PIANO's 14 ms per audio second on the Mac
+  (FM 0.6, SUB 1.6). On the Organelle Pd goes from about 36 % idle to 46-50 % with full chords.
 - SMPL loop points and playheads (`apply_smplloop.py`, `test_smplloop.py`): AUX + knobs 2 / 3 on SMPL = loop start /
   end, relative to START..END, snapped to zero crossings (same chunked searcher). Voice: the read position is a
   counter ([rpole~] of the time rate); idx = c while c < E, then ls + fmod(c - E, B); folded back by B every block

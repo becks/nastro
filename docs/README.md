@@ -1,6 +1,6 @@
 # Nastro for Organelle
 
-> Nastro is an independent, non-commercial hobby project, written from scratch in Pure Data (the base drum kit is synthesized by a script, `nastro-src/makekit.py`). It is not affiliated with or endorsed by Critter & Guitari; *Organelle* is a trademark of Critter & Guitari, mentioned only to describe the hardware Nastro runs on.
+> Nastro is an independent, non-commercial hobby project, written from scratch in Pure Data (the base drum kit is synthesized by a script, `nastro-src/makekit.py`).
 
 Nastro is a tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a synth LFO per engine, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages and an arpeggiator, project saving, a tape editor and an album recorder with a player.
 

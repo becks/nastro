@@ -268,7 +268,7 @@ x_.c(seq, x_.msg(100, 430, "\\; mt-reset bang"), 2)
 psel = x_.obj(200, 430, "sel 0 1 2 3 4")
 x_.c(pgS, psel)
 
-# MIX page: 4 dials with needles (OP-1 style). Holding AUX shows / edits PAN instead of level.
+# MIX page: 4 dials with needles. Holding AUX shows / edits PAN instead of level.
 import math
 rauxM = x_.obj(1100, 60, "r aux")
 x_.c(rauxM, dOne)

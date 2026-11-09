@@ -1,5 +1,5 @@
 # exec'd from gen.py: builds meter.pd - master output meter in the title row of the MIX level page
-# (OP-1 style little lights). 2 rows (L y=1, R y=5) of 12 segments, -30..0 dBFS, falling one segment per frame,
+# (little segment lights). 2 rows (L y=1, R y=5) of 12 segments, -30..0 dBFS, falling one segment per frame,
 # plus a LIM light when the limiter is working. 10 fps; only segments that change are drawn.
 # Inputs: [r nst-outL] [r nst-outR] (env~ dB, 100 = 0 dBFS), [r nst-lim-gain], [r mt-reset] (screen was cleared).
 THR = [-30, -27, -24, -21, -18, -15, -12, -9, -6, -4, -2, -0.5]   # dBFS for segments 1..12

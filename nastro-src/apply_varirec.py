@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tape recording at 0.5x and 2x (OP-1 style: record slowed down, play back at 1x an octave up - or the reverse).
+"""Tape recording at 0.5x and 2x (the classic tape trick: record slowed down, play back at 1x an octave up - or the reverse).
 
 Before, rec forced the tape to 1x. Now, when the speed is on one of the octave steps 0.5 or 2, the tape keeps that
 speed while recording (the factor is frozen at rec start); any other speed records at 1x as before.

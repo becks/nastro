@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""1) live waveform while sampling  2) stereo tape with per-track pan  3) OP-1-style MIX page with dials,
+"""1) live waveform while sampling  2) stereo tape with per-track pan  3) MIX page with round dials,
 AUX held = PAN (own pickup context 11)."""
 import shutil
 
@@ -121,7 +121,7 @@ ms.c(ctL, tMono, 0, 0); ms.c(ctR, tMono, 0, 1); ms.c(tMono, tHalf)'''),
 ])
 
 # ------------------------------------------------------------ 3) MIX page: dials, AUX = PAN
-PAGE = r'''# MIX page: 4 dials with needles (OP-1 style). Holding AUX shows / edits PAN instead of level.
+PAGE = r'''# MIX page: 4 dials with needles. Holding AUX shows / edits PAN instead of level.
 import math
 rauxM = x_.obj(1100, 60, "r aux")
 x_.c(rauxM, dOne)

@@ -123,7 +123,7 @@ def draw_tape_loop(oled):
 
 
 def dial(oled, cx, value, label, small):
-    # OP-1-style dial used by the MIX page, approximate but using device primitives.
+    # round dial used by the MIX page, approximate but using device primitives.
     oled.circle(cx, 30, 12, 1)
     for dx, dy in ((-9, 7), (-12, 0), (-9, -7), (0, -11), (9, -7), (12, 0), (9, 7)):
         oled.line(cx + dx, 30 + dy, cx + dx // 2, 30 + dy // 2, 1)

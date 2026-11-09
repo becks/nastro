@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synth LFO, OP-1 style: one LFO per engine, saved with it. On SYNTH, AUX + D5 opens the LFO page of the
+"""Synth LFO: one LFO per engine, saved with it. On SYNTH, AUX + D5 opens the LFO page of the
 current engine (again = back to the parameters; leaving SYNTH closes it). Knobs: TYPE (off sine tri squ ramp
 rand drift trem env), RATE (0.05..10 Hz), AMT, DEST (the engine's 4 parameters, PITCH, VOL).
 - P1..P4: the parameter moves around its knob value (value = knob + AMT/2 x lfo, clipped); the bar moves, the

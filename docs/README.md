@@ -2,7 +2,7 @@
 
 > Nastro is an independent, non-commercial hobby project, written from scratch in Pure Data (the base drum kit is synthesized by a script, `nastro-src/makekit.py`).
 
-Nastro is a tape workstation for Organelle 1. It combines eleven synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a synth LFO per engine, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages and an arpeggiator, project saving, a tape editor and an album recorder with a player.
+Nastro is a tape workstation for Organelle 1. It combines twelve synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE, PIANO), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a synth LFO per engine, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages and an arpeggiator, project saving, a tape editor and an album recorder with a player.
 
 This manual describes the current generated source in `nastro-src`. Screen images are rendered with the project’s bundled OLED simulator at the real 128 × 64 pixel resolution; values in the images are examples.
 
@@ -107,12 +107,26 @@ Enter SYNTH with **AUX + C**. Press **AUX + C** again to cycle the engines:
 - **STRING** — plucked string with a body: Damping (bright ringing → muted), Body resonance, Pick position and Release.
 - **ORGAN** — four drawbars (16', 8', 4', 2⅔', shown 0–8 like a real organ) with key click and a gentle leslie.
 - **DRONE** — two slowly drifting, detuned saws through a breathing filter: Detune, Drift, Filter and Release (the attack is half the release).
+- **PIANO** — a lo-fi felt piano with an audible sustain pedal: Felt, Decay, Lofi and Noise (see Piano below).
 
 The four knobs control the parameters named on screen for the current engine. Hold AUX and use knob 1 for **SYNTH VOLUME**.
 
 ![SUB ADSR screen](oled/18-sub-adsr.png)
 
 With SUB selected, the AUX page shows VOL, ATK, D/R and SUS (the filter envelope follows Attack and Decay, then closes, which keeps SUB's plucky character). The normal synth view shows the selected engine, octave and four parameter bars.
+
+### Piano
+
+![Piano screen](oled/29-synth-piano.png)
+
+PIANO is a felt piano made by modal synthesis (no samples): every note is a set of resonators — two strings a fraction of a hertz apart and a few slightly stretched partials, each with its own decay — struck by a felt hammer, with a short contact noise and the resonance of the instrument's body. It has 6 voices.
+
+1. **FELT** — how soft the hammer is: more felt gives a longer, gentler strike that reaches the upper partials less (darker, rounder), without getting quieter.
+2. **DECAY** — how long the notes ring, about 1.5–20 seconds; high notes ring shorter than low ones.
+3. **LOFI** — from clean to worn tape: high cut, a slow wow and a hiss that follows what you play.
+4. **NOISE** — level of the mechanical sounds: hammer thump, key release and the pedal.
+
+**Sustain pedal: the footswitch**, while the SYNTH page shows PIANO. With the pedal down, released notes keep ringing and the other strings resonate along with them; you hear the pedal going down and coming up, and lifting it damps the notes. On every other page (TAPE included) the footswitch still starts tape recording. Each note is struck up to a few milliseconds apart from the others, like fingers on a keyboard, and a soft limiter rounds off the peaks of loud chords.
 
 ### Sample instrument
 
@@ -177,7 +191,7 @@ Enter TAPE with **AUX + D**. There are four mono tracks, each up to 60 seconds, 
 | Control | Action |
 | --- | --- |
 | AUX + F | Play / stop. |
-| AUX + F# (or footswitch) | Record / stop recording. Record automatically starts playback. |
+| AUX + F# (or footswitch) | Record / stop recording. Record automatically starts playback. (On the SYNTH page with PIANO the footswitch is the sustain pedal instead.) |
 | AUX + G | Rewind to the start. |
 | AUX + G# | Loop: first press sets start, second sets end and enables looping, third disables loop. |
 | AUX + C#5 / D#5 | Move backward / forward by the current navigation unit. |

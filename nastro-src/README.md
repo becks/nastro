@@ -19,7 +19,7 @@ scheduler ticks), redraw the OLED only when something changes, keep the OLED und
 `test_tomb.py`, `test_endl.py`, `test_ambient.py`, `test_proj.py`, `test_startempty.py`, `test_nav.py`,
 `test_smpl.py`, `test_click.py`, `test_pan.py`, `test_drumrec.py`, `test_monitor.py`, `test_lfo.py`,
 `test_lfoproj.py`, `test_recblink.py`, `test_album.py`, `test_albumview.py`, `test_arp.py`, `test_guardedit.py`,
-`test_loopstart.py`, `test_smplloop.py`.
+`test_loopstart.py`, `test_smplloop.py`, `test_piano.py`.
 
 ## Review tools
 - `python3 review.py ../Nastro`: sends/receives without a counterpart, connections into `[r]`, `[delay]` fed with
@@ -101,7 +101,7 @@ counter + `tabwrite~` (block-aligned; `vline~` was ~80 samples off).
   (`apply_editall.py`, `apply_editall_menu.py`, `test_editall.py`).
 
 ## Synth engines
-FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE. AUX+C again in SYNTH = next engine. Every voice switches its own DSP on at
+FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE, PIANO. AUX+C again in SYNTH = next engine. Every voice switches its own DSP on at
 a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_voiceswitch.py`): about -42% DSP idle.
 - SUB ADSR (`apply_subadsr.py`, `test_subadsr.py`): AUX + knobs 2..4 on SUB = ATTACK (1–3000 ms), DECAY/RELEASE
   (10–5000 ms), SUSTAIN; knob 1 stays the synth volume. Amp ADSR (`vline~`), filter envelope attack + decay to 0.
@@ -119,6 +119,17 @@ a note and off when its sound has ended (`switch~`, PLUK `switch~ 16`; `apply_vo
     vibrato + tremolo with its own rate per voice, 4 ms / 60 ms gate.
   - DRONE: two `phasor~` saws detuned +-DET/2 cents, each drifting (own slow LFO, up to +-15 cents), `vcf~`
     low-pass that breathes, squared envelope, attack = REL / 2 (0.5..15 s release).
+- PIANO, engine 11 (`apply_piano.py`, `test_piano.py`): modal synthesis ported from the felt piano of the
+  minichord-kalimba firmware. Per voice 7 two-pole resonators ([biquad~] fb1 = 2 r cos w, fb2 = -r^2, ff1 = gain,
+  r = exp(-ln 1000 / (T60 sr))) struck by a half-sine pulse (vline~ ramp -> cos~ of ramp/2 - 1/4); FELT = pulse
+  length, the fundamental's level compensated (|cos(pi x/2) / (1 - x^2)|, x = 2 f T); contact click; each strike
+  0..6 ms late at random. Damping re-sends the coefficients with T60 = 0.15 s (gains unchanged: no click in Pd's
+  direct form II). DSP per voice off when damped or silent (own timer, not voice_switch: the pedal sustains past
+  the note-off). piano-post.pd, before the engine's clip: body (bp~ 110 Hz Q 1.5), sympathetic resonance (4
+  combs, pedal down), pedal noises, LOFI = high cut + wow + hiss following the playing (no saturation: it
+  sounded like clipping), soft limiter above 0.6. Footswitch = pedal while mode 0 and engine 11 (gentape.py),
+  else tape rec; leaving SYNTH / PIANO lifts it. Knob contexts 43 (engine) and 44 (its LFO): 27 and 40 were taken;
+  pkval 180. A first additive version (sines + envelopes) sounded fake and was replaced.
 - SMPL loop points and playheads (`apply_smplloop.py`, `test_smplloop.py`): AUX + knobs 2 / 3 on SMPL = loop start /
   end, relative to START..END, snapped to zero crossings (same chunked searcher). Voice: the read position is a
   counter ([rpole~] of the time rate); idx = c while c < E, then ls + fmod(c - E, B); folded back by B every block

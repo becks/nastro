@@ -134,7 +134,7 @@ p.c(ldMo, p.msg(1250, 730, "\\; nst-proj-status symbol NEW"), 0); p.c(ldSt, p.ob
 # apply the knob state to the modules, as if every knob had been turned
 CTX = [(0, "fm-knob"), (6, "sub-knob"), (7, "pluk-knob"), (8, "pad-knob"), (10, "smpl-knob"), (2, "tape-knob"),
        (3, "mix-lvl-set"), (11, "mix-pan-set"), (5, "mix-fx-set"), (4, "tempo-knob"), (9, "seq-step-set"),
-       (13, "synth-vol-set"), (14, "drum-vol-set"), (15, "tomb-set"), (16, "rvb-set"), (17, "endl-set"), (18, "air-knob"), (19, "bell-knob"), (20, "tfilt-set"), (21, "tres-set"), (22, "comp-set"), (23, "wave-knob"), (24, "strg-knob"), (25, "organ-knob"), (26, "drone-knob"), (27, "dsend-set"), (28, "rsend-set"), (29, "fm-lfo-knob"), (30, "sub-lfo-knob"), (31, "pluk-lfo-knob"), (32, "pad-lfo-knob"), (33, "smpl-lfo-knob"), (34, "air-lfo-knob"), (35, "bell-lfo-knob"), (36, "wave-lfo-knob"), (37, "strg-lfo-knob"), (38, "organ-lfo-knob"), (39, "drone-lfo-knob"), (40, "arp-set"), (41, "arp-aux-set"), (42, "smp-aux-set")]
+       (13, "synth-vol-set"), (14, "drum-vol-set"), (15, "tomb-set"), (16, "rvb-set"), (17, "endl-set"), (18, "air-knob"), (19, "bell-knob"), (20, "tfilt-set"), (21, "tres-set"), (22, "comp-set"), (23, "wave-knob"), (24, "strg-knob"), (25, "organ-knob"), (26, "drone-knob"), (27, "dsend-set"), (28, "rsend-set"), (29, "fm-lfo-knob"), (30, "sub-lfo-knob"), (31, "pluk-lfo-knob"), (32, "pad-lfo-knob"), (33, "smpl-lfo-knob"), (34, "air-lfo-knob"), (35, "bell-lfo-knob"), (36, "wave-lfo-knob"), (37, "strg-lfo-knob"), (38, "organ-lfo-knob"), (39, "drone-lfo-knob"), (40, "arp-set"), (41, "arp-aux-set"), (42, "smp-aux-set"), (43, "piano-knob"), (44, "piano-lfo-knob")]
 apT = p.obj(1000, 790, "t " + " ".join(["b"] * (len(CTX) + 1)))
 fixT = p.obj(900, 760, "t b b")
 p.c(apT0, fixT, 0); p.c(fixT, apT, 0)
@@ -156,6 +156,10 @@ fixE7 = p.obj(300, 790, "expr pkval[88]+pkval[89]==0")
 fixS7 = p.obj(300, 820, "sel 1")
 fixE8 = p.obj(200, 790, "expr pkval[92]+pkval[93]+pkval[94]+pkval[95]+pkval[96]+pkval[97]+pkval[98]+pkval[99]+pkval[100]+pkval[101]+pkval[102]+pkval[103]+pkval[104]+pkval[105]+pkval[106]+pkval[107]==0")
 fixS8 = p.obj(200, 820, "sel 1")
+# projects saved before PIANO: slots 172..179 all equal (Pd repeats the last value) -> defaults (apply_piano.py)
+fixE13 = p.obj(-300, 790, "expr abs(pkval[173]-pkval[172])+abs(pkval[174]-pkval[172])+abs(pkval[175]-pkval[172])+abs(pkval[176]-pkval[172])+abs(pkval[177]-pkval[172])+abs(pkval[178]-pkval[172])+abs(pkval[179]-pkval[172])==0")
+fixS13 = p.obj(-300, 820, "sel 1")
+p.c(fixT, fixE13, 1); p.c(fixE13, fixS13); p.c(fixS13, p.msg(-300, 850, "\\; pkval 172 0.7 0.5 0.4 0.5 0 0.3 0.5 0"))
 # projects saved before the SMPL loop points: slots 168..171 all equal (Pd repeats the last value) -> defaults
 fixE12 = p.obj(-200, 790, "expr abs(pkval[169]-pkval[168])+abs(pkval[170]-pkval[168])+abs(pkval[171]-pkval[168])==0")
 fixS12 = p.obj(-200, 820, "sel 1")

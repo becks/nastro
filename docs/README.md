@@ -77,7 +77,7 @@ Hold **AUX** and press a mode key:
 | C | SYNTH | Play and shape the selected synth engine. |
 | C# | DRUM | Play, edit and sample drum slots. |
 | D | TAPE | Four-track tape transport and looping. |
-| D# | MIX | Tape levels/pan, delay and reverb, track filters, master compressor, FX sends. |
+| D# | MIX | Tape levels/pan, delay and reverb, track filters, master compressor, FX sends, output visualizer. |
 | E | SEQ | Tempo, step sequencer, Tombola, Endless sequencer and arpeggiator. |
 | A | SAVE | Save the open project from any page. |
 | high G | FREEZE | Freeze / release the reverb from any page (see Mix and effects). |
@@ -241,7 +241,7 @@ Recording or loading a project clears the tape editor undo memory. Copy/paste an
 
 ![Mix level screen](oled/07-mix-level.png)
 
-Enter MIX with **AUX + D#**. Pressing **AUX + D#** again cycles the pages: **MIX → FX → FILTER → MASTER → SEND** (then back to MIX). The default page has four round dials, one per tape track. Knobs set each track’s **level**. The title row includes left/right output meters and a `LIM` indicator when the master limiter is working.
+Enter MIX with **AUX + D#**. Pressing **AUX + D#** again cycles the pages: **MIX → FX → FILTER → MASTER → SEND → VIS** (then back to MIX). The default page has four round dials, one per tape track. Knobs set each track’s **level**. The title row includes left/right output meters and a `LIM` indicator when the master limiter is working.
 
 ![Mix pan screen](oled/08-mix-pan.png)
 
@@ -295,6 +295,20 @@ Press **AUX + D#** once more for the SEND page (one more press goes back to the 
 ![FX send screen](oled/20-fx-send.png)
 
 The SEND page sets how much of each tape track goes into the effects: knob 1–4 = delay send of track 1–4; hold AUX for the reverb send (the title turns to `SEND REV`). The sends are 0–100 and start at 100, so by default every track goes to the delay and reverb; turn a track down to keep it dry. **DLY** and **REV** on the FX page remain the overall amounts. Only tape tracks 1–4 reach the effects: the live synth, the drums and the input monitor are always dry (record them on a track to add effects). Sends are saved with the project.
+
+### VIS
+
+![VIS page, WAVE view](oled/31-vis-wave.png)
+
+The last MIX page is a picture of what Nastro plays (the master output, after the limiter). Knobs:
+
+1. **VIEW** — **WAVE** (left half of the knob): the level scrolling to the left, with a scope on the right. **SPEC** (right half): a spectrogram, time scrolling to the left, low frequencies at the bottom and high at the top (40 Hz – 16 kHz), louder = denser dots.
+2. **SPEED** — how fast the picture scrolls (about 5–33 columns a second).
+3. **GAIN** — how many dB the picture shows: higher reveals quiet tails and soft sounds.
+
+![VIS page, SPEC view](oled/32-vis-spec.png)
+
+It only runs while the page is shown, and the whole screen goes out as one picture per frame, so it costs almost nothing.
 
 ## Sequencers and tempo
 

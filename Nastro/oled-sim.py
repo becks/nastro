@@ -224,6 +224,16 @@ class Oled:
             elif path == "/oled/gSetPixel":
                 _, x, y, c = ints(4)
                 self.put(c, x, y)
+            elif path == "/oled/gFrame":
+                # the whole screen as a 1024-byte blob, in the hardware's page layout (like the device: only a full blob)
+                if len(args) == 1025:
+                    self.buf[:] = bytes(int(float(a)) & 0xFF for a in args[1:])
+            elif path == "/oled/gWaveform":
+                # 128 y values, drawn as 127 connected lines (like the device: only a full blob)
+                if len(args) == 129:
+                    ys = [int(float(a)) & 0xFF for a in args[1:]]
+                    for i in range(1, 128):
+                        self.line(i - 1, ys[i - 1], i, ys[i], 1)
             elif path == "/oled/gInvertArea":
                 _, x, y, w, h = ints(5)
                 self.invert_area(x, y, w, h)

@@ -120,9 +120,9 @@ With SUB selected, the AUX page shows VOL, ATK, D/R and SUS (the filter envelope
 
 With the SMPL engine selected:
 
-- **AUX + E5** arms recording from the stereo audio input. Recording starts when the input crosses the threshold; there is a 15 ms pre-roll.
+- **AUX + E5** arms recording from the audio input. Recording starts when the input crosses the threshold; there is a 15 ms pre-roll.
 - **AUX + F5** records Nastro’s master output immediately.
-- Press the same record key again to stop; maximum time is 10 seconds.
+- Press the same record key again to stop; maximum time is 10 seconds. The sample is **mono**: the left and right channels (of the input, or of Nastro's output) are mixed together.
 - **AUX + F#5** toggles input monitoring. The monitored input is heard dry and can be recorded onto tape (once on a track it can go through the effects with the track’s sends).
 - **AUX + A** saves the sample as part of the project.
 
@@ -166,7 +166,7 @@ Hold AUX and use knob 1 for **DRUM VOLUME**.
 
 ![Drum recording screen](oled/04-drum-record.png)
 
-To sample into the selected drum key, use **AUX + E5** for audio input or **AUX + F5** for Nastro’s output. Input recording can be armed and starts at the threshold; output recording starts immediately. The OLED displays `ARM` or `REC` while this is active. The kit’s per-key settings are stored with the project.
+To sample into the selected drum key, use **AUX + E5** for audio input or **AUX + F5** for Nastro’s output. Input recording can be armed and starts at the threshold; output recording starts immediately. Drum samples are mono too (left and right mixed together). The OLED displays `ARM` or `REC` while this is active. The kit’s per-key settings are stored with the project.
 
 ## Tape
 
@@ -366,6 +366,7 @@ To mirror the OLED on a computer, put the computer IP address in `mirror.txt` ne
 ## Practical limits
 
 - Tape is four tracks × 60 seconds; projects save tape WAVs, synth/kit/sequencer settings and samples.
+- Mono and stereo: the sampler (SMPL), the drum samples and the four tape tracks are mono; the stereo image comes from each track's pan and from delay and reverb. Nastro's output, and the albums, are stereo.
 - Tape recording is possible at 0.25×, 0.5×, 1× and 2× only (not at continuous or reverse speeds).
 - Tape editor operations are destructive, but the last edit has undo/redo. Recorded audio itself cannot be undone.
 - Nastro is designed for Organelle 1 / Pd 0.49. Avoid launching a second headless Pd instance on the device while the patch is running.

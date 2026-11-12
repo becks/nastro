@@ -1,0 +1,60 @@
+# exec'd from gen.py: builds toast.pd - a short message over any page ([s nst-toast] WORDS..., 1 to 4 words).
+# For 1.5 s a framed box with the words is drawn at once and again after every gFlip of the page underneath (each
+# page keeps redrawing itself, the box goes on top before the next flip); then [s nst-redraw] gives the page back.
+# The box's own commands go through [s oscOut] too, so the watcher is closed while they are sent.
+to = Patch(1200, 700)
+to.text(20, 5, "toast: [s nst-toast] 1-4 words -> a box over any page for 1.5 s (redrawn after each page flip)")
+rIn = to.obj(20, 40, "r nst-toast")
+inL = to.obj(20, 70, "list")                          # the words as a list (the first word arrives as a selector)
+to.c(rIn, inL)
+inT = to.obj(20, 100, "t b l l")                      # 2) words  1) type string  0) show
+to.c(inL, inT)
+words = to.obj(300, 160, "list")
+to.c(inT, words, 2, 1)
+# the type string: 5 numbers + one string per word
+ln = to.obj(150, 130, "list length")
+to.c(inT, ln, 1)
+lnS = to.obj(150, 160, "sel 1 2 3 4")
+to.c(ln, lnS)
+pre = to.obj(300, 220, "list prepend")
+for k in range(4):
+    m = to.msg(150 + k * 120, 190, f"list sendtyped /oled/gPrintln iiiii{'s' * (k + 1)}")
+    to.c(lnS, m, k); to.c(m, pre, 0, 1)
+# active for 1.5 s
+on1 = to.msg(20, 160, "1")
+dl = to.obj(100, 190, "delay 1500")
+showT = to.obj(20, 130, "t b b b")                    # 2) active  1) restart the timer  0) draw now
+to.c(inT, showT, 0)
+to.c(showT, on1, 2)
+to.c(showT, dl, 1)
+endT = to.obj(100, 220, "t b b")
+to.c(dl, endT)
+off0 = to.msg(200, 250, "0")
+to.c(endT, off0, 1)
+to.c(endT, to.msg(100, 250, "\\; nst-redraw bang"), 0)
+# draw: guard closed, box, words, flip, guard open
+draw = to.obj(20, 400, "t b b b b b b")
+to.c(showT, draw, 0)
+guard = to.obj(600, 400, "spigot 1")
+g0 = to.msg(600, 440, "0"); g1 = to.msg(660, 440, "1")
+to.c(draw, g0, 5); to.c(g0, guard, 0, 1)
+to.c(draw, to.msg(20, 440, "\\; oscOut sendtyped /oled/gFillArea iiiiii 3 6 19 116 24 0"), 4)
+to.c(draw, to.msg(20, 470, "\\; oscOut sendtyped /oled/gBox iiiiii 3 7 20 114 22 1"), 3)
+txt = to.obj(300, 470, "list prepend 3 13 27 8 1")
+to.c(draw, words, 2); to.c(words, txt); to.c(txt, pre)
+pt = to.obj(300, 530, "list trim")
+to.c(pre, pt); to.c(pt, to.obj(300, 560, "s oscOut"))
+to.c(draw, to.msg(20, 500, "\\; oscOut sendtyped /oled/gFlip i 3"), 1)
+to.c(draw, g1, 0); to.c(g1, guard, 0, 1)
+# watch the pages: after a gFlip from someone else, while active, draw again
+w = to.obj(600, 300, "r oscOut")
+wR = to.obj(600, 330, "route sendtyped")
+wF = to.obj(600, 360, "route /oled/gFlip")
+to.c(w, wR); to.c(wR, wF)
+to.c(wF, guard, 0, 0)
+gB = to.obj(600, 470, "t b")
+to.c(guard, gB)
+actS = to.obj(600, 500, "spigot")
+to.c(on1, actS, 0, 1); to.c(off0, actS, 0, 1)
+to.c(gB, actS); to.c(actS, draw)
+to.save("toast.pd")

@@ -19,7 +19,7 @@ events = [
     (700, ["dbg SAVE-P1", "aux 1", "notes 69 100", "notes 69 0", "aux 0"]),
     (1000, ["dbg NEW-P2"] + ENC(2, 1) + PRESS),
     (1400, ["dbg SAVE-P2", "aux 1", "notes 69 100", "notes 69 0", "aux 0"]),
-    (1800, ["dbg LOAD-P1"] + ENC(1, 1) + PRESS),
+    (1800, ["dbg LOAD-P1"] + ENC(1, 1) + PRESS + PRESS),
     (2400, ["dbg LOAD-P2"] + ENC(1, 1) + PRESS),
     (3000, ["dbg OLD-P3", "pkval resize 116", "pkval write p3-pk.txt", "pkval resize 160", "nstproj 3 1"]),
     (3100, ["pm-load 3"]),

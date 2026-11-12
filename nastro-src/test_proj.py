@@ -18,9 +18,9 @@ events = [
     (1000, ["dbg MENU-NEW"] + ENC(2, 1) + PRESS),                 # open, go to '+ NUOVO', press
     (1400, ["dbg STATE-B", "pkval 12 0.9", "mix-lvl-set 1 0.9", "synth-engine-set 3", "seqn 0 72"]),
     (1500, ["dbg SAVE-P2 (AUX+A)", "aux 1", "notes 69 100", "notes 69 0", "aux 0"]),
-    (1900, ["dbg LOAD-P1"] + ENC(1, 1) + PRESS),                              # row 3 = PROG 1
+    (1900, ["dbg LOAD-P1"] + ENC(1, 1) + PRESS + PRESS),                      # row 3 = PROJECTS >, then PROG 1
     (2300, ["dbg CHECK-P1", "chk bang"]),
-    (2400, ["dbg LOAD-P2"] + ENC(1, 1) + PRESS),                              # row 4 = PROG 2
+    (2400, ["dbg LOAD-P2"] + ENC(1, 1) + PRESS),                              # PROJECTS row 2 = PROG 2
     (2800, ["dbg CHECK-P2", "chk bang"]),
     (3000, ["pd quit"]),
 ]

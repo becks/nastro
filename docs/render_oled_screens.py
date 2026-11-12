@@ -235,11 +235,11 @@ def draw_edit(oled):
 
 
 def draw_projects(oled):
-    header(oled, "PROJECTS")
-    items = ("< BACK", "SAVE PROJ 2", "+ NEW", "PROG 1", "PROG 2  <")
+    header(oled, "MENU")
+    items = ("< BACK", "SAVE PROJ 1", "+ NEW", "PROJECTS >", "ALBUMS >")
     for index, item in enumerate(items):
         y = 13 + index * 10
-        if index == 4:
+        if index == 3:
             oled.fill_area(0, y - 1, 128, 10, 1)
             text(oled, 4, y, item, 0)
         else:

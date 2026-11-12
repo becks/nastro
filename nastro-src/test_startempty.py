@@ -38,6 +38,6 @@ print("\n".join(run([(700, ["dbg RUN1-SET", "pkval 12 0.3", "seqn 0 64"]),
                      (1200, ["chk bang"]), (1300, ["pd quit"])], "r1")))
 print("---- restart")
 print("\n".join(run([(700, ["dbg RUN2-START", "chk bang"]),
-                     (800, ["dbg LOAD-P1", "enc 1", "enc 1", "enc 1", "encbut 1", "encbut 0"]),
+                     (800, ["dbg LOAD-P1", "enc 1", "enc 1", "enc 1", "encbut 1", "encbut 0", "encbut 1", "encbut 0"]),
                      (1300, ["chk bang"]), (1400, ["pd quit"])], "r2")))
 shutil.rmtree(T)

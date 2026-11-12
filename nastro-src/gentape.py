@@ -178,6 +178,9 @@ t.c(t.obj(2600, 870, "r dsend-knob"), sdR); t.c(t.obj(2650, 850, "r dsend-set"),
 t.c(t.obj(2800, 870, "r rsend-knob"), srR); t.c(t.obj(2850, 850, "r rsend-set"), srR)
 lbS = t.obj(3000, 870, "loadbang")
 xAs, xBs, rds = [], [], []
+# speed gate (apply_tapedc.py): no output when the head rests
+sgA = t.obj(1600, 470, "abs~"); sgM = t.obj(1600, 500, "*~ 20"); sgC = t.obj(1600, 530, "clip~ 0 1")
+t.c(lspd, sgA); t.c(sgA, sgM); t.c(sgM, sgC)
 # punch fade gain (apply_punchfade.py): written = old + g*(dub*old + in - old)
 pG = t.obj(900, 640, "line~")
 for k in range(4):
@@ -194,7 +197,9 @@ for k in range(4):
     xA = t.obj(x, 790, "*~"); xB = t.obj(x + 40, 790, "*~"); xS = t.obj(x, 820, "+~")
     t.c(idx, rdB); t.c(bAdd, rdB, 0, 1)
     t.c(rd, xA, 0, 0); t.c(rdB, xB, 0, 0); xAs.append(xA); xBs.append(xB); rds.append(rd)
-    t.c(xA, xS, 0, 0); t.c(xB, xS, 0, 1); t.c(xS, lv)
+    t.c(xA, xS, 0, 0); t.c(xB, xS, 0, 1)
+    sgG = t.obj(x + 40, 840, "*~")                              # speed gate (apply_tapedc.py)
+    t.c(xS, sgG, 0, 0); t.c(sgC, sgG, 0, 1); t.c(sgG, lv)
     t.c(rl, rlm); t.c(rlm, rll); t.c(rll, lv, 0, 1)
     # pan (balance law: centre = full level on both sides)
     rpan = t.obj(x + 130, 880, f"r tape-pan{k+1}")

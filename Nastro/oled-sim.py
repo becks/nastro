@@ -14,6 +14,7 @@ import json
 import socket
 import struct
 import threading
+import time
 import zlib
 
 import os
@@ -32,6 +33,15 @@ class Oled:
         self.info_bar = True
         self.led = 0
         self.lock = threading.Lock()
+        # virtual Organelle: controls and page state relayed by mirror.pd / mac-sim.pd (inrelay.py)
+        self.keys = set()
+        self.aux = False
+        self.fs = False
+        self.knobs = [0, 0, 0, 0]
+        self.ctx = {"mode": 2, "mix-page": 0, "seq-page": 0, "synth-engine": 0, "syn-lfo-page": 0, "drum-kit": 0}
+        self.caption = ("", "", 0.0)          # combination, what it does, when
+        self.enc = (0, 0.0)                   # encoder position (turns counted) and when it last moved
+        self.encbut = False
 
     # --- primitives (ported from OledScreen.cpp)
     def put(self, on, x, y):
@@ -252,6 +262,143 @@ class Oled:
                     f.write(png(self.shown))
             elif path == "/led":
                 self.led = int(float(args[0])) % 8 if args else 0
+            elif path.startswith("/dbg/"):            # probe readings from the device: printed with the page state
+                print(time.strftime("%H:%M:%S"), path, " ".join(args), page_name(self.ctx), flush=True)
+            elif path.startswith("/in/") or path.startswith("/ctx/"):
+                self.control(path, [float(a) for a in args if _num(a)])
+
+    def say(self, combo, what=""):
+        self.caption = (combo, what, time.monotonic())
+
+    def control(self, path, v):
+        if not v:
+            return
+        if path.startswith("/ctx/"):
+            self.ctx[path[5:]] = int(v[0])
+        elif path == "/in/notes" and len(v) >= 2:
+            n = int(v[0])
+            if v[1] > 0:
+                self.keys.add(n)
+                if self.aux:
+                    self.say("AUX + " + key_name(n), aux_key_function(n, self.ctx))
+            else:
+                self.keys.discard(n)
+        elif path == "/in/aux":
+            self.aux = v[0] > 0
+        elif path == "/in/fs":
+            self.fs = v[0] > 0
+            if self.fs:
+                piano = self.ctx["mode"] == 0 and self.ctx["synth-engine"] == 11
+                self.say("FOOTSWITCH", "sustain pedal" if piano else "REC tape")
+        elif path == "/in/knob" and len(v) >= 2 and 1 <= v[0] <= 4:
+            k = int(v[0])
+            self.knobs[k - 1] = v[1]
+            if self.aux:
+                self.say(f"AUX + KNOB {k}", aux_knob_function(k, self.ctx))
+        elif path == "/in/enc":
+            self.enc = (self.enc[0] + (1 if v[0] > 0 else -1), time.monotonic())
+        elif path == "/in/encbut":
+            self.encbut = v[0] > 0
+            if self.encbut and self.aux:
+                self.say("AUX + ENCODER", "remove project from list")
+
+    def state(self):
+        now = time.monotonic()
+        combo, what, t = self.caption
+        return {"pix": self.shown.hex(), "led": self.led, "keys": sorted(self.keys), "aux": self.aux, "fs": self.fs,
+                "knobs": self.knobs, "enc": self.enc[0], "enct": now - self.enc[1], "encbut": self.encbut,
+                "combo": combo, "what": what, "age": now - t if combo else 99, "page": page_name(self.ctx)}
+
+
+NOTE = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+ENGINES = ["FM", "SUB", "PLUK", "PAD", "SMPL", "AIR", "GLASS", "WAVE", "STRING", "ORGAN", "DRONE", "PIANO", "MALLET"]
+MODES = ["SYNTH", "DRUM", "TAPE", "MIX", "SEQ", "PROJECTS"]       # 5 = encoder menu / album page
+MIX_PAGES = ["MIX", "FX", "FILTER", "MASTER", "SEND", "VIS"]
+SEQ_PAGES = ["TEMPO", "STEP", "TOMBOLA", "ENDLESS", "ARP"]
+
+
+def key_name(n):
+    """Key names as in the manual: the lower octave by letter (F, G#), the upper one with 5 (C5, A5)."""
+    return NOTE[n % 12] + ("5" if n >= 72 else "")
+
+
+def page_name(ctx):
+    m = ctx["mode"]
+    if m == 0:
+        e = ENGINES[ctx["synth-engine"] % len(ENGINES)]
+        return f"SYNTH {e}" + (" LFO" if ctx["syn-lfo-page"] else "")
+    if m == 3:
+        return "MIX " + MIX_PAGES[ctx["mix-page"] % 6] if ctx["mix-page"] else "MIX"
+    if m == 4:
+        return "SEQ " + SEQ_PAGES[ctx["seq-page"] % 5]
+    return MODES[m] if 0 <= m < len(MODES) else ""
+
+
+def aux_key_function(n, ctx):
+    """What AUX + key does, from the page it was pressed on (the manual's tables)."""
+    m, eng, sp = ctx["mode"], ctx["synth-engine"], ctx["seq-page"]
+    if n == 60:
+        return "next engine: " + ENGINES[(eng + 1) % len(ENGINES)] if m == 0 else "SYNTH page"
+    if n == 61:
+        return "DRUM page"
+    if n == 62:
+        return "TAPE page"
+    if n == 63:
+        return "next page: " + MIX_PAGES[(ctx["mix-page"] + 1) % 6] if m == 3 else "MIX page"
+    if n == 64:
+        return "next page: " + SEQ_PAGES[(sp + 1) % 5] if m == 4 else "SEQ page"
+    glob = {65: "tape PLAY / STOP", 66: "tape REC / stop", 67: "REWIND to start", 68: "LOOP: start / end / off",
+            69: "SAVE project", 78: "input MONITOR on / off", 79: "reverb FREEZE on / off", 81: "ALBUM record / stop",
+            82: "OCTAVE down", 83: "OCTAVE up"}
+    if n in glob:
+        return glob[n]
+    if n in (76, 77):                     # DRUM: into the selected slot; anywhere else: the SMPL sample
+        what = ("WHOLE KIT (24 slices)" if ctx.get("drum-kit") else "DRUM slot") if m == 1 else "SAMPLE (SMPL)"
+        return what + (": arm rec from input" if n == 76 else ": rec Nastro output")
+    if n == 74:
+        return "LFO page on / off" if m == 0 else ""
+    if n == 80:
+        return ("KIT mode off" if ctx.get("drum-kit") else "KIT mode: next rec = whole kit") if m == 1 else ""
+    if n in (73, 75):
+        if m == 2:
+            return "move BACK" if n == 73 else "move FORWARD"
+        if m == 5:
+            return "ALBUM: 5 s back" if n == 73 else "ALBUM: 5 s forward"
+        return ""
+    seq = sp if m == 4 else -1
+    if n == 72:                           # C5: the STEP sequence anywhere, except where the page has its own C5
+        return {2: "TOMBOLA: pause / resume", 3: "ENDLESS: start / stop", 4: "ARP: HOLD on / off"}.get(
+            seq, "STEP sequence: play / stop")
+    if n in (70, 71):
+        return {1: {70: "STEP: write a rest", 71: "STEP: clear pattern"},
+                2: {70: "TOMBOLA: remove last ball", 71: "TOMBOLA: remove all balls"},
+                3: {70: "ENDLESS: add a rest", 71: "ENDLESS: clear"},
+                4: {71: "ARP: clear"}}.get(seq, {}).get(n, "")
+    return ""
+
+
+def aux_knob_function(k, ctx):
+    m, eng = ctx["mode"], ctx["synth-engine"]
+    if m == 0:
+        if k == 1:
+            return "SYNTH VOLUME"
+        if ctx["syn-lfo-page"]:
+            return ""
+        if eng == 1:
+            return {2: "SUB attack", 3: "SUB decay / release", 4: "SUB sustain"}[k]
+        if eng == 4:
+            return {2: "SAMPLE loop start", 3: "SAMPLE loop end"}.get(k, "")
+        return ""
+    if m == 1:
+        return "DRUM VOLUME" if k == 1 else ""
+    if m == 2:
+        return "SPEED, continuous" if k == 1 else ""
+    if m == 3:
+        return {0: f"PAN track {k}", 1: "REVERB settings", 2: f"RESONANCE track {k}",
+                4: f"REVERB SEND track {k}"}.get(ctx["mix-page"] % 6, "")
+    if m == 4 and ctx["seq-page"] == 4 and k == 1:
+        return "ARP probability"
+    return ""
 
 
 def _num(s):
@@ -305,19 +452,75 @@ def png(buf, scale=4):
 
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Organelle OLED</title>
-<style>body{background:#1b1b1b;color:#aaa;font:14px -apple-system,sans-serif;display:flex;
-flex-direction:column;align-items:center;margin-top:40px}canvas{image-rendering:pixelated;
-border:10px solid #000;border-radius:6px;background:#000}#led{width:18px;height:18px;border-radius:50%;
-margin:14px;border:1px solid #444}</style></head><body>
-<canvas id="c" width="128" height="64" style="width:640px;height:320px"></canvas>
-<div id="led"></div><div>Organelle OLED sim &middot; clicca la finestra di Pd per suonare</div>
+<style>
+:root{--bg:#121416;--panel:#1d86a8;--panel2:#176f8c;--wood:#c47634;--wood2:#8f4e1e;--hot:#ffd36b;--txt:#bbb}
+body{background:var(--bg);color:var(--txt);font:14px -apple-system,Helvetica,sans-serif;margin:0;overflow-x:hidden}
+#wrap{width:1050px;margin:0 auto;padding:22px 0;transform-origin:top center}
+#zoom{display:block;margin:0 auto 22px;image-rendering:pixelated;width:512px;height:256px;border:12px solid #000;
+border-radius:6px;background:#000}
+#dev{position:relative;width:1050px;height:340px;border-radius:16px;
+background:linear-gradient(170deg,var(--panel) 0%,var(--panel2) 100%);box-shadow:0 14px 40px #000c,inset 0 1px 0 #ffffff30}
+.knob,.key,#led,#oled{position:absolute;transform:translate(-50%,-50%)}
+.knob svg{display:block;filter:drop-shadow(0 4px 4px #0008)}
+.knob.hot svg{filter:drop-shadow(0 0 10px var(--hot))}
+.num{position:absolute;font-size:12px;color:#0b3d4f;font-weight:600}
+.key{width:50px;height:50px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#e3a15f 0%,var(--wood) 45%,var(--wood2) 100%);
+box-shadow:0 4px 6px #0009,inset 0 -2px 3px #0005;transition:background .05s,box-shadow .05s}
+.key.on{background:radial-gradient(circle at 38% 32%,#fff6d8 0%,var(--hot) 55%,#d9962c 100%);box-shadow:0 0 20px var(--hot),0 2px 3px #0009}
+.key span{position:absolute;top:56px;left:50%;transform:translateX(-50%);font-size:10px;color:#0b3d4fcc;white-space:nowrap}
+#led{width:20px;height:20px;border-radius:50%;background:#222;box-shadow:0 0 0 2px #0003}
+#oled{image-rendering:pixelated;width:192px;height:96px;border:6px solid #000;border-radius:3px;background:#000}
+#page{position:absolute;right:18px;bottom:12px;font-size:12px;letter-spacing:.08em;color:#0b3d4f;font-weight:600}
+#cap{height:110px;margin-top:22px;text-align:center;transition:opacity .4s}
+#combo{font-size:46px;font-weight:700;color:#fff}
+#what{font-size:28px;color:var(--hot);margin-top:6px}
+</style></head><body><div id="wrap">
+<canvas id="zoom" width="128" height="64"></canvas>
+<div id="dev"><canvas id="oled" width="128" height="64" style="left:668px;top:80px"></canvas>
+<div id="led" style="left:106px;top:177px"></div><div id="page"></div></div>
+<div id="cap"><div id="combo"></div><div id="what"></div></div>
+</div>
 <script>
-const c=document.getElementById('c').getContext('2d'),img=c.createImageData(128,64);
+// layout measured from a photo of an Organelle 1 (keys towards the player)
+const dev=document.getElementById('dev'),zc=document.getElementById('zoom').getContext('2d'),
+oc=document.getElementById('oled').getContext('2d'),img=zc.createImageData(128,64);
 const LED=['#222','#e33','#ec3','#3d4','#3dd','#36f','#c4e','#eee'];
+function knob(x,y,d){const r=d/2,el=document.createElement('div');el.className='knob';el.style.left=x+'px';el.style.top=y+'px';
+el.innerHTML=`<svg width="${d}" height="${d}" viewBox="${-r} ${-r} ${d} ${d}"><circle r="${r-1}" fill="#141414"/>
+<circle r="${r-6}" fill="#1e1e1e"/><line class="ptr" x1="0" y1="${-r*0.25}" x2="0" y2="${-r+4}" stroke="#f2f2f2"
+stroke-width="4" stroke-linecap="round"/></svg>`;dev.appendChild(el);return el;}
+function label(x,y,t){const el=document.createElement('div');el.className='num';el.style.left=x+'px';el.style.top=y+'px';
+el.textContent=t;dev.appendChild(el);}
+const KX=[109,226,336,446],kn=[],last=[0,0,0,0],hotT=[0,0,0,0];
+KX.forEach((x,k)=>{kn.push(knob(x,62,62));label(x+36,70,k+1);});
+const enc=knob(818,84,62),vol=knob(972,90,64);
+vol.querySelector('.ptr').setAttribute('transform','rotate(-40)');
+const NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],WHITE=[0,2,4,5,7,9,11],KEY={};
+function key(x,y,name){const el=document.createElement('div');el.className='key';el.style.left=x+'px';el.style.top=y+'px';
+el.innerHTML=`<span>${name}</span>`;dev.appendChild(el);return el;}
+const AUX=key(106,262,'AUX'),X0=194,S=59.3;let wi=0;
+for(let n=60;n<84;n++){const pc=n%12,nm=NAMES[pc]+(n>=72?'5':'');
+if(WHITE.includes(pc)){KEY[n]=key(X0+wi*S,262,nm);wi++;}else KEY[n]=key(X0+(wi-0.5)*S,190,nm);}
+const FS=document.createElement('div');FS.className='num';FS.style.cssText='left:930px;top:300px;font-size:12px';dev.appendChild(FS);
+function fit(){const sc=Math.min(1,(innerWidth-32)/1050);document.getElementById('wrap').style.transform=`scale(${sc})`;}
+addEventListener('resize',fit);fit();
 async function tick(){try{const r=await fetch('/frame');const j=await r.json();
 for(let y=0;y<64;y++)for(let x=0;x<128;x++){const b=parseInt(j.pix.substr(((y>>3)*128+x)*2,2),16);
-const on=(b>>(y&7))&1,i=(y*128+x)*4;img.data[i]=on?120:0;img.data[i+1]=on?200:0;img.data[i+2]=on?255:0;img.data[i+3]=255;}
-c.putImageData(img,0,0);document.getElementById('led').style.background=LED[j.led];}catch(e){}
+const on=(b>>(y&7))&1,i=(y*128+x)*4;img.data[i]=on?235:0;img.data[i+1]=on?240:0;img.data[i+2]=on?255:0;img.data[i+3]=255;}
+zc.putImageData(img,0,0);oc.putImageData(img,0,0);
+const L=document.getElementById('led');L.style.background=LED[j.led];L.style.boxShadow=j.led?`0 0 14px ${LED[j.led]}`:'0 0 0 2px #0003';
+const now=performance.now();
+for(const n in KEY)KEY[n].classList.toggle('on',j.keys.includes(+n));
+AUX.classList.toggle('on',j.aux);
+FS.textContent=j.fs?'FOOTSWITCH':'';
+for(let k=0;k<4;k++){const v=j.knobs[k];if(v!==last[k]){last[k]=v;hotT[k]=now;}
+kn[k].querySelector('.ptr').setAttribute('transform',`rotate(${-140+2.8*v})`);kn[k].classList.toggle('hot',now-hotT[k]<600);}
+enc.querySelector('.ptr').setAttribute('transform',`rotate(${j.enc*24})`);
+enc.classList.toggle('hot',j.encbut||j.enct<0.3);
+document.getElementById('page').textContent=j.page;
+document.getElementById('combo').textContent=j.combo;document.getElementById('what').textContent=j.what;
+document.getElementById('cap').style.opacity=j.age<2.5?1:Math.max(0,1-(j.age-2.5)/0.6);
+}catch(e){}
 setTimeout(tick,40);}tick();
 </script></body></html>"""
 
@@ -329,7 +532,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/frame":
             with OLED.lock:
-                body = json.dumps({"pix": OLED.shown.hex(), "led": OLED.led}).encode()
+                body = json.dumps(OLED.state()).encode()
             ctype = "application/json"
         elif self.path == "/frame.png":
             with OLED.lock:

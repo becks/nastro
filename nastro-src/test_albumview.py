@@ -17,13 +17,13 @@ w.writeframes(b"".join(struct.pack("<h", int(12000 * math.sin(2 * math.pi * 440 
 PRESS = ["encbut 1", "encbut 0"]
 ev = [(400, ["sfread read t1.wav tape1", "tp-loaded bang"]),
       (800, ["aux-key 81"]), (2800, ["aux-key 81"]),                       # album 1: 2 s
-      (3200, ["mark menu", "enc 1", "enc 1", "enc 1"]),                    # open the menu, go to ALBUMS
+      (3200, ["mark menu", "enc 1", "enc 1", "enc 1", "enc 1"]),                    # open the menu, go to ALBUMS
       (3400, ["mark albums"] + PRESS),
       (3700, ["mark play", "recP bang"] + PRESS),                          # album 1 under the cursor: play
       (4400, ["mark skip", "aux-key 75"]),                                 # +5 s: clipped to the end - 1 s
       (4700, ["mark stop"] + PRESS),
       (5000, ["mark rec2", "mode 0", "aux-key 81"]), (6000, ["aux-key 81"]),
-      (6300, ["mark menu2", "enc 1", "enc 1", "enc 1"]), (6500, PRESS),
+      (6300, ["mark menu2", "enc 1", "enc 1", "enc 1", "enc 1"]), (6500, PRESS),
       (6800, ["mark list2", "chkmenu bang"]), (7000, ["pd quit"])]
 L = ["#N canvas 0 0 800 600 12;", "#X obj 20 20 loadbang;", "#X msg 20 50 " + BS + "; pd dsp 1;"]
 C = ["#X connect 0 0 1 0;"]

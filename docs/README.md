@@ -38,7 +38,7 @@ When a USB stick with a `Patches` folder is plugged in, the Organelle lists the 
 You can run Nastro on a computer with [Pure Data](https://puredata.info) (vanilla 0.51 or newer; developed with 0.54) and Python 3.
 
 1. In Pd, open `Nastro/mac-sim.pd` only (it already contains Nastro: opening `main.pd` as well would run two copies). The simulator patch provides what the Organelle normally supplies: keys, knobs (sliders), AUX, encoder, audio input/output and the LED.
-2. In a terminal: `cd Nastro && python3 oled-sim.py`, then open `http://localhost:8123` to see the 128 × 64 screen.
+2. In a terminal: `cd Nastro && python3 oled-sim.py`, then open `http://localhost:8123` to see the screen on a virtual Organelle (see [Virtual Organelle](#virtual-organelle-for-video-tutorials)).
 3. Click the `mac-sim.pd` window before playing, so it receives the keyboard.
 
 | Computer key | Organelle |
@@ -84,11 +84,15 @@ Hold **AUX** and press a mode key:
 | high A | ALBUM | Record / stop an album (Nastro's output to a WAV file) from any page (see Album). |
 | high A# / high B | OCTAVE | Transpose the keyboard down/up by octaves. |
 
-On SYNTH, **AUX + high D** opens the engine's LFO page (see Synth LFO).
+On SYNTH, **AUX + high D** opens the engine's LFO page (see Synth LFO). On DRUM, **AUX + high G#** switches to KIT mode (see Drum sampler).
+
+Switches that have no page of their own confirm themselves with a short message in a box over the current page, for 1.5 seconds: input monitor, reverb freeze, arpeggiator HOLD, octave (it names the keyboard's lowest C: `OCTAVE C4` is the normal range) and KIT mode.
+
+![A message over the TAPE page](oled/35-message.png)
 
 While anything records (tape, sampler, drum sampling or an album) the Organelle LED blinks.
 
-Turn the encoder to open the **PROJECTS** menu. Turn it to select an item and press it to confirm. In the desktop simulator, comma and full stop turn the encoder; slash presses it.
+Turn the encoder to open the **MENU**. Turn it to select an item and press it to confirm. In the desktop simulator, comma and full stop turn the encoder; slash presses it.
 
 ## Synth
 
@@ -196,6 +200,10 @@ Hold AUX and use knob 1 for **DRUM VOLUME**.
 
 To sample into the selected drum key, use **AUX + E5** for audio input or **AUX + F5** for Nastro’s output. Input recording can be armed and starts at the threshold; output recording starts immediately. Drum samples are mono too (left and right mixed together). The OLED displays `ARM` or `REC` while this is active. The kit’s per-key settings are stored with the project.
 
+![DRUM page in KIT mode](oled/34-drum-kit.png)
+
+**Recording a whole kit.** Press **AUX + high G#** on DRUM: the screen says `WHOLE KIT ON` and shows `KIT` in the corner. The next recording — **AUX + E5** from the input (it waits for the signal) or **AUX + F5** from Nastro's output — goes into the whole kit instead of one key. Press the same key again to stop (it stops by itself after 12 seconds). Whatever length you recorded is split into 24 equal parts, one per key from C to high B: 12 seconds give half a second per key, 3 seconds an eighth. The key settings go back to neutral and KIT mode switches off (`KIT SLICED: ALL KEYS`); press **AUX + high G#** again before recording to cancel. Resampling a loop from the tape this way turns it into a 24-slice slicer: playing the keys in order plays the loop back. The new kit is saved with the project, with its length.
+
 ## Tape
 
 ![Tape transport screen](oled/05-tape.png)
@@ -233,7 +241,7 @@ The editor works on the selected track and on the loop region (when looping) or 
 - **CUT**, **COPY**, **PASTE**, **REVERSE**, **CLEAR**, **DUPLICATE**.
 - **UNDO** swaps the previous version with the current one; press it again for redo.
 - **MODE: 1 TRACK / ALL** chooses whether an edit runs on the selected track or all four tracks.
-- **PROJECTS >** returns to the project list.
+- **MENU >** goes to the menu (projects, albums, …).
 
 Recording or loading a project clears the tape editor undo memory. Copy/paste and duplicate are the supported way to move a loop between tape locations.
 
@@ -385,25 +393,35 @@ With the tape stopped it follows the TEMPO page; while the tape plays it steps o
 
 ![Album player](oled/25-albums.png)
 
-To listen to your albums, open the PROJECTS menu with the encoder and choose **ALBUMS >**. Turn the encoder to choose an album (newest first) and press it to play or stop. The page shows the album number, its length (the position while playing), its waveform and the playhead. **AUX + C#5 / D#5** jumps 5 seconds back / forward while playing. Playback reads the file straight from the stick and stops at the end, when you choose another album or when you leave the page. **< BACK** at the top of the list leaves the page. The waveform is saved while the album records (`album-N.txt`); albums recorded before this version play but show `?` and no waveform.
+To listen to your albums, open the MENU with the encoder and choose **ALBUMS >**. Turn the encoder to choose an album (newest first) and press it to play or stop. The page shows the album number, its length (the position while playing), its waveform and the playhead. **AUX + C#5 / D#5** jumps 5 seconds back / forward while playing. Playback reads the file straight from the stick and stops at the end, when you choose another album or when you leave the page. **< BACK** at the top of the list leaves the page. The waveform is saved while the album records (`album-N.txt`); albums recorded before this version play but show `?` and no waveform.
 
 ## Projects and OLED mirror
 
-![Projects menu](oled/16-projects.png)
+![The menu](oled/16-projects.png)
 
-Turn the encoder to open PROJECTS. Available entries are:
+Turn the encoder to open the MENU. Its entries are always the same, so they stay at the top however many projects you have:
 
-- **BACK** — return to the previous page.
-- **SAVE** — save the current project. If you are in the empty project (0), this creates the first unused project number.
+- **< BACK** — return to the previous page.
+- **SAVE PROJ n** — save the current project. If you are in the empty project (0), this creates the first unused project number.
 - **+ NEW** — load a clean empty project.
-- **PROG n** — load a saved project.
+- **PROJECTS >** — the list of saved projects.
 - **ALBUMS >** — listen to the recorded albums (see Album).
-- **SCREEN TO MAC: OFF/ON** — start/stop OLED mirroring to a Mac.
+- **SCREEN TO MAC: OFF/ON** — start/stop OLED mirroring to a computer.
 - **SYSTEM (Organelle)** — return to the Organelle system menu.
 
-Hold AUX and press the encoder on a project to remove it from the project list. Its files are deliberately left on disk. Loading or saving pauses playback, releases synth notes and fades the output briefly so tape WAV files can be handled safely.
+![The project list](oled/33-projects-list.png)
 
-To mirror the OLED on a computer, put the computer IP address in `mirror.txt` next to the patch, enable **SCREEN TO MAC**, then run `OLED_BIND=0.0.0.0 python3 oled-sim.py` on the computer and open `http://localhost:8123`. The simulator can also receive a `/snap` command to write a PNG.
+**PROJECTS >** shows **< BACK** (it leaves the menu) and your projects: press one to load it; `<` marks the open project. Hold AUX and press the encoder on a project to remove it from the project list. Its files are deliberately left on disk. Loading or saving pauses playback, releases synth notes and fades the output briefly so tape WAV files can be handled safely.
+
+To mirror the OLED on a computer, put the computer IP address in `mirror.txt` next to the patch, enable **SCREEN TO MAC**, then run `OLED_BIND=0.0.0.0 python3 oled-sim.py` on the computer and open `http://localhost:8123`. The simulator can also receive a `/snap` command to write a PNG. If nothing arrives, check that the computer's address has not changed (routers may hand out a new one; a fixed address, "DHCP reservation", avoids it) and switch SCREEN TO MAC off and on again: `mirror.txt` is read when it is switched on.
+
+The mirror is light: what the screen receives in one moment goes out as a single network packet a few milliseconds later, so it does not add to the work of a screen redraw. The VIS page reaches the computer at 5 frames a second (the Organelle's own screen keeps its full rate).
+
+### Virtual Organelle (for video tutorials)
+
+![The virtual Organelle in the browser](virtual-organelle.png)
+
+The simulator page shows an Organelle with the big screen above it: the knobs, the keys, AUX, the encoder, the LED and the footswitch light up as they are used on the real device (or in `mac-sim.pd`), and every AUX combination is written underneath with what it does on the page it was pressed on — for example `AUX + C5` / `STEP: play sequence`, `AUX + knob 1` / `PAN track 1`. To record a tutorial, capture the browser page (for example with OBS) together with the Organelle's audio output.
 
 ## Practical limits
 

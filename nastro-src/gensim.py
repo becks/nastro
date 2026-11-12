@@ -115,6 +115,9 @@ for k in range(5):
 rl = add("obj", 1230, 770, "r led")
 lpl = add("obj", 1230, 800, "list prepend send /led")
 c(rl, lpl); c(lpl, lt)
+# controls + page state for the virtual Organelle in oled-sim.py (apply_mirrorkeys.py)
+from inrelay import relay_inputs
+relay_inputs(lambda x, y, t: add("obj", x, y, t), lambda x, y, t: add("msg", x, y, t), c, lt, 20, 900, resend=tb2)
 
 # the patch itself, loaded last so the display receivers already exist
 add("obj", 480, 520, "main")

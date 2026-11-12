@@ -263,8 +263,9 @@ http://localhost:8123 and record the window.
   then a [list] batch that copied the growing list per command, were both too slow. Now (`apply_mirrortext.py`)
   each command is appended to `[text define mirq]` and the buffer goes out 3 ms later ([delay 3], a later tick) as
   one packet via `[text tolist]` (the ";" between commands survive; oled-sim splits them like any FUDI).
-- VIS: at most one `/oled/gFrame` every 200 ms to the computer, no `/oled/gWaveform` (`apply_mirrorthrottle.py`,
-  `apply_mirrorvis5.py`, `test_mirrorthrottle.py`).
+- VIS: at most one `/oled/gFrame` every 200 ms to the computer, and the `/oled/gWaveform` (WAVE scope) that follows
+  a frame which went out (`apply_mirrorthrottle.py`, `apply_mirrorvis5.py`, `apply_mirrorscope.py`,
+  `test_mirrorthrottle.py`).
 - Virtual Organelle (`inrelay.py`, `apply_mirrorkeys.py`, used by `mirror.pd` and `mac-sim.pd`): the controls go
   out as `/in/notes|aux|fs|enc|encbut|knob` (knobs in whole percent, on change) and the page state as
   `/ctx/mode|mix-page|seq-page|synth-engine|syn-lfo-page|drum-kit` through `[pipe 0]`, so a key press reaches the

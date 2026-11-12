@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mirror diet (apply_mirrorthrottle.py): VIS page shown for 4 s with SCREEN TO MAC on (to 127.0.0.1, port moved to
 9124 in the copy). Checks: the OLED still gets ~10 gFrame/s; the network gets at most ~5 gFrame/s of 1024 bytes,
-no gWaveform, and the other commands (gFlip ...) still arrive."""
+a gWaveform (the scope) with each gFrame, and the other commands (gFlip ...) still arrive."""
 import os, shutil, subprocess, tempfile, sys, socket, threading, time, wave, struct, math
 
 SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Nastro")
@@ -64,5 +64,5 @@ print("OLED in VIS (4 s): gFrame", osc["VIS"][0], "gWaveform", osc["VIS"][1], "g
 print("network (whole run): gFrame", len(nF), "gWaveform", len(nW), "gFlip", len(nFl), "messages", len(msgs))
 print("frame sizes", sorted({len(m) for m in nF}))
 print("errors", errs[:5])
-ok = osc["VIS"][0] >= 35 and 12 <= len(nF) <= 26 and not nW and len(nFl) > 0 and all(len(m) == 1028 for m in nF) and not errs
+ok = osc["VIS"][0] >= 35 and 12 <= len(nF) <= 26 and abs(len(nW) - len(nF)) <= 1 and all(len(m) == 132 for m in nW) and len(nFl) > 0 and all(len(m) == 1028 for m in nF) and not errs
 print("PASS" if ok else "FAIL")

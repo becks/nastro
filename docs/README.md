@@ -150,13 +150,20 @@ All the instruments have about the same loudness for a single note.
 
 ![Sample instrument screen](oled/02-synth-sample.png)
 
-With the SMPL engine selected:
+Recording a sample (these keys work on every page except DRUM, where they sample into a drum key instead):
 
-- **AUX + E5** arms recording from the audio input. Recording starts when the input crosses the threshold; there is a 15 ms pre-roll.
-- **AUX + F5** records Nastro’s master output immediately.
+- **AUX + E5** — records the **audio input** only. It arms and waits: recording starts when the input crosses the threshold, with a 15 ms pre-roll. While it records the input is monitored by itself, so you hear what goes in.
+- **AUX + F5** — records **what Nastro plays**: its master output (tape, synth, drums, effects), immediately. If input monitoring is on, the input is part of that output, so it is recorded too, mixed with the rest.
 - Press the same record key again to stop; maximum time is 10 seconds. The sample is **mono**: the left and right channels (of the input, or of Nastro's output) are mixed together.
-- **AUX + F#5** toggles input monitoring. The monitored input is heard dry and can be recorded onto tape (once on a track it can go through the effects with the track’s sends).
-- **AUX + A** saves the sample as part of the project.
+- **AUX + F#5** toggles **input monitoring** (from any page; the screen confirms `INPUT MONITOR ON` / `OFF`): the input is heard, dry, through Nastro's output. It can then be recorded onto tape (once on a track it can go through the effects with the track’s sends) or resampled with AUX + F5.
+
+| To record… | Use | Input monitoring |
+| --- | --- | --- |
+| only the input (mic, line, another instrument) | AUX + E5 | either (it is switched on while recording) |
+| only Nastro's own sound | AUX + F5 | **off** |
+| the input played over Nastro (e.g. over a tape loop) | AUX + F5 | **on** |
+
+The sample is saved with the project (**AUX + A**).
 
 The four SMPL knobs set Start, End, Release and **Mode**: `one` (plays once), `str` (time-stretch: every note lasts as long as the sample, whatever its pitch), `s+lp` (time-stretch and loop) and `loop`. Time-stretch is granular (50 ms grains): on very pure tones it can sound slightly detuned or chorused. Start/end are aligned to an upward zero crossing to reduce clicks.
 
@@ -198,7 +205,7 @@ Hold AUX and use knob 1 for **DRUM VOLUME**.
 
 ![Drum recording screen](oled/04-drum-record.png)
 
-To sample into the selected drum key, use **AUX + E5** for audio input or **AUX + F5** for Nastro’s output. Input recording can be armed and starts at the threshold; output recording starts immediately. Drum samples are mono too (left and right mixed together). The OLED displays `ARM` or `REC` while this is active. The kit’s per-key settings are stored with the project.
+To sample into the selected drum key, use **AUX + E5** for the audio input or **AUX + F5** for Nastro’s output (what you hear, including the input if input monitoring is on: see the table in [Sample instrument](#sample-instrument)). Input recording is armed and starts at the threshold; output recording starts immediately. Drum samples are mono too (left and right mixed together). The OLED displays `ARM` or `REC` while this is active. The kit’s per-key settings are stored with the project.
 
 ![DRUM page in KIT mode](oled/34-drum-kit.png)
 

@@ -97,7 +97,7 @@ static = g.msg(20, 780, " ".join([
 ]))
 steps.append(static)
 
-# top bar: state, track, speed, time
+# top bar: state (REC blinks), track, speed, time
 blinkC = g.obj(300, 330, "f")
 blinkP = g.obj(340, 330, "+ 1")
 blinkM = g.obj(300, 360, "% 10")
@@ -114,8 +114,7 @@ txt = {
     0: osc("gPrintln", "iiiiis", "1 1 8 1 STOP"),
     1: osc("gPrintln", "iiiiis", "1 1 8 1 PLAY"),
     3: osc("gPrintln", "iiiiis", "1 1 8 1 REC"),
-    # recording: REC stays plain (it used to blink as an inverted white badge, too busy on the OLED)
-    7: osc("gPrintln", "iiiiis", "1 1 8 1 REC"),
+    7: osc("gFillArea", "iiiiii", "0 0 19 10 1") + " " + osc("gPrintln", "iiiiis", "1 1 8 0 REC"),
 }
 for i, code in enumerate([0, 1, 3, 7]):
     m = g.msg(300 + i * 160, 480, txt[code])

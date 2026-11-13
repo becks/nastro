@@ -73,7 +73,7 @@
 #X msg 300 480 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 1 STOP;
 #X msg 460 480 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 1 PLAY;
 #X msg 620 480 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 1 REC;
-#X msg 780 480 \; oscOut sendtyped /oled/gFillArea iiiiii 3 0 0 19 10 1 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 0 REC;
+#X msg 780 480 \; oscOut sendtyped /oled/gPrintln iiiiis 3 1 1 8 1 REC;
 #X obj 1300 220 r album-rec;
 #X obj 1300 250 f;
 #X obj 1300 260 t b b;

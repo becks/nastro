@@ -7,10 +7,10 @@
 #X obj 150 130 list length;
 #X obj 150 160 sel 1 2 3 4;
 #X obj 300 220 list prepend;
-#X msg 150 190 list sendtyped /oled/gPrintln ;
-#X msg 270 190 list sendtyped /oled/gPrintln ;
-#X msg 390 190 list sendtyped /oled/gPrintln ;
-#X msg 510 190 list sendtyped /oled/gPrintln ;
+#X msg 150 190 list sendtyped /oled/gPrintln iiiiis;
+#X msg 270 190 list sendtyped /oled/gPrintln iiiiiss;
+#X msg 390 190 list sendtyped /oled/gPrintln iiiiisss;
+#X msg 510 190 list sendtyped /oled/gPrintln iiiiissss;
 #X msg 20 160 1;
 #X obj 100 190 delay 1500;
 #X obj 20 130 t b b b;

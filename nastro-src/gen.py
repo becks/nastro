@@ -26,6 +26,9 @@ def fix_println_types(text):
             while j < len(toks) and ";" not in toks[j] and "," not in toks[j]:
                 j += 1
             orig, args = toks[i + 1], toks[i + 2:j]   # given types; args up to the next ; or , separator
+            if not args:      # arguments appended at run time (toast.pd): keep the types given by hand
+                i += 1
+                continue
             # $n placeholders keep the type given by hand (they can be words or numbers); literal text is typed here
             ty = []
             for k, t in enumerate(args):

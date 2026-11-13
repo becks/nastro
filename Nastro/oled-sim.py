@@ -202,6 +202,8 @@ class Oled:
             args = [f"{float(a):f}" if i < len(types) and types[i] == "s" and _num(a) else a for i, a in enumerate(args)]
             # and a word sent in a number field ('f' / 'i') arrives as 0
             args = ["0" if i < len(types) and types[i] in "fi" and not _num(a) else a for i, a in enumerate(args)]
+        elif path.startswith("/oled/g") and path not in ("/oled/gFrame", "/oled/gWaveform"):
+            return        # like the device: sendtyped with no type string (e.g. "gPrintln 3 13 ...") draws nothing
 
         def ints(n):
             return [int(float(a)) for a in args[:n]]
@@ -493,7 +495,7 @@ function label(x,y,t){const el=document.createElement('div');el.className='num';
 el.textContent=t;dev.appendChild(el);}
 const KX=[109,226,336,446],kn=[],last=[0,0,0,0],hotT=[0,0,0,0];
 KX.forEach((x,k)=>{kn.push(knob(x,62,62));label(x+36,70,k+1);});
-const enc=knob(818,84,62),vol=knob(972,90,64);
+const enc=knob(818,62,62),vol=knob(972,62,62);
 vol.querySelector('.ptr').setAttribute('transform','rotate(-40)');
 const NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],WHITE=[0,2,4,5,7,9,11],KEY={};
 function key(x,y,name){const el=document.createElement('div');el.className='key';el.style.left=x+'px';el.style.top=y+'px';

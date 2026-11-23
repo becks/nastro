@@ -1,7 +1,10 @@
 # exec'd from gen.py: builds reverb.pd - the master reverb (abstraction used by master.pd)
 # pre-delay -> 4 series allpass diffusers -> 8-line feedback delay network (Hadamard matrix, per-line damping
 # and decay gains, 2 slowly modulated lines) -> stereo out.  Params (AUX + knobs on the FX page, ctx 16):
-#   rvb-knob / rvb-set  1 DECAY (T60 0.4..12 s)  2 TONE (damping 1.5..12 kHz)  3 PRE (0..120 ms)  4 MOD (depth)
+#   rvb-knob / rvb-set  1 DECAY (T60 0.4..40 s)  2 TONE (damping 1.5..12 kHz)
+#                       3 SIZE (line lengths x0.5..x2, pre-delay 1..81 ms)
+#                       4 GRAIN (0 = clean; up: lower sample rate and fewer bits inside the loop on 4 of the 8
+#                         lines, so the tail gets grainier at every pass, and deeper modulation)
 # DSP is switched off (switch~) when the reverb send is 0 and the tail has died away.
 LINES = [31.7, 37.3, 41.1, 47.9, 53.3, 59.9, 67.1, 73.7]   # ms
 AP = [(4.77, 0.75), (3.59, 0.75), (12.73, 0.625), (9.31, 0.625)]
@@ -19,20 +22,34 @@ sw = rv.obj(600, 40, "switch~")
 rk = rv.obj(600, 100, "r rvb-knob")
 krt = rv.obj(600, 130, "route 1 2 3 4")
 rv.c(rk, krt); rv.c(rv.obj(700, 100, "r rvb-set"), krt)   # [r name] has no inlet: both feed the route
-t60E = rv.obj(600, 170, "expr 0.4*pow(30 \\, $f1)")
+t60E = rv.obj(600, 170, "expr 0.4*pow(30 \\, $f1)*(1+2.333*pow($f1 \\, 6))")   # as before up to ~8 s, then to 40 s
 toneE = rv.obj(750, 170, "expr 1500*pow(8 \\, $f1)")
-preE = rv.obj(900, 170, "expr 1+$f1*120")
-modE = rv.obj(1050, 170, "expr $f1*1.2")
-for i, e in enumerate((t60E, toneE, preE, modE)):
-    rv.c(krt, e, i)
+sizeK = rv.obj(900, 140, "t f f")
+preE = rv.obj(900, 170, "expr 1+80*$f1*$f1")
+sclE = rv.obj(980, 170, "expr pow(4 \\, $f1-0.5)")
+grnK = rv.obj(1050, 140, "t f f f")
+modE = rv.obj(1050, 170, "expr 0.36+$f1*2")
+rateE = rv.obj(1150, 170, "expr 44099*pow(0.18 \\, $f1)")
+qE = rv.obj(1250, 170, "expr pow(2 \\, 22-12*$f1) \\; pow(2 \\, -22+12*$f1)")
+rv.c(krt, t60E, 0); rv.c(krt, toneE, 1); rv.c(krt, sizeK, 2); rv.c(krt, grnK, 3)
+rv.c(sizeK, preE, 1); rv.c(sizeK, sclE, 0)
+rv.c(grnK, modE, 2); rv.c(grnK, rateE, 1); rv.c(grnK, qE, 0)
 t60T = rv.obj(600, 200, "t f f")
 rv.c(t60E, t60T)
 rv.c(t60T, rv.obj(700, 230, "v rvb-t60"), 1)
 # per line gain: 10^(-3 L / T60), times 1/sqrt(8) for the (unnormalised) Hadamard
-gE = rv.obj(600, 260, "expr " + " \\; ".join(f"pow(10 \\, -3*{L}/1000/$f1)*0.353553" for L in LINES))
+gE = rv.obj(600, 260, "expr " + " \\; ".join(f"pow(10 \\, -3*{L}*$f2/1000/$f1)*0.353553" for L in LINES))
+# SIZE: new line lengths -> new gains for the same T60 (through the same gate: not while frozen)
+sclT = rv.obj(980, 200, "t b f f")
+rv.c(sclE, sclT); rv.c(sclT, gE, 1, 1)
+sclV = rv.obj(980, 230, "v rvb-t60")
+rv.c(sclT, sclV, 0)
+sclM = rv.msg(1060, 230, "\\$1 100")
+sclL = rv.obj(1060, 260, "line~")
+rv.c(sclT, sclM, 2); rv.c(sclM, sclL)
 gGate = rv.obj(600, 230, "spigot 1")
-rv.c(t60T, gGate, 0); rv.c(gGate, gE)
-defs = rv.msg(800, 60, "1 0.5 \\, 2 0.6 \\, 3 0.15 \\, 4 0.3")
+rv.c(t60T, gGate, 0); rv.c(gGate, gE); rv.c(sclV, gGate)
+defs = rv.msg(800, 60, "1 0.5 \\, 2 0.6 \\, 3 0.5 \\, 4 0")
 rv.c(rv.obj(800, 30, "loadbang"), defs); rv.c(defs, krt)
 preM = rv.msg(900, 200, "\\$1 50")
 preL = rv.obj(900, 230, "line~")
@@ -95,29 +112,43 @@ inj = rv.obj(20, 330, "*~ 0.5")
 injN = rv.obj(120, 330, "*~ -0.5")
 rv.c(x, inj); rv.c(x, injN)
 sums, damped, lps = [], [], []
+gPh = rv.obj(1250, 300, "phasor~ 44099")                       # GRAIN: sample-rate clock (a wrap = a new sample)
+rv.c(rateE, gPh)
 lfo = {}
 for j, (li, hz) in enumerate(zip(MODL, MODHZ)):
     o = rv.obj(1600 + j * 200, 300, f"osc~ {hz}")
     dep = rv.obj(1600 + j * 200, 330, "*~ 0.36")
     rv.c(o, dep); rv.c(modE, dep, 0, 1)
-    base = rv.obj(1600 + j * 200, 360, f"+~ {LINES[li]}")
-    rv.c(dep, base)
-    lfo[li] = base
+    lfo[li] = dep
 for i, L in enumerate(LINES):
     X = 20 + i * 140
     s_ = rv.obj(X, 400, "+~")                                   # input + feedback
     rv.c(inj if i % 2 == 0 else injN, s_, 0, 0)
-    rv.c(s_, rv.obj(X, 430, f"delwrite~ rvb-l{i} 100"))
+    rv.c(s_, rv.obj(X, 430, f"delwrite~ rvb-l{i} 200"))
+    ln = rv.obj(X + 60, 440, f"*~ {L}")                         # length = L * SIZE
+    rv.c(sclL, ln)
     if i in lfo:
-        d = rv.obj(X, 470, f"vd~ rvb-l{i}")
-        rv.c(lfo[i], d)
-    else:
-        d = rv.obj(X, 470, f"delread~ rvb-l{i} {L}")
+        lnm = rv.obj(X + 60, 455, "+~")
+        rv.c(ln, lnm, 0, 0); rv.c(lfo[i], lnm, 0, 1)
+        ln = lnm
+    d = rv.obj(X, 470, f"vd~ rvb-l{i}")
+    rv.c(ln, d)
     lp = rv.obj(X, 500, "lop~ 5000")
     lps.append(lp)
     gm = rv.obj(X, 530, "*~ 0.3")
     rv.c(gE, gm, i, 1)
-    rv.c(d, lp); rv.c(lp, gm)
+    rv.c(d, lp)
+    if i % 2 == 0:                                              # GRAIN on lines 0 2 4 6 (all lines mix through the matrix)
+        sh = rv.obj(X, 505, "samphold~")
+        rv.c(lp, sh, 0, 0); rv.c(gPh, sh, 0, 1)
+        qm = rv.obj(X, 512, "*~ 4194304"); rv.c(qE, qm, 0, 1)
+        qa = rv.obj(X, 516, "+~ 0.5")
+        qw = rv.obj(X + 60, 518, "wrap~")
+        qs = rv.obj(X, 520, "-~")
+        qd = rv.obj(X, 524, "*~ 2.384e-07"); rv.c(qE, qd, 1, 1)
+        rv.c(sh, qm); rv.c(qm, qa); rv.c(qa, qs, 0, 0); rv.c(qa, qw); rv.c(qw, qs, 0, 1); rv.c(qs, qd); rv.c(qd, gm)
+    else:
+        rv.c(lp, gm)
     sums.append(s_); damped.append(gm)
 # Hadamard 8 = 3 butterfly stages
 stage = damped

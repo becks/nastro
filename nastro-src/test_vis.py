@@ -14,7 +14,7 @@ SR, BS = 44100, "\\"
 w = wave.open(f"{T}/t1.wav", "wb"); w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
 w.writeframes(b"".join(struct.pack("<h", int(12000 * math.sin(2 * math.pi * 440 * i / SR))) for i in range(10 * SR))); w.close()
 ev = [(300, ["sfread read t1.wav tape1", "tp-loaded bang"]), (500, ["aux-key 65", "mode 3"])]
-ev += [(600 + 50 * k, ["mode 3"]) for k in range(5)]
+ev += [(600 + 50 * k, ["mode 3"]) for k in range(6)]          # MIX FX DELAY FILTER MASTER SEND -> VIS
 ev += [(1000, ["mark WAVE"]), (4000, ["mark SPEC", "vis-knob 1 0.9"]), (7000, ["mark OFF", "mode 2"]), (8000, ["pd quit"])]
 L = ["#N canvas 0 0 800 600 12;", "#X obj 20 20 loadbang;", "#X msg 20 50 " + BS + "; pd dsp 1;"]
 C = ["#X connect 0 0 1 0;"]

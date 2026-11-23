@@ -315,7 +315,8 @@ class Oled:
 NOTE = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 ENGINES = ["FM", "SUB", "PLUK", "PAD", "SMPL", "AIR", "GLASS", "WAVE", "STRING", "ORGAN", "DRONE", "PIANO", "MALLET"]
 MODES = ["SYNTH", "DRUM", "TAPE", "MIX", "SEQ", "PROJECTS"]       # 5 = encoder menu / album page
-MIX_PAGES = ["MIX", "FX", "FILTER", "MASTER", "SEND", "VIS"]
+MIX_PAGES = ["MIX", "FX", "FILTER", "MASTER", "SEND", "VIS", "DELAY"]   # DELAY (6) comes after FX
+MIX_NEXT = {0: 1, 1: 6, 6: 2, 2: 3, 3: 4, 4: 5, 5: 0}
 SEQ_PAGES = ["TEMPO", "STEP", "TOMBOLA", "ENDLESS", "ARP"]
 
 
@@ -330,7 +331,7 @@ def page_name(ctx):
         e = ENGINES[ctx["synth-engine"] % len(ENGINES)]
         return f"SYNTH {e}" + (" LFO" if ctx["syn-lfo-page"] else "")
     if m == 3:
-        return "MIX " + MIX_PAGES[ctx["mix-page"] % 6] if ctx["mix-page"] else "MIX"
+        return "MIX " + MIX_PAGES[ctx["mix-page"] % 7] if ctx["mix-page"] else "MIX"
     if m == 4:
         return "SEQ " + SEQ_PAGES[ctx["seq-page"] % 5]
     return MODES[m] if 0 <= m < len(MODES) else ""
@@ -346,7 +347,7 @@ def aux_key_function(n, ctx):
     if n == 62:
         return "TAPE page"
     if n == 63:
-        return "next page: " + MIX_PAGES[(ctx["mix-page"] + 1) % 6] if m == 3 else "MIX page"
+        return "next page: " + MIX_PAGES[MIX_NEXT.get(ctx["mix-page"], 0)] if m == 3 else "MIX page"
     if n == 64:
         return "next page: " + SEQ_PAGES[(sp + 1) % 5] if m == 4 else "SEQ page"
     glob = {65: "tape PLAY / STOP", 66: "tape REC / stop", 67: "REWIND to start", 68: "LOOP: start / end / off",
@@ -397,7 +398,7 @@ def aux_knob_function(k, ctx):
         return "SPEED, continuous" if k == 1 else ""
     if m == 3:
         return {0: f"PAN track {k}", 1: "REVERB settings", 2: f"RESONANCE track {k}",
-                4: f"REVERB SEND track {k}"}.get(ctx["mix-page"] % 6, "")
+                4: f"REVERB SEND track {k}"}.get(ctx["mix-page"] % 7, "")
     if m == 4 and ctx["seq-page"] == 4 and k == 1:
         return "ARP probability"
     return ""

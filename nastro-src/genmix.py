@@ -73,22 +73,77 @@ def smooth(x, y, name, init):
     ms.c(r, m); ms.c(m, l); ms.c(lb, i); ms.c(i, m)
     return l
 
-# --- delay (mono, feedback through a lowpass)
+# --- delay: two lines (L / R). In the loop, per line: GRAIN (lower sample rate + fewer bits), TONE (lowpass),
+# then SPREAD mixes the lines (0 = each line feeds itself: mono, as before; 1 = they feed each other: ping-pong)
+# and a soft saturation keeps feedback above 100 % bounded. WOW wobbles the time. DELAY page (dly-knob / dly-set):
+# 1 TONE (800 Hz..12 kHz, 0.545 = 3.5 kHz as before)  2 GRAIN  3 WOW  4 SPREAD
 dmix = smooth(400, 40, "fx-dmix", 0)
 dfb = smooth(560, 40, "fx-fb", 0.4)
 dtm = smooth(720, 40, "fx-time", 373)
 dsend = ms.obj(200, 160, "*~")
 ms.c(dry, dsend, 0, 0); ms.c(dmix, dsend, 0, 1)
-dsum = ms.obj(200, 200, "+~")
-dwr = ms.obj(200, 240, "delwrite~ nst-dly 2100")
-drd = ms.obj(400, 200, "vd~ nst-dly")
-dlp = ms.obj(400, 240, "lop~ 3500")
-dfbm = ms.obj(400, 280, "*~")
-dclip = ms.obj(400, 320, "clip~ -1.5 1.5")
-ms.c(dsend, dsum, 0, 0); ms.c(dsum, dwr)
-ms.c(dtm, drd); ms.c(drd, dlp); ms.c(dlp, dfbm, 0, 0); ms.c(dfb, dfbm, 0, 1)
-ms.c(dfbm, dclip); ms.c(dclip, dsum, 0, 1)
-ms.c(drd, ol); ms.c(drd, orr)
+dK = ms.obj(1400, 40, "route 1 2 3 4")
+ms.c(ms.obj(1400, 10, "r dly-knob"), dK); ms.c(ms.obj(1500, 10, "r dly-set"), dK)
+dDef = ms.msg(1600, 10, "1 0.545 \\, 2 0 \\, 3 0 \\, 4 0")
+ms.c(ms.obj(1600, -20, "loadbang"), dDef); ms.c(dDef, dK)
+dToneE = ms.obj(1400, 70, "expr 800*pow(15 \\, $f1)")
+dGrT = ms.obj(1500, 70, "t f f")
+dRateE = ms.obj(1500, 100, "expr 44099*pow(0.18 \\, $f1)")
+dQE = ms.obj(1600, 100, "expr pow(2 \\, 22-12*$f1) \; pow(2 \\, -22+12*$f1)")
+dWowE = ms.obj(1700, 70, "expr $f1*0.015")
+dWowM = ms.msg(1700, 100, "\\$1 50"); dWowL = ms.obj(1700, 130, "line~")
+dSpT = ms.obj(1800, 70, "t f f")
+dSpI = ms.obj(1880, 100, "expr 1-$f1")
+dSpM = ms.msg(1800, 100, "\\$1 30"); dSpL = ms.obj(1800, 130, "line~")
+dSiM = ms.msg(1880, 130, "\\$1 30"); dSiL = ms.obj(1880, 160, "line~")
+ms.c(dK, dToneE, 0); ms.c(dK, dGrT, 1); ms.c(dK, dWowE, 2); ms.c(dK, dSpT, 3)
+ms.c(dGrT, dRateE, 1); ms.c(dGrT, dQE, 0)
+ms.c(dWowE, dWowM); ms.c(dWowM, dWowL)
+ms.c(dSpT, dSpI, 1); ms.c(dSpT, dSpM, 0); ms.c(dSpM, dSpL); ms.c(dSpI, dSiM); ms.c(dSiM, dSiL)
+# WOW: time * (1 + depth * (0.7 sin 0.9 Hz + 0.3 sin 0.23 Hz))
+dO1 = ms.obj(1400, 200, "osc~ 0.9"); dO2 = ms.obj(1500, 200, "osc~ 0.23")
+dO1g = ms.obj(1400, 230, "*~ 0.7"); dO2g = ms.obj(1500, 230, "*~ 0.3")
+dOs = ms.obj(1400, 260, "+~"); dOd = ms.obj(1400, 290, "*~"); dO1p = ms.obj(1400, 320, "+~ 1")
+dTm = ms.obj(1400, 350, "*~")
+ms.c(dO1, dO1g); ms.c(dO2, dO2g); ms.c(dO1g, dOs, 0, 0); ms.c(dO2g, dOs, 0, 1)
+ms.c(dOs, dOd, 0, 0); ms.c(dWowL, dOd, 0, 1); ms.c(dOd, dO1p); ms.c(dO1p, dTm, 0, 0); ms.c(dtm, dTm, 0, 1)
+dPh = ms.obj(1600, 200, "phasor~ 44099")                  # GRAIN clock (a wrap = a new sample)
+ms.c(dRateE, dPh)
+outs, fbs, sums = [], [], []
+for j, nm in enumerate(("A", "B")):
+    X = 200 + j * 500
+    sm = ms.obj(X, 200, "+~")                              # input + feedback
+    ms.c(sm, ms.obj(X, 240, f"delwrite~ nst-dly{nm} 2100"))
+    rd = ms.obj(X + 200, 200, f"vd~ nst-dly{nm}")
+    ms.c(dTm, rd)
+    sh = ms.obj(X + 200, 225, "samphold~")
+    ms.c(rd, sh, 0, 0); ms.c(dPh, sh, 0, 1)
+    qm = ms.obj(X + 200, 240, "*~ 4194304"); ms.c(dQE, qm, 0, 1)
+    qa = ms.obj(X + 200, 255, "+~ 0.5"); qw = ms.obj(X + 280, 262, "wrap~"); qs = ms.obj(X + 200, 270, "-~")
+    qd = ms.obj(X + 200, 285, "*~ 2.384e-07"); ms.c(dQE, qd, 1, 1)
+    ms.c(sh, qm); ms.c(qm, qa); ms.c(qa, qs, 0, 0); ms.c(qa, qw); ms.c(qw, qs, 0, 1); ms.c(qs, qd)
+    lp = ms.obj(X + 200, 300, "lop~ 3500")
+    ms.c(dToneE, lp, 0, 1); ms.c(qd, lp)
+    outs.append(qd); fbs.append(lp); sums.append(sm)
+# SPREAD mix: line j gets (1-s) * its own + s * the other
+for j in range(2):
+    X = 200 + j * 500
+    own = ms.obj(X + 200, 330, "*~"); oth = ms.obj(X + 260, 330, "*~")
+    ms.c(fbs[j], own, 0, 0); ms.c(dSiL, own, 0, 1); ms.c(fbs[1 - j], oth, 0, 0); ms.c(dSpL, oth, 0, 1)
+    mx = ms.obj(X + 200, 350, "+~"); ms.c(own, mx, 0, 0); ms.c(oth, mx, 0, 1)
+    fm = ms.obj(X + 200, 370, "*~"); ms.c(mx, fm, 0, 0); ms.c(dfb, fm, 0, 1)
+    # soft saturation: c = clip(v, -1, 1); y = c - c^3/3 (gain 1 for small signals, smooth up to +-2/3)
+    cl = ms.obj(X + 200, 390, "clip~ -1 1"); c2 = ms.obj(X + 260, 405, "*~"); c3 = ms.obj(X + 260, 420, "*~")
+    c3s = ms.obj(X + 260, 435, "*~ -0.3333"); y = ms.obj(X + 200, 450, "+~")
+    ms.c(fm, cl); ms.c(cl, c2, 0, 0); ms.c(cl, c2, 0, 1); ms.c(c2, c3, 0, 0); ms.c(cl, c3, 0, 1); ms.c(c3, c3s)
+    ms.c(cl, y, 0, 0); ms.c(c3s, y, 0, 1)
+    ms.c(y, sums[j], 0, 1)
+# input: line A always, line B only as much as it is not ping-pong
+dInB = ms.obj(700, 170, "*~")
+ms.c(dsend, sums[0], 0, 0); ms.c(dsend, dInB, 0, 0); ms.c(dSiL, dInB, 0, 1); ms.c(dInB, sums[1], 0, 0)
+ms.c(outs[0], ol); ms.c(outs[1], orr)
+dWet = ms.obj(400, 520, "+~"); drd = ms.obj(400, 540, "*~ 0.5")       # mono wet: to the reverb and the resample copy
+ms.c(outs[0], dWet, 0, 0); ms.c(outs[1], dWet, 0, 1); ms.c(dWet, drd)
 
 # --- reverb (reverb.pd: diffusers + 8-line FDN, switches itself off when unused)
 rmix = smooth(880, 40, "fx-rmix", 0)
@@ -164,7 +219,8 @@ mt = x_.obj(20, 90, "t f f")
 again = x_.obj(20, 130, "expr $f1==3 && $f2==3")
 ag1 = x_.obj(20, 160, "sel 1")
 pgF = x_.obj(20, 190, "f")
-pgN = x_.obj(20, 220, "expr ($f1+1)%6")             # MIX -> FX -> FILTER -> MASTER -> SEND -> VIS (apply_vis.py)
+# MIX 0 -> FX 1 -> DELAY 6 -> FILTER 2 -> MASTER 3 -> SEND 4 -> VIS 5 (DELAY came last, so it keeps number 6)
+pgN = x_.obj(20, 220, "expr if($f1==1 \\, 6 \\, if($f1==6 \\, 2 \\, ($f1+1)%6))")
 pgT = x_.obj(20, 250, "t f f")
 x_.c(rmd, mt); x_.c(mt, again, 1); x_.c(mt, again, 0, 1)
 x_.c(pgT, x_.obj(120, 280, "s mix-page"), 0)
@@ -173,7 +229,7 @@ x_.c(again, ag1); x_.c(ag1, pgF); x_.c(pgF, pgN); x_.c(pgN, pgT); x_.c(pgT, pgF,
 rk = x_.obj(200, 60, "r mix-knob")
 lp = x_.obj(200, 90, "list prepend 0")
 x_.c(rk, lp); x_.c(pgT, lp, 0, 1)
-rpg = x_.obj(200, 120, "route 0 1 2 3 4 5")
+rpg = x_.obj(200, 120, "route 0 1 2 3 4 5 6")
 x_.c(lp, rpg)
 rlv = x_.obj(200, 150, "route 1 2 3 4")
 rfx = x_.obj(500, 150, "route 1 2 3 4")
@@ -191,7 +247,8 @@ fiKR = x_.obj(700, 135, "route 0 1")
 x_.c(rpg, fiK, 2); x_.c(fiK, fiKR)
 x_.c(fiKR, x_.obj(700, 150, "s tfilt-knob"), 0); x_.c(fiKR, x_.obj(800, 150, "s tres-knob"), 1)
 x_.c(rpg, x_.obj(900, 150, "s comp-knob"), 3)
-x_.c(rpg, x_.obj(1200, 150, "s vis-knob"), 5)              # VIS page (apply_vis.py)                # MASTER page: knob 1 COMP, knob 2 SPEED
+x_.c(rpg, x_.obj(1200, 150, "s vis-knob"), 5)
+x_.c(rpg, x_.obj(1300, 150, "s dly-knob"), 6)              # DELAY page: TONE GRAIN WOW SPREAD              # VIS page (apply_vis.py)                # MASTER page: knob 1 COMP, knob 2 SPEED
 seK = x_.obj(1000, 120, "list prepend 0")                       # SEND page: knob k -> delay send, AUX -> reverb send
 x_.c(x_.obj(1060, 90, "r aux"), seK, 0, 1)
 seKR = x_.obj(1000, 135, "route 0 1")
@@ -207,7 +264,8 @@ for k in range(4):
     f_ = x_.obj(200 + k * 70, 250, "f")
     x_.c(rlv, t_, k); x_.c(t_, s_, 1); x_.c(t_, f_, 0, 1)
     lvF.append(f_)
-fxmap = ["expr int(20+980*pow($f1 \\, 2))", "* 0.95", "t f", "t f"]
+# FDBK: as before up to 90 % of the knob, then up to 110 % (the delay saturates softly and can self-oscillate)
+fxmap = ["expr int(20+980*pow($f1 \\, 2))", "expr if($f1<0.9 \\, $f1*0.95 \\, 0.855+($f1-0.9)*2.45)", "t f", "t f"]
 fxsend = ["t f", "s fx-fb", "s fx-dmix", "s fx-rmix"]
 for k in range(4):
     t_ = x_.obj(500 + k * 120, 190, "t f f")
@@ -270,7 +328,7 @@ clr = x_.msg(20, 430, osc2("gClear", "ii", "1"))
 flip = x_.msg(20, 460, "\\; oscOut sendtyped /oled/gFlip i 3")
 x_.c(seq, clr, 2); x_.c(seq, pgS, 1); x_.c(seq, flip, 0)
 x_.c(seq, x_.msg(100, 430, "\\; mt-reset bang"), 2)
-psel = x_.obj(200, 430, "sel 0 1 2 3 4")
+psel = x_.obj(200, 430, "sel 0 1 2 3 4 6")
 x_.c(pgS, psel)
 
 # MIX page: 4 dials with needles. Holding AUX shows / edits PAN instead of level.
@@ -420,7 +478,7 @@ rvT = x_.obj(1600, 470, "t b b b b b b")
 x_.c(fxPgS, rvT, 1)
 x_.c(rvT, x_.msg(1600, 500, " ".join(
     [osc2("gPrintln", "iiiiis", "1 1 8 1 REVERB")] +
-    [osc2("gPrintln", "iiiiis", f"1 {15 + k * 12} 8 1 {nm}") for k, nm in enumerate(("DEC", "TONE", "PRE", "MOD"))] +
+    [osc2("gPrintln", "iiiiis", f"1 {15 + k * 12} 8 1 {nm}") for k, nm in enumerate(("DEC", "TONE", "SIZE", "GRAIN"))] +
     [osc2("gBox", "iiiiii", f"34 {14 + k * 12} 93 9 1") for k in range(4)])), 5)
 rvV = []
 for k in range(4):
@@ -428,7 +486,7 @@ for k in range(4):
     rvV.append(f_)
 rvIn = x_.obj(1600, 530, "route 1 2 3 4")
 x_.c(x_.obj(1600, 500, "r rvb-knob"), rvIn); x_.c(x_.obj(1700, 500, "r rvb-set"), rvIn)
-rvDef = x_.msg(1800, 500, "1 0.5 \\, 2 0.6 \\, 3 0.15 \\, 4 0.3")
+rvDef = x_.msg(1800, 500, "1 0.5 \\, 2 0.6 \\, 3 0.5 \\, 4 0")
 x_.c(x_.obj(1800, 470, "loadbang"), rvDef); x_.c(rvDef, rvIn)
 for k in range(4):
     x_.c(rvIn, rvV[k], k, 1)
@@ -436,7 +494,7 @@ for k in range(4):
     x_.c(rvT, rvV[k], 4 - k); x_.c(rvV[k], e_)
     x_.c(e_, x_.msg(1600 + k * 70, 640 + k * 30, osc2("gFillArea", "iiiiii", f"36 {16 + k * 12} \\$1 5 1")))
 # decay in seconds in the title (one decimal)
-rvSec = x_.obj(1900, 560, "expr int(0.4*pow(30 \\, $f1)*10+0.5)/10.0")
+rvSec = x_.obj(1900, 560, "expr int(0.4*pow(30 \\, $f1)*(1+2.333*pow($f1 \\, 6))*10+0.5)/10.0")
 rvTV = x_.obj(1900, 530, "t b")
 x_.c(rvT, rvTV, 0)
 rvD = x_.obj(1950, 530, "f")
@@ -605,4 +663,22 @@ for k in range(4):
                     osc2("gFillArea", "iiiiii", f"{cx - 3} \\$2 7 \\$1 1") + " " +
                     osc2("gPrintln", "iiiiif", f"{cx - 3} 42 8 1 {k + 1}") + " " +
                     osc2("gPrintln", "iiiiif", f"{cx - 9} 53 8 1 \\$3")))
+# ------------------------------------------------ DELAY page: title, 4 bars (TONE GRAIN WOW SPREAD)
+dlT = x_.obj(4800, 470, "t b b b b b")
+x_.c(psel, dlT, 5)
+x_.c(dlT, x_.msg(4800, 500, " ".join(
+    [osc2("gPrintln", "iiiiis", "1 1 8 1 DELAY")] +
+    [osc2("gPrintln", "iiiiis", f"1 {15 + k * 12} 8 1 {nm}") for k, nm in enumerate(("TONE", "GRAIN", "WOW", "SPRD"))] +
+    [osc2("gBox", "iiiiii", f"34 {14 + k * 12} 93 9 1") for k in range(4)])), 4)
+dlIn = x_.obj(4800, 530, "route 1 2 3 4")
+x_.c(x_.obj(4800, 500, "r dly-knob"), dlIn); x_.c(x_.obj(4900, 500, "r dly-set"), dlIn)
+x_.c(x_.obj(5000, 500, "r dly-knob"), dOne); x_.c(x_.obj(5100, 500, "r dly-set"), dOne)
+dlDef = x_.msg(5000, 470, "1 0.545 \\, 2 0 \\, 3 0 \\, 4 0")
+x_.c(x_.obj(5000, 440, "loadbang"), dlDef); x_.c(dlDef, dlIn)
+for k in range(4):
+    f_ = x_.obj(4800 + k * 70, 560, "f")
+    x_.c(dlIn, f_, k, 1)
+    e_ = x_.obj(4800 + k * 70, 600, "expr max(0 \\, int($f1*89))")
+    x_.c(dlT, f_, 3 - k); x_.c(f_, e_)
+    x_.c(e_, x_.msg(4800 + k * 70, 640 + k * 30, osc2("gFillArea", "iiiiii", f"36 {16 + k * 12} \\$1 5 1")))
 x_.save("mix.pd")

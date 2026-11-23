@@ -123,6 +123,14 @@ mkPk2 = p.obj(1000, 600, "makefilename p%d-pk.txt")
 mkMs2 = p.obj(1150, 630, "makefilename p%d-misc.txt")
 p.c(loadT, mkPk2, 2); p.c(loadT, mkMs2, 2)
 p.c(mkPk2, p.msg(1000, 630, "\\; pkval read \\$1"))
+# the same file as text, to count its values: a project saved before the FX sends has 108
+pkLen = p.obj(850, 660, "text define nst-pklen")
+pkLT = p.obj(850, 570, "t f b")                       # 1) clear  0) read, only for a saved project (p0 has no file)
+pkLM = p.obj(850, 590, "moses 1")
+pkLF = p.obj(900, 610, "makefilename p%d-pk.txt")
+pkRd = p.msg(900, 630, "read -c \\$1")
+p.c(loadT, pkLT, 2); pkClr = p.msg(800, 630, "clear"); p.c(pkLT, pkClr, 1); p.c(pkClr, pkLen); p.c(pkLT, pkLM, 0)
+p.c(pkLM, pkLF, 1); p.c(pkLF, pkRd); p.c(pkRd, pkLen)
 p.c(mkMs2, p.msg(1150, 660, "\\; nstmisc read \\$1"))
 ldSnap = p.obj(1300, 585, "t f b")                     # right after the files are read: keep the saved speed
 p.c(loadT, ldSnap, 1); p.c(ldSnap, p.obj(1300, 600, "s nst-load"), 0)
@@ -137,7 +145,7 @@ p.c(ldMo, p.msg(1250, 730, "\\; nst-proj-status symbol NEW"), 0); p.c(ldSt, p.ob
 # apply the knob state to the modules, as if every knob had been turned
 CTX = [(0, "fm-knob"), (6, "sub-knob"), (7, "pluk-knob"), (8, "pad-knob"), (10, "smpl-knob"), (2, "tape-knob"),
        (3, "mix-lvl-set"), (11, "mix-pan-set"), (5, "mix-fx-set"), (4, "tempo-knob"), (9, "seq-step-set"),
-       (13, "synth-vol-set"), (14, "drum-vol-set"), (15, "tomb-set"), (16, "rvb-set"), (17, "endl-set"), (18, "air-knob"), (19, "bell-knob"), (20, "tfilt-set"), (21, "tres-set"), (22, "comp-set"), (23, "wave-knob"), (24, "strg-knob"), (25, "organ-knob"), (26, "drone-knob"), (27, "dsend-set"), (28, "rsend-set"), (29, "fm-lfo-knob"), (30, "sub-lfo-knob"), (31, "pluk-lfo-knob"), (32, "pad-lfo-knob"), (33, "smpl-lfo-knob"), (34, "air-lfo-knob"), (35, "bell-lfo-knob"), (36, "wave-lfo-knob"), (37, "strg-lfo-knob"), (38, "organ-lfo-knob"), (39, "drone-lfo-knob"), (40, "arp-set"), (41, "arp-aux-set"), (42, "smp-aux-set"), (43, "piano-knob"), (44, "piano-lfo-knob"), (45, "mallet-knob"), (46, "mallet-lfo-knob"), (47, "vis-set")]
+       (13, "synth-vol-set"), (14, "drum-vol-set"), (15, "tomb-set"), (16, "rvb-set"), (17, "endl-set"), (18, "air-knob"), (19, "bell-knob"), (20, "tfilt-set"), (21, "tres-set"), (22, "comp-set"), (23, "wave-knob"), (24, "strg-knob"), (25, "organ-knob"), (26, "drone-knob"), (27, "dsend-set"), (28, "rsend-set"), (29, "fm-lfo-knob"), (30, "sub-lfo-knob"), (31, "pluk-lfo-knob"), (32, "pad-lfo-knob"), (33, "smpl-lfo-knob"), (34, "air-lfo-knob"), (35, "bell-lfo-knob"), (36, "wave-lfo-knob"), (37, "strg-lfo-knob"), (38, "organ-lfo-knob"), (39, "drone-lfo-knob"), (40, "arp-set"), (41, "arp-aux-set"), (42, "smp-aux-set"), (43, "piano-knob"), (44, "piano-lfo-knob"), (45, "mallet-knob"), (46, "mallet-lfo-knob"), (47, "vis-set"), (48, "dly-set")]
 apT = p.obj(1000, 790, "t " + " ".join(["b"] * (len(CTX) + 1)))
 fixT = p.obj(900, 760, "t b b")
 p.c(apT0, fixT, 0); p.c(fixT, apT, 0)
@@ -185,20 +193,28 @@ p.c(fixT, fixE11, 1); p.c(fixE11, fixS11); p.c(fixS11, p.msg(-100, 850, "\\; pkv
 fixA10 = p.obj(0, 760, "expr abs(pkval[116]-pkval[115])+abs(pkval[117]-pkval[115])+abs(pkval[118]-pkval[115])+abs(pkval[119]-pkval[115])+abs(pkval[120]-pkval[115])+abs(pkval[121]-pkval[115])+abs(pkval[122]-pkval[115])+abs(pkval[123]-pkval[115])+abs(pkval[124]-pkval[115])+abs(pkval[125]-pkval[115])+abs(pkval[126]-pkval[115])+abs(pkval[127]-pkval[115])+abs(pkval[128]-pkval[115])+abs(pkval[129]-pkval[115])+abs(pkval[130]-pkval[115])+abs(pkval[131]-pkval[115])+abs(pkval[132]-pkval[115])+abs(pkval[133]-pkval[115])+abs(pkval[134]-pkval[115])+abs(pkval[135]-pkval[115])+abs(pkval[136]-pkval[115])+abs(pkval[137]-pkval[115])")
 fixB10 = p.obj(0, 775, "expr abs(pkval[138]-pkval[115])+abs(pkval[139]-pkval[115])+abs(pkval[140]-pkval[115])+abs(pkval[141]-pkval[115])+abs(pkval[142]-pkval[115])+abs(pkval[143]-pkval[115])+abs(pkval[144]-pkval[115])+abs(pkval[145]-pkval[115])+abs(pkval[146]-pkval[115])+abs(pkval[147]-pkval[115])+abs(pkval[148]-pkval[115])+abs(pkval[149]-pkval[115])+abs(pkval[150]-pkval[115])+abs(pkval[151]-pkval[115])+abs(pkval[152]-pkval[115])+abs(pkval[153]-pkval[115])+abs(pkval[154]-pkval[115])+abs(pkval[155]-pkval[115])+abs(pkval[156]-pkval[115])+abs(pkval[157]-pkval[115])+abs(pkval[158]-pkval[115])+abs(pkval[159]-pkval[115])")
 fixE10 = p.obj(0, 790, "expr $f1+$f2==0")
-fixT10 = p.obj(0, 745, "t b b")
+fixT10 = p.obj(0, 745, "t b b b")              # 2) 1) LFO check  0) sends check, after the LFO fix
 fixS10 = p.obj(0, 820, "sel 1")
-p.c(fixT, fixT10, 1); p.c(fixT10, fixB10, 1); p.c(fixB10, fixE10, 0, 1); p.c(fixT10, fixA10, 0); p.c(fixA10, fixE10)
+p.c(fixT, fixT10, 1); p.c(fixT10, fixB10, 2); p.c(fixB10, fixE10, 0, 1); p.c(fixT10, fixA10, 1); p.c(fixA10, fixE10)
 p.c(fixE10, fixS10); p.c(fixS10, p.msg(0, 850, "\\; pkval 116 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0 0 0.3 0.5 0"))
-fixE9 = p.obj(100, 790, "expr pkval[108]+pkval[109]+pkval[110]+pkval[111]+pkval[112]+pkval[113]+pkval[114]+pkval[115]==0")
+# projects saved before the FX sends (108 values in the file, the sends read as the last one) -> sends at 100.
+# Counted from the file, not from the values: all sends at 0 is a real setting.
+fixE9 = p.obj(100, 790, "text size nst-pklen")
+fixL9 = p.obj(100, 805, "< 116")
 fixS9 = p.obj(100, 820, "sel 1")
-p.c(fixT, fixE9, 1); p.c(fixE9, fixS9); p.c(fixS9, p.msg(100, 850, "\\; pkval 108 1 1 1 1 1 1 1 1"))
+p.c(fixT10, fixE9, 0); p.c(fixE9, fixL9); p.c(fixL9, fixS9); p.c(fixS9, p.msg(100, 850, "\\; pkval 108 1 1 1 1 1 1 1 1"))
+# projects saved before the reverb's SIZE / GRAIN (file shorter than 196 values): knobs 3 and 4 were PRE and MOD
+# -> SIZE 0.5 (the old room) and GRAIN 0 (clean), so they sound as before
+fixL16 = p.obj(200, 805, "< 196")
+fixS16 = p.obj(200, 820, "sel 1")
+p.c(fixE9, fixL16); p.c(fixL16, fixS16); p.c(fixS16, p.msg(200, 870, "\\; pkval 66 0.5 0 \\; pkval 192 0.545 0 0 0"))
 p.c(fixT, fixE8, 1); p.c(fixE8, fixS8); p.c(fixS8, p.msg(200, 850, "\\; pkval 92 0.3 0.0 0.5 0.3 0.3 0.5 0.25 0.4 0.75 1.0 0.5 0.25 0.4 0.4 0.4 0.5"))
 p.c(fixT, fixE7, 1); p.c(fixE7, fixS7); p.c(fixS7, p.msg(300, 850, "\\; pkval 88 0 0.5 0 0"))
 p.c(fixT, fixE6, 1); p.c(fixE6, fixS6); p.c(fixS6, p.msg(400, 850, "\\; pkval 53 0.04 0.28 1"))
 p.c(fixT, fixE5, 1); p.c(fixE5, fixS5); p.c(fixS5, p.msg(500, 850, "\\; pkval 80 0.5 0.5 0.5 0.5 0 0 0 0"))
 p.c(fixT, fixE4, 1); p.c(fixE4, fixS4); p.c(fixS4, p.msg(600, 850, "\\; pkval 72 0.5 0.5 0.5 0.4 0.4 0.5 0.7 0.3"))
 p.c(fixT, fixE3, 1); p.c(fixE3, fixS3); p.c(fixS3, p.msg(700, 850, "\\; pkval 68 0.6 0.45 0.1 1"))
-p.c(fixT, fixE2, 1); p.c(fixE2, fixS2); p.c(fixS2, p.msg(800, 850, "\\; pkval 64 0.5 0.6 0.15 0.3"))
+p.c(fixT, fixE2, 1); p.c(fixE2, fixS2); p.c(fixS2, p.msg(800, 850, "\\; pkval 64 0.5 0.6 0.5 0"))
 for i, (ctx, dest) in enumerate(CTX):
     x = 1000 + (i % 4) * 160
     y = 830 + (i // 4) * 110

@@ -2,7 +2,7 @@
 
 > Nastro is an independent, non-commercial hobby project, written from scratch in Pure Data (the base drum kit is synthesized by a script, `nastro-src/makekit.py`).
 
-Nastro is a tape workstation for Organelle 1. It combines thirteen synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE, PIANO, MALLET), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a synth LFO per engine, a mixer with per-track DJ filters and effect sends, delay, a reverb with freeze, a master compressor and limiter, four sequencer pages and an arpeggiator, project saving, a tape editor and an album recorder with a player.
+Nastro is a tape workstation for Organelle 1. It combines thirteen synth engines (FM, SUB, PLUK, PAD, SMPL, AIR, GLASS, WAVE, STRING, ORGAN, DRONE, PIANO, MALLET), a 24-part drum sampler, a four-track tape recorder (with 0.25× / 0.5× / 2× recording), a sampler with time-stretch, a synth LFO per engine, a mixer with per-track DJ filters and effect sends, a tape-style delay (tone, grain, wow, ping-pong), a reverb with size, grain and freeze, a master compressor and limiter, four sequencer pages and an arpeggiator, project saving, a tape editor and an album recorder with a player.
 
 This manual describes the current generated source in `nastro-src`. Screen images are rendered with the project’s bundled OLED simulator at the real 128 × 64 pixel resolution; values in the images are examples.
 
@@ -256,7 +256,7 @@ Recording or loading a project clears the tape editor undo memory. Copy/paste an
 
 ![Mix level screen](oled/07-mix-level.png)
 
-Enter MIX with **AUX + D#**. Pressing **AUX + D#** again cycles the pages: **MIX → FX → FILTER → MASTER → SEND → VIS** (then back to MIX). The default page has four round dials, one per tape track. Knobs set each track’s **level**. The title row includes left/right output meters and a `LIM` indicator when the master limiter is working.
+Enter MIX with **AUX + D#**. Pressing **AUX + D#** again cycles the pages: **MIX → FX → DELAY → FILTER → MASTER → SEND → VIS** (then back to MIX). The default page has four round dials, one per tape track. Knobs set each track’s **level**. The title row includes left/right output meters and a `LIM` indicator when the master limiter is working.
 
 ![Mix pan screen](oled/08-mix-pan.png)
 
@@ -269,7 +269,7 @@ Press **AUX + D#** again to reach the FX page.
 Without AUX, FX knobs control:
 
 1. **TIME** — delay time; it can follow the delay-sync value in TEMPO.
-2. **FDBK** — delay feedback.
+2. **FDBK** — delay feedback. The last tenth of the knob goes past 100 % (up to 110 %): the echoes grow into self-oscillation, kept bounded by a soft saturation in the loop.
 3. **DLY** — delay amount (of the tape tracks, see SEND).
 4. **REV** — reverb amount (of the tape tracks, see SEND).
 
@@ -277,14 +277,29 @@ Without AUX, FX knobs control:
 
 Hold AUX on the FX page for the reverb page:
 
-1. **DEC** — reverb decay, approximately 0.4–12 seconds.
-2. **TONE** — damping / brightness.
-3. **PRE** — pre-delay, 0–120 ms.
-4. **MOD** — modulation depth.
+1. **DEC** — reverb decay, approximately 0.4 seconds to 40 seconds. Up to about three quarters of the knob it behaves as before (up to ~8 s); the last part opens into very long, almost endless tails. The title row shows the decay time.
+2. **TONE** — damping / brightness: low values darken the tail as it decays, high values keep it bright.
+3. **SIZE** — the size of the room: at the centre it is the usual reverb, lower is a small, dense room, higher a large hall with sparser, slower echoes. The pre-delay follows the size (from 1 ms to about 80 ms).
+4. **GRAIN** — lo-fi inside the reverb: it lowers the sample rate and the bit depth of the tail, more and more at every pass, so it turns grainy and metallic like an old digital reverb. At 0 it is clean.
+
+Projects saved with an earlier version load with SIZE at the centre and GRAIN at 0, so they sound as before.
 
 **Reverb freeze — AUX + G5** (from any page) freezes the reverb: what is ringing in it hangs as an endless pad, and new sound no longer enters the reverb until you release it. Press **AUX + G5** again to release: the tail fades out with the current DEC. While frozen the Organelle LED turns white and the FX and REVERB pages show `FRZ`; DEC and TONE changes made meanwhile are applied on release. Loading a project releases the freeze.
 
 ![Reverb freeze screen](oled/21-reverb-freeze.png)
+
+Press **AUX + D#** once more for the DELAY page.
+
+![Delay screen](oled/36-delay.png)
+
+The DELAY page shapes the echoes. Everything happens inside the feedback loop, so each repeat is more affected than the one before:
+
+1. **TONE** — the brightness of the echoes (a low-pass from 800 Hz to 12 kHz). The default is the delay's usual sound; lower makes every repeat darker, like a tape echo.
+2. **GRAIN** — lowers the sample rate and the bit depth of the echoes: the repeats get gritty and crushed. At 0 it is clean.
+3. **WOW** — the delay time wobbles slowly, so the echoes bend in pitch like a worn tape machine.
+4. **SPRD** (spread) — stereo: at 0 the delay is mono, as before; turning it up sends the echoes alternately left and right (ping-pong at the top).
+
+The DELAY settings are saved with the project; older projects load with the defaults, which sound as before.
 
 Press **AUX + D#** once more for the FILTER page.
 

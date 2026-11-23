@@ -163,7 +163,15 @@ def draw_fx(oled):
 def draw_reverb(oled):
     header(oled, "REVERB")
     text(oled, 80, 1, "4.1 s")
-    for y, label, amount in ((15, "DEC", 51), (27, "TONE", 65), (39, "PRE", 15), (51, "MOD", 28)):
+    for y, label, amount in ((15, "DEC", 51), (27, "TONE", 65), (39, "SIZE", 46), (51, "GRAIN", 20)):
+        text(oled, 1, y - 1, label)
+        oled.box(34, y - 2, 93, 9, 1)
+        oled.fill_area(36, y, amount, 5, 1)
+
+
+def draw_delay(oled):
+    header(oled, "DELAY")
+    for y, label, amount in ((15, "TONE", 48), (27, "GRAIN", 30), (39, "WOW", 22), (51, "SPRD", 89)):
         text(oled, 1, y - 1, label)
         oled.box(34, y - 2, 93, 9, 1)
         oled.fill_area(36, y, amount, 5, 1)
@@ -257,6 +265,7 @@ SCREENS = {
     "08-mix-pan": draw_pan,
     "09-fx-delay": draw_fx,
     "10-reverb": draw_reverb,
+    "36-delay": draw_delay,
     "11-tempo": draw_tempo,
     "12-step-sequencer": draw_step,
     "13-tombola": draw_tombola,
